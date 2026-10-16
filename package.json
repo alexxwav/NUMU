@@ -1,7 +1,7 @@
 {
   "name": "numu-app",
-  "version": "1.0.0",
-  "description": "Aplicación web interactiva de aprendizaje matemático para niños de 5 a 12 años, inspirada en la UX de Duolingo.",
+  "version": "2.0.0",
+  "description": "Aplicación web interactiva de aprendizaje matemático para niños de 5 a 12 años, inspirada en la UX de Duolingo. HTML5 + Tailwind CSS + Vanilla JS (ES6+ Modules) con Vite.",
   "private": true,
   "type": "module",
   "scripts": {
