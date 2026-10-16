@@ -16,10 +16,15 @@ export default {
         "cyan-ocean": "#00B4D8",
         "orange-energy": "#FF8800",
         "text-dark": "#1E1B4B",
+        plum: '#381932',
+        milk: '#FFF3E6',
+        purple: '#6C3483',
+        purpleDark: '#512E5F',
+        darkBg: '#1E121C',
       },
       fontFamily: {
         fredoka: ["Fredoka", "cursive", "sans-serif"],
-        nunito: ["Nunito", "sans-serif"],
+        poppins: ["Poppins", "sans-serif"],
       },
       boxShadow: {
         "3d-primary": "0px 6px 0px #2B0F8A",
