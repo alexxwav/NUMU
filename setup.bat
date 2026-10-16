@@ -20,10 +20,10 @@ if %errorlevel% neq 0 (
 echo Node.js version:
 node --version
 echo npm version:
-npm --version
+call npm --version
 
 echo Instalando dependencias...
-npm install
+call npm install
 
 echo.
 echo Instalación completada con éxito
