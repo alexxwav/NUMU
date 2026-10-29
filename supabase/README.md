@@ -8,14 +8,16 @@ Scripts para un proyecto de Supabase **nuevo y exclusivo de NUMU**. No aplicar s
 |---|---|
 | `migrations/20261029000001_schema.sql` | Tablas `profiles`, `courses`, `lessons`, `diagnostic_results`, `progress`; trigger de alta de perfil; RPC `record_lesson_result`. |
 | `migrations/20261029000002_rls.sql` | RLS: cada estudiante solo accede a lo suyo; catálogo de solo lectura. |
+| `migrations/20261029000003_grants.sql` | GRANT explícitos mínimos para `authenticated` (no depende de los permisos automáticos de Supabase). |
 | `seed.sql` | Catálogo provisional: 2 cursos y 4 lecciones (idempotente). |
 
 ## Aplicar (cuando exista el proyecto)
 
-1. En el SQL Editor del proyecto, ejecutar en orden: `20261029000001_schema.sql`, `20261029000002_rls.sql`, `seed.sql`.
+1. En el SQL Editor del proyecto, ejecutar en orden: `20261029000001_schema.sql`, `20261029000002_rls.sql`, `20261029000003_grants.sql`, `seed.sql`.
    Con Supabase CLI: `supabase link` y `supabase db push`, luego ejecutar `seed.sql`.
-2. Copiar `.env.example` como `.env.local` y poner la URL y la clave **pública** (anon/publishable).
-   La clave `service_role` nunca va en el frontend ni en Git.
+2. Copiar `.env.example` como `.env.local` y poner la URL y la clave **publishable** (`sb_publishable_...`).
+   Las claves `sb_secret_...` y `service_role` nunca van en el frontend ni en Git.
+   Las claves `anon` heredadas dejan de funcionar a finales de 2026.
 3. Authentication → Providers → Email: decidir con el equipo si se exige confirmar el correo.
 
 ## Relación con el frontend
