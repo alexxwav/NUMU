@@ -8,9 +8,11 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "setup": "npm install"
+    "setup": "npm install",
+    "test": "node --test tests/*.test.js"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.118.0",
     "canvas-confetti": "^1.9.3",
     "framer-motion": "^11.11.17",
     "howler": "^2.2.4",
