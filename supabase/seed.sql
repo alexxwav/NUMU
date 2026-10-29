@@ -21,7 +21,7 @@ insert into public.lessons (id, course_id, title, description, position, module_
   ('figuras', 'geometria-patrones', 'Figuras geométricas',
    'Reconocer triángulos, cuadrados, pentágonos y hexágonos por su número de lados. Las figuras tienen bordes llamados lados. Podemos identificar algunas figuras contando sus lados: el triángulo tiene tres y el cuadrado tiene cuatro.',
    1, 'geometria', 1),
-  ('patrones', 'geometria-patrones', 'Patrones',
+  ('patrones', 'geometria-patrones', 'Patrones de colores',
    'Identificar el color que continúa una secuencia repetitiva. Un patrón es algo que se repite en el mismo orden. Si vemos morado, amarillo, morado, amarillo, el siguiente es morado.',
    2, 'patrones', 1)
 on conflict (id) do update
