@@ -4,8 +4,189 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  /* Colors */
+  --numu-primary: #5124EE;
+  --numu-primary-dark: #2B0F8A;
+  --numu-bg: #F4F5FE;
+  --numu-text: #1E1B4B;
+
+  --numu-yellow: #FFC700;
+  --numu-green: #00D282;
+  --numu-coral: #FF5A5F;
+  --numu-cyan: #00B4D8;
+  --numu-orange: #FF8800;
+
+  /* Fonts */
+  --font-heading: 'Fredoka', cursive, sans-serif;
+  --font-body: 'Nunito', sans-serif;
+
+  /* UI Dimensions & Touch Targets */
+  --min-touch-target: 64px;
+  --card-border-radius: 24px;
+  --button-border-radius: 18px;
+
+  /* Tactile 3D Shadow Effect */
+  --button-3d-shadow-primary: 0px 6px 0px #2B0F8A;
+  --button-3d-shadow-success: 0px 6px 0px #009E60;
+  --button-3d-shadow-yellow: 0px 6px 0px #C79A00;
+}
+
 @layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
   body {
-    @apply bg-soft-lavender font-nunito text-text-dark;
+    @apply bg-soft-lavender font-nunito text-text-dark antialiased;
+    font-family: var(--font-body);
+    min-height: 100dvh;
+  }
+
+  h1, h2, h3, h4, h5, h6,
+  .font-heading {
+    font-family: var(--font-heading);
+  }
+
+  button, a, [role="button"], input[type="range"], input[type="checkbox"] {
+    touch-action: manipulation;
+  }
+
+  :focus-visible {
+    @apply outline-none ring-4 ring-numu-purple/40 ring-offset-2;
+  }
+}
+
+@layer components {
+  /* Efecto botón 3D táctil: se presiona físicamente al hacer active */
+  .btn-3d {
+    @apply relative inline-flex items-center justify-center gap-2 rounded-btn px-6 font-fredoka font-bold
+           transition-all duration-100 select-none;
+    min-height: var(--min-touch-target);
+    box-shadow: var(--button-3d-shadow);
+    transform: translateY(0);
+  }
+
+  .btn-3d:hover {
+    filter: brightness(1.05);
+  }
+
+  .btn-3d:active {
+    transform: translateY(4px);
+    box-shadow: 0px 2px 0px var(--shadow-solid-color, #2B0F8A);
+  }
+
+  .btn-3d:disabled {
+    @apply opacity-50 cursor-not-allowed;
+    transform: translateY(0);
+  }
+
+  .btn-primary {
+    @apply bg-numu-purple text-white;
+    --button-3d-shadow: var(--button-3d-shadow-primary);
+    --shadow-solid-color: #2B0F8A;
+  }
+
+  .btn-success {
+    @apply bg-mint-success text-white;
+    --button-3d-shadow: var(--button-3d-shadow-success);
+    --shadow-solid-color: #009E60;
+  }
+
+  .btn-yellow {
+    @apply bg-sunshine-yellow text-text-dark;
+    --button-3d-shadow: var(--button-3d-shadow-yellow);
+    --shadow-solid-color: #C79A00;
+  }
+
+  .btn-coral {
+    @apply bg-coral-alert text-white;
+    --button-3d-shadow: 0px 6px 0px #D32F2F;
+    --shadow-solid-color: #D32F2F;
+  }
+
+  .btn-cyan {
+    @apply bg-cyan-ocean text-white;
+    --button-3d-shadow: 0px 6px 0px #0077A3;
+    --shadow-solid-color: #0077A3;
+  }
+
+  .btn-orange {
+    @apply bg-orange-energy text-white;
+    --button-3d-shadow: 0px 6px 0px #CC6A00;
+    --shadow-solid-color: #CC6A00;
+  }
+
+  .btn-white {
+    @apply bg-white text-text-dark border-2 border-border-gray;
+    --button-3d-shadow: 0px 6px 0px #E2E8F0;
+    --shadow-solid-color: #E2E8F0;
+  }
+
+  /* Tarjeta contenedora */
+  .card-numu {
+    @apply bg-card-white rounded-card border-2 border-border-gray shadow-sm;
+  }
+
+  /* Campo de formulario amigable (bordes redondeados 2xl, alto táctil 64px) */
+  .input-numu {
+    @apply w-full rounded-2xl border-2 border-border-gray bg-white px-4 font-nunito font-bold text-body
+           text-text-dark placeholder:text-text-dark/35 transition-colors focus:border-numu-purple;
+    min-height: var(--min-touch-target);
+  }
+
+  /* Slider estilizado (volumen, tamaño de texto) */
+  .range-numu {
+    @apply appearance-none h-3 rounded-full bg-border-gray cursor-pointer;
+  }
+
+  .range-numu::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 9999px;
+    background: var(--numu-primary);
+    border: 4px solid #ffffff;
+    box-shadow: 0 2px 6px rgba(30, 27, 75, 0.25);
+    cursor: pointer;
+  }
+
+  .range-numu::-moz-range-thumb {
+    width: 28px;
+    height: 28px;
+    border-radius: 9999px;
+    background: var(--numu-primary);
+    border: 4px solid #ffffff;
+    box-shadow: 0 2px 6px rgba(30, 27, 75, 0.25);
+    cursor: pointer;
+  }
+
+  .range-numu:focus-visible {
+    @apply outline-none ring-4 ring-numu-purple/30;
+  }
+}
+
+@layer utilities {
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Modo reducción de animaciones (accesibilidad, DESIGN_SYSTEM.md §4 Frame 6) */
+  .reduce-motion *,
+  .reduce-motion *::before,
+  .reduce-motion *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+
+  /* Daltonismo: refuerzo de patrones por color (además del tono) */
+  .colorblind-mode .is-correct {
+    background-image: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.25) 0 8px, transparent 8px 16px);
+  }
+
+  .colorblind-mode .is-wrong {
+    background-image: repeating-linear-gradient(-45deg, rgba(0, 0, 0, 0.15) 0 8px, transparent 8px 16px);
   }
 }
