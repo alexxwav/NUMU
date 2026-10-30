@@ -7,12 +7,20 @@ import {
 } from 'lucide-react';
 import { store, MODULES } from '../../state/store.js';
 import { sfx } from '../../utils/audio.js';
+import { useAuth } from '../../hooks/useAuth.jsx';
 import mascotUrl from '../../assets/brand/mascot/numu-morado.png';
 
 const TOTAL_LEVELS = 10;
 
 export default function Home() {
   const navigate = useNavigate();
+  const { configured, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    sfx.tap();
+    if (configured) await signOut();
+    navigate('/bienvenida', { replace: true });
+  };
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
   const [state, setState] = useState(() => store.get());
@@ -78,9 +86,9 @@ export default function Home() {
         </nav>
 
         <div className="p-6 border-t border-gray-100">
-          <Link to="/bienvenida" className="w-full flex items-center gap-4 p-4 rounded-2xl bg-gray-100 hover:bg-coral-alert hover:text-white text-text-dark font-fredoka font-bold text-xl transition-colors group">
+          <button type="button" onClick={handleSignOut} className="w-full flex items-center gap-4 p-4 rounded-2xl bg-gray-100 hover:bg-coral-alert hover:text-white text-text-dark font-fredoka font-bold text-xl transition-colors group">
             <LogOut className="w-6 h-6 text-coral-alert group-hover:text-white" /> Salir
-          </Link>
+          </button>
         </div>
       </aside>
 

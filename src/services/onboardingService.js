@@ -58,12 +58,12 @@ export function toStoreProfile(profile, diagnostic = null) {
 
 export function createOnboardingService(profiles = profileService) {
   return {
-    /** Guarda primero el diagnóstico y luego marca el perfil como completo. */
-    async save(userId, draft, answerKey) {
+    /** Guarda primero el diagnóstico y luego el perfil; tener perfil = cuestionario terminado. */
+    async save(draft, answerKey) {
       const { profile, diagnostic } = buildOnboardingPayload(draft, answerKey);
-      const saved = await profiles.saveDiagnostic({ userId, ...diagnostic });
+      const saved = await profiles.saveDiagnostic(diagnostic);
       if (saved.error) return { profile: null, diagnostic: null, error: saved.error };
-      const updated = await profiles.updateProfile(userId, profile);
+      const updated = await profiles.saveProfile(profile);
       if (updated.error) return { profile: null, diagnostic: saved.diagnostic, error: updated.error };
       return { profile: updated.profile, diagnostic: saved.diagnostic, error: null };
     },

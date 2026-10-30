@@ -2,7 +2,7 @@
 export default {
   content: [
     "./index.html",
-    "./src/**/*.{js,html}",
+    "./src/**/*.{js,jsx,html}",
   ],
   // Clases construidas dinámicamente (ej. `btn-${variant}`) que Tailwind debe conservar
   safelist: [

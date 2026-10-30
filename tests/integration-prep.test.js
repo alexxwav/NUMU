@@ -1,7 +1,7 @@
 // Pruebas de los módulos de integración (IDs, cuestionario inicial y ruta de arranque).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { MODULE_IDS, normalizeModuleId, normalizeInterests, recommendedCourseId } from '../src/data/subjects.js';
+import { MODULE_IDS, normalizeModuleId, normalizeInterests, recommendedCourseId, courseSlugForModule } from '../src/data/subjects.js';
 import { scoreDiagnostic, buildOnboardingPayload, toStoreProfile, createOnboardingService } from '../src/services/onboardingService.js';
 import { resolveStartRoute, ROUTES } from '../src/services/startRoute.js';
 import { generateQuestions } from '../src/state/questions.js';
@@ -76,18 +76,18 @@ test('toStoreProfile devuelve la forma de state.profile de store.js', () => {
 test('onboardingService.save guarda el diagnóstico antes del perfil y se detiene si falla', async () => {
   const calls = [];
   const ok = createOnboardingService({
-    saveDiagnostic: async (d) => { calls.push(['diag', d.userId, d.score]); return { diagnostic: { id: 'd1' }, error: null }; },
-    updateProfile: async (id, p) => { calls.push(['profile', id, p.onboarding_completed]); return { profile: { id }, error: null }; },
+    saveDiagnostic: async (d) => { calls.push(['diag', d.score]); return { diagnostic: { score: d.score }, error: null }; },
+    saveProfile: async (p) => { calls.push(['profile', p.nickname]); return { profile: { onboarding_completed: true }, error: null }; },
   });
-  const res = await ok.save('u1', DRAFT, ANSWER_KEY);
+  const res = await ok.save(DRAFT, ANSWER_KEY);
   assert.equal(res.error, null);
-  assert.deepEqual(calls, [['diag', 'u1', 4], ['profile', 'u1', true]]);
+  assert.deepEqual(calls, [['diag', 4], ['profile', 'LuisPro']]);
 
   const fail = createOnboardingService({
     saveDiagnostic: async () => ({ diagnostic: null, error: 'sin permiso' }),
-    updateProfile: async () => { throw new Error('no debería llamarse'); },
+    saveProfile: async () => { throw new Error('no debería llamarse'); },
   });
-  assert.equal((await fail.save('u1', DRAFT, ANSWER_KEY)).error, 'sin permiso');
+  assert.equal((await fail.save(DRAFT, ANSWER_KEY)).error, 'sin permiso');
 });
 
 test('resolveStartRoute separa login real y cuestionario inicial', () => {
@@ -96,4 +96,12 @@ test('resolveStartRoute separa login real y cuestionario inicial', () => {
   assert.equal(resolveStartRoute({ session: {}, profile: { onboarding_completed: false } }), ROUTES.onboarding);
   assert.equal(resolveStartRoute({ session: {}, profile: { onboarding_completed: true } }), ROUTES.home);
   assert.notEqual(ROUTES.signIn, ROUTES.onboarding);
+});
+
+test('courseSlugForModule asigna cada módulo (y sus alias) a su curso de numu', () => {
+  assert.equal(courseSlugForModule('conteo'), 'aritmetica');
+  assert.equal(courseSlugForModule('sumas'), 'aritmetica');
+  assert.equal(courseSlugForModule('formas'), 'geometria-patrones');
+  assert.equal(courseSlugForModule('patrones'), 'geometria-patrones');
+  assert.equal(courseSlugForModule('algebra'), null);
 });

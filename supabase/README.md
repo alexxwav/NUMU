@@ -1,5 +1,22 @@
 # Backend de NUMU (Supabase)
 
+## Proyecto en uso: `numu` (esquema del equipo)
+
+La app usa el proyecto de Supabase **numu**, con las tablas del equipo:
+`usuarios`, `perfil_usuario`, `resultados_examen_diagnostico`, `cursos`, `lecciones` y `progreso`.
+Sobre ese esquema se aplicó `propuesta_numu_auth.sql` (30-10-2026), que:
+
+- liga `usuarios` con Supabase Auth (`auth_id`) y deja sin uso `contrasena` (la contraseña la guarda Auth con hash);
+- crea la fila de `usuarios` al registrarse (trigger) y agrega `perfil_usuario.intereses`;
+- activa RLS: cada estudiante solo ve y cambia lo suyo; sin sesión no se lee nada;
+- carga los 2 cursos y las 4 lecciones.
+
+Los servicios de `src/services/` leen y escriben estas tablas. Tener fila en `perfil_usuario`
+significa que el cuestionario inicial ya se hizo.
+
+Las migraciones de `migrations/` describen un esquema alternativo (`profiles`, `progress`, …)
+que **no** está aplicado en numu; se conservan como referencia y para `npm run test:db`.
+
 Scripts para un proyecto de Supabase **nuevo y exclusivo de NUMU**. No aplicar sobre otros proyectos.
 
 ## Archivos

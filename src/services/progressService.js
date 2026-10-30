@@ -1,46 +1,68 @@
 import { requireSupabase } from '../lib/supabase.js';
+import { profileService } from './profileService.js';
 
-export function createProgressService(getClient = requireSupabase) {
+// Esquema de numu: cursos(id, nombre_curso, slug), lecciones(id, curso_id, titulo_leccion, nivel, preguntas)
+// y progreso(usuario_id, curso_id, nivel_actual, num_estrellas, num_intentos, racha_dias, leccion_completada),
+// con una fila de progreso por usuario y curso.
+
+export function createProgressService(getClient = requireSupabase, profiles = profileService) {
   return {
-    /** Cursos con sus lecciones, ordenados por posición. */
+    /** Cursos con sus lecciones. */
     async getCatalog() {
       const { data, error } = await getClient()
-        .from('courses')
-        .select('id, title, description, position, lessons (id, title, description, position, module_id, base_level)')
-        .order('position', { ascending: true })
-        .order('position', { referencedTable: 'lessons', ascending: true });
+        .from('cursos')
+        .select('id, nombre_curso, slug, lecciones (id, titulo_leccion, nivel)')
+        .order('id', { ascending: true })
+        .order('id', { referencedTable: 'lecciones', ascending: true });
       return { courses: data ?? [], error: error ? error.message : null };
     },
 
-    /** Progreso del estudiante como objeto { [lessonId]: fila }. */
-    async getProgress(userId) {
+    /** Progreso del usuario con sesión como objeto { [slugDelCurso]: fila }. */
+    async getProgress() {
       const { data, error } = await getClient()
-        .from('progress')
-        .select('lesson_id, current_level, best_stars, attempts, completed, last_played_at')
-        .eq('user_id', userId);
-      const byLesson = {};
-      for (const row of data ?? []) byLesson[row.lesson_id] = row;
-      return { progress: byLesson, error: error ? error.message : null };
+        .from('progreso')
+        .select('curso_id, nivel_actual, num_estrellas, num_intentos, racha_dias, leccion_completada, cursos (slug)');
+      const byCourse = {};
+      for (const row of data ?? []) byCourse[row.cursos?.slug ?? row.curso_id] = row;
+      return { progress: byCourse, error: error ? error.message : null };
     },
 
     /**
-     * Registra una ronda terminada en Game.jsx. El servidor usa auth.uid(),
-     * así que no se puede escribir el progreso de otro estudiante.
-     * nextLevel lo calcula la regla adaptativa (pendiente de definir por Dante).
+     * Registra una ronda terminada: guarda el nivel nuevo, suma las estrellas y un intento.
+     * nextLevel lo decide la regla de adaptación antes de llamar a esta función.
      */
-    async recordLessonResult({ lessonId, stars, nextLevel, completed = false }) {
+    async recordRound({ courseSlug, stars, nextLevel, streak = 1, completed = false }) {
       if (!Number.isInteger(stars) || stars < 0 || stars > 3) {
         return { progress: null, error: 'stars debe ser un entero entre 0 y 3.' };
       }
       if (!Number.isInteger(nextLevel) || nextLevel < 1) {
         return { progress: null, error: 'nextLevel debe ser un entero mayor o igual a 1.' };
       }
-      const { data, error } = await getClient().rpc('record_lesson_result', {
-        p_lesson_id: lessonId,
-        p_stars: stars,
-        p_next_level: nextLevel,
-        p_completed: completed,
-      });
+      const client = getClient();
+      const { usuarioId, error: idError } = await profiles.currentUsuarioId();
+      if (idError) return { progress: null, error: idError };
+
+      const { data: course, error: courseError } = await client
+        .from('cursos').select('id').eq('slug', courseSlug).maybeSingle();
+      if (courseError || !course) return { progress: null, error: courseError?.message ?? `No existe el curso ${courseSlug}.` };
+
+      const { data: current } = await client
+        .from('progreso').select('num_estrellas, num_intentos, leccion_completada')
+        .eq('usuario_id', usuarioId).eq('curso_id', course.id).maybeSingle();
+
+      const { data, error } = await client
+        .from('progreso')
+        .upsert({
+          usuario_id: usuarioId,
+          curso_id: course.id,
+          nivel_actual: nextLevel,
+          num_estrellas: (current?.num_estrellas ?? 0) + stars,
+          num_intentos: (current?.num_intentos ?? 0) + 1,
+          racha_dias: streak,
+          leccion_completada: Boolean(current?.leccion_completada) || completed,
+        }, { onConflict: 'usuario_id,curso_id' })
+        .select()
+        .single();
       return { progress: data ?? null, error: error ? error.message : null };
     },
   };

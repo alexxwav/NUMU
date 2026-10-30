@@ -12,6 +12,19 @@ export function normalizeModuleId(id) {
   return MODULE_IDS.includes(canonical) ? canonical : null;
 }
 
+// Curso (cursos.slug en numu) al que pertenece cada generador.
+const MODULE_COURSE = {
+  conteo: 'aritmetica',
+  aritmetica: 'aritmetica',
+  geometria: 'geometria-patrones',
+  patrones: 'geometria-patrones',
+};
+
+/** Curso de un módulo, aceptando también los alias viejos; null si no existe. */
+export function courseSlugForModule(id) {
+  return MODULE_COURSE[normalizeModuleId(id)] ?? null;
+}
+
 /**
  * Intereses del diseño original (Actividad 5, 24-09-2026).
  * Solo dos tienen curso en el MVP; Álgebra y Trigonometría quedan sin curso.

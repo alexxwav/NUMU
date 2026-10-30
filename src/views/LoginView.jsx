@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import confetti from 'canvas-confetti';
 import { Check, Settings, Sparkles, ArrowLeft, ArrowRight, Gauge } from 'lucide-react';
 import logoUrl from '../assets/brand/mascot/logo-completo-blanco.png';
+import { useAuth } from '../hooks/useAuth.jsx';
+import { buildOnboardingPayload, toStoreProfile } from '../services/onboardingService.js';
+import { store } from '../state/store.js';
 
 // --- Constantes del Cuestionario ---
 const DIAGNOSTIC = [
@@ -26,6 +29,7 @@ const MODULES = [
 ];
 
 const TOTAL_STEPS = 3 + DIAGNOSTIC.length + 1; // 9 pasos
+const ANSWER_KEY = DIAGNOSTIC.map((q) => q.answer);
 
 const STEP_META = [
   { title: '¡Conocámonos!', subtitle: 'Cuéntanos un poco de ti para personalizar tu aventura.' },
@@ -41,7 +45,10 @@ const AVATARS = ['👾', '🐱', '🐶', '🦊', '🚀', '⭐'];
 // --- Componente Principal ---
 export default function LoginView() {
   const navigate = useNavigate();
+  const { configured, saveOnboarding } = useAuth();
   const [step, setStep] = useState(0);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
 
   // Estado del Formulario
   const [draft, setDraft] = useState({
@@ -80,19 +87,31 @@ export default function LoginView() {
   };
 
   // --- Funciones de Navegación ---
-  const handleNext = () => {
-    if (!isValid()) return;
+  const handleNext = async () => {
+    if (!isValid() || saving) return;
 
     if (step === TOTAL_STEPS - 1) {
-      // Finalizar Onboarding
+      // Finalizar Onboarding: se guarda en la cuenta (o solo en local si no hay Supabase)
+      setSaving(true);
+      setSaveError('');
+      if (configured) {
+        const { error } = await saveOnboarding(draft, ANSWER_KEY);
+        if (error) {
+          setSaving(false);
+          setSaveError('No pudimos guardar tu perfil. Revisa tu conexión e inténtalo de nuevo.');
+          return;
+        }
+      } else {
+        const { profile, diagnostic } = buildOnboardingPayload(draft, ANSWER_KEY);
+        store.completeOnboarding(toStoreProfile(profile, { self_level: diagnostic.selfLevel, score: diagnostic.score }));
+      }
       confetti({
         particleCount: 140,
         spread: 100,
         origin: { y: 0.6 },
         colors: ['#5124EE', '#FFC700', '#00D282', '#00B4D8', '#FF8800'],
       });
-      // Guardaríamos en localStorage o Context aquí
-      navigate('/inicio');
+      navigate('/inicio', { replace: true });
     } else {
       setStep(step + 1);
     }
@@ -286,6 +305,10 @@ export default function LoginView() {
             {renderStepContent()}
           </div>
 
+          {saveError && (
+            <p role="alert" className="mt-6 text-sm font-medium text-coral-alert text-center">{saveError}</p>
+          )}
+
           {/* Footer de Navegación */}
           <footer className="mt-8 pt-5 border-t-2 border-gray-100 grid grid-cols-[auto_1fr_auto] items-center gap-4">
             
@@ -309,10 +332,10 @@ export default function LoginView() {
             <div>
               <button 
                 onClick={handleNext}
-                disabled={!isValid()}
-                className={`flex items-center gap-2 px-6 py-3 font-fredoka font-bold text-lg rounded-btn transition-all shadow-md ${!isValid() ? 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none' : step === TOTAL_STEPS - 1 ? 'bg-sunshine-yellow text-text-dark shadow-3d-yellow hover:translate-y-1 hover:shadow-none' : 'bg-numu-purple text-white shadow-3d-primary hover:translate-y-1 hover:shadow-none'}`}
+                disabled={!isValid() || saving}
+                className={`flex items-center gap-2 px-6 py-3 font-fredoka font-bold text-lg rounded-btn transition-all shadow-md ${!isValid() || saving ? 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none' : step === TOTAL_STEPS - 1 ? 'bg-sunshine-yellow text-text-dark shadow-3d-yellow hover:translate-y-1 hover:shadow-none' : 'bg-numu-purple text-white shadow-3d-primary hover:translate-y-1 hover:shadow-none'}`}
               >
-                {step === TOTAL_STEPS - 1 ? '¡A JUGAR!' : 'Continuar'}
+                {step === TOTAL_STEPS - 1 ? (saving ? 'Guardando…' : '¡A JUGAR!') : 'Continuar'}
                 {step !== TOTAL_STEPS - 1 && <ArrowRight className="w-5 h-5" />}
               </button>
             </div>

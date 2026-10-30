@@ -8,17 +8,21 @@ import { createProgressService } from '../src/services/progressService.js';
 import { isSupabaseConfigured, requireSupabase } from '../src/lib/supabase.js';
 
 // Simula el query builder encadenable de supabase-js y registra cada llamada.
-function fakeClient(result = { data: null, error: null }) {
+// `tables` permite dar una respuesta distinta por tabla (por ejemplo, el id de usuarios).
+function fakeClient(result = { data: null, error: null }, tables = {}) {
   const calls = [];
-  const builder = new Proxy({}, {
-    get(_t, prop) {
-      if (prop === 'then') return (resolve) => resolve(result);
-      return (...args) => { calls.push([prop, ...args]); return builder; };
-    },
-  });
+  const builderFor = (res) => {
+    const builder = new Proxy({}, {
+      get(_t, prop) {
+        if (prop === 'then') return (resolve) => resolve(res);
+        return (...args) => { calls.push([prop, ...args]); return builder; };
+      },
+    });
+    return builder;
+  };
   const client = {
     calls,
-    from: (table) => { calls.push(['from', table]); return builder; },
+    from: (table) => { calls.push(['from', table]); return builderFor(tables[table] ?? result); },
     rpc: async (fn, args) => { calls.push(['rpc', fn, args]); return result; },
     auth: {
       signUp: async (args) => { calls.push(['signUp', args]); return result; },
@@ -68,45 +72,78 @@ test('signIn propaga el mensaje de error de Supabase', async () => {
   assert.equal(res.user, null);
 });
 
-test('pickProfileFields descarta campos no editables y convierte la edad', () => {
-  const clean = pickProfileFields({ id: 'otro', nickname: 'Luis', age: '8', score: 5, created_at: 'x' });
-  assert.deepEqual(clean, { nickname: 'Luis', age: 8 });
+test('pickProfileFields traduce a columnas de perfil_usuario y descarta lo demás', () => {
+  const clean = pickProfileFields({ id: 'otro', nickname: 'Luis', age: '8', interests: ['geometria'], score: 5 });
+  assert.deepEqual(clean, { apodo: 'Luis', edad: 8, intereses: ['geometria'] });
 });
 
-test('updateProfile sin campos válidos no llama a Supabase', async () => {
+test('saveProfile sin campos válidos no llama a Supabase', async () => {
   const client = fakeClient();
-  const res = await createProfileService(() => client).updateProfile('u1', { id: 'otro' });
+  const res = await createProfileService(() => client).saveProfile({ id: 'otro' });
   assert.match(res.error, /No hay campos/);
   assert.equal(client.calls.length, 0);
 });
 
-test('saveDiagnostic inserta en diagnostic_results con nombres de columna correctos', async () => {
-  const client = fakeClient({ data: { id: 'd1' }, error: null });
-  const res = await createProfileService(() => client)
-    .saveDiagnostic({ userId: 'u1', answers: [1, 2, 0, 3, 0], score: 5, total: 5, selfLevel: 'some' });
+test('saveProfile usa el id de usuarios de la sesión y hace upsert por usuario_id', async () => {
+  const client = fakeClient({ data: { nombre: 'Luis', apodo: 'LuisPro', edad: 8, intereses: [] }, error: null },
+    { usuarios: { data: { id: 7 }, error: null } });
+  const res = await createProfileService(() => client).saveProfile({ name: 'Luis', nickname: 'LuisPro', age: 8 });
   assert.equal(res.error, null);
-  assert.deepEqual(client.calls[0], ['from', 'diagnostic_results']);
-  assert.deepEqual(client.calls[1], ['insert', { user_id: 'u1', answers: [1, 2, 0, 3, 0], score: 5, total: 5, self_level: 'some' }]);
+  assert.equal(res.profile.onboarding_completed, true);
+  const upsert = client.calls.find((c) => c[0] === 'upsert');
+  assert.deepEqual(upsert, ['upsert', { usuario_id: 7, nombre: 'Luis', apodo: 'LuisPro', edad: 8 }, { onConflict: 'usuario_id' }]);
 });
 
-test('getProgress indexa las filas por lección', async () => {
-  const rows = [{ lesson_id: 'conteo-basico', current_level: 2 }, { lesson_id: 'patrones', current_level: 1 }];
-  const client = fakeClient({ data: rows, error: null });
-  const res = await createProgressService(() => client).getProgress('u1');
-  assert.equal(res.progress['conteo-basico'].current_level, 2);
-  assert.equal(res.progress.patrones.current_level, 1);
+test('getProfile sin fila de perfil devuelve null (cuestionario pendiente)', async () => {
+  const client = fakeClient({ data: null, error: null }, { usuarios: { data: { id: 7 }, error: null } });
+  const res = await createProfileService(() => client).getProfile();
+  assert.equal(res.profile, null);
+  assert.equal(res.error, null);
 });
 
-test('recordLessonResult valida y llama al RPC con los parámetros del SQL', async () => {
-  const client = fakeClient({ data: { lesson_id: 'figuras' }, error: null });
-  const svc = createProgressService(() => client);
+test('saveDiagnostic inserta en resultados_examen_diagnostico con las columnas de numu', async () => {
+  const client = fakeClient({ data: { num_aciertos: 4, autoevaluacion: 'some' }, error: null },
+    { usuarios: { data: { id: 7 }, error: null } });
+  const res = await createProfileService(() => client)
+    .saveDiagnostic({ answers: [1, 2, 0, 3, 1], score: 4, total: 5, selfLevel: 'some' });
+  assert.deepEqual(res.diagnostic, { score: 4, self_level: 'some' });
+  assert.deepEqual(client.calls.find((c) => c[0] === 'insert'), ['insert',
+    { usuario_id: 7, num_aciertos: 4, puntuacion: 80, autoevaluacion: 'some', respuestas: [1, 2, 0, 3, 1] }]);
+});
 
-  assert.match((await svc.recordLessonResult({ lessonId: 'figuras', stars: 4, nextLevel: 1 })).error, /stars/);
-  assert.match((await svc.recordLessonResult({ lessonId: 'figuras', stars: 2, nextLevel: 0 })).error, /nextLevel/);
+test('sin fila en usuarios, el servicio avisa en lugar de escribir', async () => {
+  const client = fakeClient({ data: null, error: null });
+  const res = await createProfileService(() => client).saveProfile({ name: 'Luis' });
+  assert.match(res.error, /No se encontró el usuario/);
+  assert.equal(client.calls.some((c) => c[0] === 'upsert'), false);
+});
+
+test('getProgress indexa las filas por slug del curso', async () => {
+  const rows = [{ curso_id: 1, nivel_actual: 2, cursos: { slug: 'aritmetica' } }, { curso_id: 2, nivel_actual: 1, cursos: { slug: 'geometria-patrones' } }];
+  const res = await createProgressService(() => fakeClient({ data: rows, error: null })).getProgress();
+  assert.equal(res.progress.aritmetica.nivel_actual, 2);
+  assert.equal(res.progress['geometria-patrones'].nivel_actual, 1);
+});
+
+test('recordRound valida y acumula estrellas e intentos sobre lo guardado', async () => {
+  const profiles = { currentUsuarioId: async () => ({ usuarioId: 7, error: null }) };
+  const client = fakeClient({ data: { nivel_actual: 3 }, error: null }, {
+    cursos: { data: { id: 2 }, error: null },
+  });
+  // La lectura del progreso actual y el upsert comparten tabla: ambos devuelven `result`.
+  const svc = createProgressService(() => client, profiles);
+
+  assert.match((await svc.recordRound({ courseSlug: 'aritmetica', stars: 4, nextLevel: 1 })).error, /stars/);
+  assert.match((await svc.recordRound({ courseSlug: 'aritmetica', stars: 2, nextLevel: 0 })).error, /nextLevel/);
   assert.equal(client.calls.length, 0);
 
-  const ok = await svc.recordLessonResult({ lessonId: 'figuras', stars: 3, nextLevel: 2, completed: true });
+  const ok = await svc.recordRound({ courseSlug: 'aritmetica', stars: 3, nextLevel: 3, streak: 2 });
   assert.equal(ok.error, null);
-  assert.deepEqual(client.calls[0], ['rpc', 'record_lesson_result',
-    { p_lesson_id: 'figuras', p_stars: 3, p_next_level: 2, p_completed: true }]);
+  const [, row, options] = client.calls.find((c) => c[0] === 'upsert');
+  assert.deepEqual(options, { onConflict: 'usuario_id,curso_id' });
+  assert.equal(row.usuario_id, 7);
+  assert.equal(row.curso_id, 2);
+  assert.equal(row.nivel_actual, 3);
+  assert.equal(row.racha_dias, 2);
+  assert.equal(row.num_intentos, 1); // la fila simulada no trae intentos previos
 });

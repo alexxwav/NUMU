@@ -1,6 +1,7 @@
 const STORAGE_KEY = 'numu-state-v1';
 
 const DEFAULT_STATE = {
+  userId: null,
   lives: 5,
   maxLives: 5,
   streak: 1,
@@ -105,6 +106,25 @@ export const store = {
   reset() {
     const { profile, settings, owned } = state;
     state = { ...structuredClone(DEFAULT_STATE), profile, settings, owned };
+    persist();
+    emit();
+    return state;
+  },
+
+  /* ---- Cuenta ---- */
+
+  // Asocia el estado a una cuenta. Si entra otra cuenta, empieza de cero (conserva los ajustes).
+  startSession(userId, patch = {}) {
+    if (state.userId !== userId) {
+      const { settings } = state;
+      state = { ...structuredClone(DEFAULT_STATE), settings, userId };
+    }
+    return store.set(patch);
+  },
+
+  endSession() {
+    const { settings } = state;
+    state = { ...structuredClone(DEFAULT_STATE), settings };
     persist();
     emit();
     return state;

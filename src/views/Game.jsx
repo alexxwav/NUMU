@@ -5,6 +5,7 @@ import { X, Volume2, Star, Heart } from 'lucide-react';
 import { store } from '../state/store.js';
 import { generateQuestions } from '../state/questions.js';
 import { sfx, speak } from '../utils/audio.js';
+import { useAuth } from '../hooks/useAuth.jsx';
 import mascotUrl from '../assets/brand/mascot/numu-morado.png';
 
 const QUESTIONS_PER_ROUND = 6;
@@ -16,6 +17,7 @@ function burst({ particleCount = 60, spread = 70 } = {}) {
 
 export default function Game() {
   const navigate = useNavigate();
+  const { recordRound } = useAuth();
   const { nivel } = useParams(); // Obtiene si es 'conteo', 'sumas', etc. de la URL
 
   // Estados del juego
@@ -111,6 +113,10 @@ export default function Game() {
     const stars = mistakes <= 1 ? 3 : mistakes <= 3 ? 2 : 1;
     store.addRewards({ gems: stars * 5, stars, xp: stars * 10, levelStars: stars });
     store.completeLevel();
+    // Guarda el avance en la cuenta; si falla, el progreso sigue en este dispositivo.
+    recordRound({ stars }).then(({ error }) => {
+      if (error) console.warn('No se pudo guardar el progreso en la cuenta:', error);
+    });
     sfx.win();
     burst({ particleCount: 160, spread: 110 });
   };
