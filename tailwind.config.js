@@ -30,6 +30,11 @@ export default {
         "orange-energy": "#FF8800",
         // Neutros / accesibilidad (DESIGN_SYSTEM.md §1.3)
         "text-dark": "#1E1B4B",
+        plum: '#381932',
+        milk: '#FFF3E6',
+        purple: '#6C3483',
+        purpleDark: '#512E5F',
+        darkBg: '#1E121C',
         "card-white": "#FFFFFF",
         "border-gray": "#E2E8F0",
         // Sombras 3D sólidas de cada color
@@ -42,7 +47,7 @@ export default {
       },
       fontFamily: {
         fredoka: ["Fredoka", "cursive", "sans-serif"],
-        nunito: ["Nunito", "sans-serif"],
+        poppins: ["Poppins", "sans-serif"],
       },
       fontSize: {
         // Escala tipográfica (DESIGN_SYSTEM.md §2.1)
