@@ -97,8 +97,9 @@ export default function LoginView() {
       if (configured) {
         const { error } = await saveOnboarding(draft, ANSWER_KEY);
         if (error) {
+          console.error('No se pudo guardar el cuestionario inicial:', error);
           setSaving(false);
-          setSaveError('No pudimos guardar tu perfil. Revisa tu conexión e inténtalo de nuevo.');
+          setSaveError(`No pudimos guardar tu perfil. Inténtalo de nuevo. (Detalle: ${error})`);
           return;
         }
       } else {

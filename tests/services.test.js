@@ -102,13 +102,13 @@ test('getProfile sin fila de perfil devuelve null (cuestionario pendiente)', asy
 });
 
 test('saveDiagnostic inserta en resultados_examen_diagnostico con las columnas de numu', async () => {
-  const client = fakeClient({ data: { num_aciertos: 4, autoevaluacion: 'some' }, error: null },
+  const client = fakeClient({ data: { num_aciertos: 4, autoevaluacion: 'Sé un poco' }, error: null },
     { usuarios: { data: { id: 7 }, error: null } });
   const res = await createProfileService(() => client)
     .saveDiagnostic({ answers: [1, 2, 0, 3, 1], score: 4, total: 5, selfLevel: 'some' });
   assert.deepEqual(res.diagnostic, { score: 4, self_level: 'some' });
   assert.deepEqual(client.calls.find((c) => c[0] === 'insert'), ['insert',
-    { usuario_id: 7, num_aciertos: 4, puntuacion: 80, autoevaluacion: 'some', respuestas: [1, 2, 0, 3, 1] }]);
+    { usuario_id: 7, num_aciertos: 4, puntuacion: 80, autoevaluacion: 'Sé un poco', respuestas: [1, 2, 0, 3, 1] }]);
 });
 
 test('sin fila en usuarios, el servicio avisa en lugar de escribir', async () => {

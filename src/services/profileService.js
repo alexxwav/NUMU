@@ -19,6 +19,17 @@ const PROFILE_COLUMNS = {
   xp: 'xp',
 };
 
+// resultados_examen_diagnostico.autoevaluacion solo acepta estas etiquetas (regla CHECK de numu).
+const SELF_LEVEL_LABELS = { none: 'No sé nada', some: 'Sé un poco', much: 'Sé mucho' };
+
+export function toSelfLevelLabel(selfLevel) {
+  return SELF_LEVEL_LABELS[selfLevel] ?? null;
+}
+
+export function fromSelfLevelLabel(label) {
+  return Object.keys(SELF_LEVEL_LABELS).find((key) => SELF_LEVEL_LABELS[key] === label) ?? null;
+}
+
 export function pickProfileFields(patch = {}) {
   const clean = {};
   for (const [key, column] of Object.entries(PROFILE_COLUMNS)) {
@@ -100,12 +111,12 @@ export function createProfileService(getClient = requireSupabase) {
           usuario_id: usuarioId,
           num_aciertos: score,
           puntuacion: total ? Math.round((score / total) * 100) : 0,
-          autoevaluacion: selfLevel,
+          autoevaluacion: toSelfLevelLabel(selfLevel),
           respuestas: answers,
         })
         .select()
         .single();
-      return { diagnostic: data ? { score: data.num_aciertos, self_level: data.autoevaluacion } : null, error: error ? error.message : null };
+      return { diagnostic: data ? { score: data.num_aciertos, self_level: fromSelfLevelLabel(data.autoevaluacion) } : null, error: error ? error.message : null };
     },
 
     async getLatestDiagnostic() {
@@ -118,7 +129,7 @@ export function createProfileService(getClient = requireSupabase) {
         .order('id', { ascending: false })
         .limit(1)
         .maybeSingle();
-      return { diagnostic: data ? { score: data.num_aciertos, self_level: data.autoevaluacion } : null, error: error ? error.message : null };
+      return { diagnostic: data ? { score: data.num_aciertos, self_level: fromSelfLevelLabel(data.autoevaluacion) } : null, error: error ? error.message : null };
     },
   };
 }
