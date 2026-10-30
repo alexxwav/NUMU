@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   Menu, X, Star, Rocket, 
-  Calculator, Plus, Shapes, 
-  Home as HomeIcon, Trophy, Settings, LogOut, Store, Lock
+  Home as HomeIcon, Trophy, Settings, LogOut, Store, Lock, BookOpen
 } from 'lucide-react';
 import { store, MODULES } from '../../state/store.js';
 import { sfx } from '../../utils/audio.js';
 import { useAuth } from '../../hooks/useAuth.jsx';
+import { normalizeModuleId } from '../../data/subjects.js';
+import catalog from '../../data/lessonContent.json';
+import { COURSE_STYLE } from '../CoursesView.jsx';
 import mascotUrl from '../../assets/brand/mascot/numu-morado.png';
 
 const TOTAL_LEVELS = 10;
@@ -34,7 +36,8 @@ export default function Home() {
 
   // Datos dinámicos del usuario
   const displayName = state.profile?.nickname || state.profile?.name || 'Explorador';
-  const selectedModule = MODULES.find((m) => m.id === state.module) ?? MODULES[0];
+  const selectedModule = MODULES.find((m) => m.id === normalizeModuleId(state.module)) ?? MODULES[0];
+  const courses = [...catalog.courses].sort((a, b) => a.position - b.position);
 
   // Manejador para jugar un nivel
   const handlePlayLevel = (moduleId, levelNumber) => {
@@ -73,6 +76,9 @@ export default function Home() {
         <nav className="flex-1 p-6 space-y-2">
           <Link to="/inicio" className="flex items-center gap-4 p-4 rounded-2xl bg-soft-lavender text-numu-purple font-fredoka font-bold text-xl transition-colors">
             <HomeIcon className="w-6 h-6" /> Inicio
+          </Link>
+          <Link to="/cursos" className="flex items-center gap-4 p-4 rounded-2xl hover:bg-soft-lavender text-text-dark font-fredoka font-bold text-xl transition-colors">
+            <BookOpen className="w-6 h-6 text-orange-energy" /> Cursos
           </Link>
           <Link to="/tienda" className="flex items-center gap-4 p-4 rounded-2xl hover:bg-soft-lavender text-text-dark font-fredoka font-bold text-xl transition-colors">
             <Store className="w-6 h-6 text-cyan-ocean" /> Tienda
@@ -144,33 +150,28 @@ export default function Home() {
           <div className="absolute top-[-50px] right-[-50px] w-64 h-64 bg-numu-deep-indigo rounded-full opacity-30"></div>
         </section>
 
-        {/* --- Cursos de aprendizaje (Tu diseño adaptado a las variables de él) --- */}
+        {/* --- Cursos (catálogo de lecciones de Viviana) --- */}
         <section>
-          <h3 className="text-2xl font-fredoka font-bold text-text-dark mb-6">Tus Aventuras</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            <button onClick={() => { store.set({module: 'conteo'}); sfx.tap(); }} className={`bg-white rounded-card p-6 border-2 transition-all flex flex-col items-center text-center group cursor-pointer ${state.module === 'conteo' ? 'border-cyan-ocean shadow-md translate-y-1' : 'border-gray-100 hover:border-cyan-ocean shadow-sm hover:shadow-lg'}`}>
-              <div className="w-24 h-24 bg-cyan-ocean text-white rounded-full mb-4 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform duration-300">
-                <Calculator className="w-10 h-10" strokeWidth={2.5} />
-              </div>
-              <h4 className="text-xl font-fredoka font-bold text-text-dark mb-2">Conteo Mágico</h4>
-              <p className="text-gray-500 text-sm">Aprende a contar de una forma divertida.</p>
-            </button>
-
-            <button onClick={() => { store.set({module: 'sumas'}); sfx.tap(); }} className={`bg-white rounded-card p-6 border-2 transition-all flex flex-col items-center text-center group cursor-pointer ${state.module === 'sumas' ? 'border-orange-energy shadow-md translate-y-1' : 'border-gray-100 hover:border-orange-energy shadow-sm hover:shadow-lg'}`}>
-              <div className="w-24 h-24 bg-orange-energy text-white rounded-full mb-4 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform duration-300">
-                <Plus className="w-12 h-12" strokeWidth={3} />
-              </div>
-              <h4 className="text-xl font-fredoka font-bold text-text-dark mb-2">Sumas y Restas</h4>
-              <p className="text-gray-500 text-sm">Resuelve problemas y rescata objetos.</p>
-            </button>
-
-            <button onClick={() => { store.set({module: 'formas'}); sfx.tap(); }} className={`bg-white rounded-card p-6 border-2 transition-all flex flex-col items-center text-center group cursor-pointer ${state.module === 'formas' ? 'border-coral-alert shadow-md translate-y-1' : 'border-gray-100 hover:border-coral-alert shadow-sm hover:shadow-lg'}`}>
-              <div className="w-24 h-24 bg-coral-alert text-white rounded-full mb-4 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform duration-300">
-                <Shapes className="w-10 h-10" strokeWidth={2.5} />
-              </div>
-              <h4 className="text-xl font-fredoka font-bold text-text-dark mb-2">Formas Ocultas</h4>
-              <p className="text-gray-500 text-sm">Descubre geometría en el espacio.</p>
-            </button>
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-2xl font-fredoka font-bold text-text-dark">Tus cursos</h3>
+            <Link to="/cursos" onClick={() => sfx.tap()} className="font-fredoka font-bold text-numu-purple hover:underline">Ver todos</Link>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {courses.map((course) => {
+              const style = COURSE_STYLE[course.id] ?? COURSE_STYLE.aritmetica;
+              return (
+                <Link key={course.id} to={`/cursos/${course.id}`} onClick={() => sfx.tap()}
+                  className="bg-white rounded-card p-6 border-2 border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all flex items-center gap-5 group">
+                  <div className={`w-20 h-20 shrink-0 ${style.bg} text-white rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
+                    <style.Icon className="w-10 h-10" strokeWidth={2.5} />
+                  </div>
+                  <div>
+                    <h4 className="text-xl font-fredoka font-bold text-text-dark mb-1">{course.title}</h4>
+                    <p className="text-gray-500 text-sm">{course.lessons.map((l) => l.title).join(' · ')}</p>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         </section>
 

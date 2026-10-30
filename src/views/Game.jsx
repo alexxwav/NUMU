@@ -6,6 +6,10 @@ import { store } from '../state/store.js';
 import { generateQuestions } from '../state/questions.js';
 import { sfx, speak } from '../utils/audio.js';
 import { useAuth } from '../hooks/useAuth.jsx';
+import { normalizeModuleId } from '../data/subjects.js';
+import lessonCatalog from '../data/lessonContent.json';
+import { getLessonById, shuffleExerciseOptions } from '../utils/lessonContent.js';
+import { adaptExerciseToGame } from '../utils/lessonGameAdapter.js';
 import mascotUrl from '../assets/brand/mascot/numu-morado.png';
 
 const QUESTIONS_PER_ROUND = 6;
@@ -18,12 +22,16 @@ function burst({ particleCount = 60, spread = 70 } = {}) {
 export default function Game() {
   const navigate = useNavigate();
   const { recordRound } = useAuth();
-  const { nivel } = useParams(); // Obtiene si es 'conteo', 'sumas', etc. de la URL
+  const { nivel, lessonId } = useParams(); // módulo ('conteo', 'sumas', …) o lección del catálogo
+  const lessonEntry = lessonId ? getLessonById(lessonCatalog, lessonId) : null;
+  const exitTo = lessonEntry ? `/lecciones/${lessonEntry.lesson.id}` : '/inicio';
 
   // Estados del juego
   const [questions] = useState(() => {
+    // Desde una lección: sus propios ejercicios, con las opciones mezcladas.
+    if (lessonEntry) return lessonEntry.lesson.exercises.map((exercise) => adaptExerciseToGame(shuffleExerciseOptions(exercise)));
     const state = store.get();
-    const moduleId = nivel ?? state.module;
+    const moduleId = normalizeModuleId(nivel ?? state.module) ?? 'conteo';
     return generateQuestions(moduleId, state.level, QUESTIONS_PER_ROUND);
   });
 
@@ -145,7 +153,7 @@ export default function Game() {
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4 relative z-10 w-full max-w-md">
-          <button onClick={() => { sfx.tap(); navigate('/inicio'); }} className="flex-1 bg-mint-success text-white font-fredoka font-bold text-xl py-4 rounded-btn shadow-3d-primary hover:translate-y-1 hover:shadow-none transition-all">
+          <button onClick={() => { sfx.tap(); navigate(exitTo); }} className="flex-1 bg-mint-success text-white font-fredoka font-bold text-xl py-4 rounded-btn shadow-3d-primary hover:translate-y-1 hover:shadow-none transition-all">
             CONTINUAR
           </button>
           <button onClick={() => { sfx.tap(); window.location.reload(); }} className="flex-1 bg-cyan-ocean text-white font-fredoka font-bold text-xl py-4 rounded-btn shadow-3d-primary hover:translate-y-1 hover:shadow-none transition-all">
@@ -162,7 +170,7 @@ export default function Game() {
       {/* Header */}
       <header className="sticky top-0 z-30 bg-white border-b-2 border-gray-100">
         <div className="mx-auto max-w-3xl px-4 py-4 flex items-center gap-4">
-          <button onClick={() => { sfx.tap(); navigate('/inicio'); }} className="w-12 h-12 shrink-0 grid place-items-center rounded-full bg-coral-alert text-white shadow-sm hover:scale-105 transition-transform">
+          <button onClick={() => { sfx.tap(); navigate(exitTo); }} className="w-12 h-12 shrink-0 grid place-items-center rounded-full bg-coral-alert text-white shadow-sm hover:scale-105 transition-transform">
             <X className="w-7 h-7" />
           </button>
           
@@ -248,7 +256,7 @@ export default function Game() {
               <div className="flex gap-3 shrink-0 w-full sm:w-auto mt-4 sm:mt-0">
                 {sheet.isGameOver ? (
                   <>
-                    <button onClick={() => navigate('/inicio')} className="flex-1 sm:flex-none bg-white/20 hover:bg-white/30 text-white font-fredoka font-bold text-xl py-3 px-6 rounded-btn transition-colors">
+                    <button onClick={() => navigate(exitTo)} className="flex-1 sm:flex-none bg-white/20 hover:bg-white/30 text-white font-fredoka font-bold text-xl py-3 px-6 rounded-btn transition-colors">
                       Salir
                     </button>
                     <button onClick={refillLives} className="flex-1 sm:flex-none bg-sunshine-yellow text-text-dark font-fredoka font-bold text-xl py-3 px-6 rounded-btn shadow-3d-yellow hover:translate-y-1 hover:shadow-none transition-all">

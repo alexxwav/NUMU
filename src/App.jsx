@@ -9,6 +9,9 @@ import Game from './views/Game';
 import ShopView from './views/ShopView';
 import Achievements from './views/Achievements';
 import SettingsView from './views/SettingsView';
+import CoursesView from './views/CoursesView';
+import CourseView from './views/CourseView';
+import LessonView from './views/LessonView';
 import { useAuth } from './hooks/useAuth.jsx';
 import { ROUTES } from './services/startRoute.js';
 
@@ -43,6 +46,12 @@ export default function App() {
 
             {/* Rutas Principales (Gamificación) */}
             <Route path={ROUTES.home} element={<RequireAccount><Home /></RequireAccount>} />
+
+            {/* Cursos y lecciones */}
+            <Route path="/cursos" element={<RequireAccount><CoursesView /></RequireAccount>} />
+            <Route path="/cursos/:courseId" element={<RequireAccount><CourseView /></RequireAccount>} />
+            <Route path="/lecciones/:lessonId" element={<RequireAccount><LessonView /></RequireAccount>} />
+            <Route path="/lecciones/:lessonId/jugar" element={<RequireAccount><Game /></RequireAccount>} />
 
             <Route path="/jugar/:nivel" element={<RequireAccount><Game /></RequireAccount>} />
             <Route path="/jugar" element={<RequireAccount><Game /></RequireAccount>} />
