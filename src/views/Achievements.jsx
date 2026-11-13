@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Medal, Gem, Trophy, Crown } from 'lucide-react';
 import { store } from '../state/store.js';
+import { hasFinishedRound } from '../utils/stars.js';
 import { flameOn, flameOff, starIcon } from '../components/iconAssets.js';
 
 // Función para mapear el nombre del ícono a los componentes de Lucide o a las imágenes de marca
@@ -17,7 +18,7 @@ const getIcon = (name, className, has = true) => {
 };
 
 const BADGES = [
-  { id: 'first', title: 'Primera lección', iconName: 'medal', tone: 'bg-orange-energy text-white', test: (s) => s.level > 1 },
+  { id: 'first', title: 'Primera lección', iconName: 'medal', tone: 'bg-orange-energy text-white', test: (s) => hasFinishedRound(s) },
   { id: 'streak3', title: 'Racha de 3 días', iconName: 'flame', tone: 'bg-coral-alert text-white', test: (s) => s.streak >= 3 },
   { id: 'stars20', title: '20 estrellas', iconName: 'star', tone: 'bg-sunshine-yellow text-text-dark', test: (s) => s.stars >= 20 },
   { id: 'gems50', title: '50 gemas', iconName: 'gem', tone: 'bg-cyan-ocean text-white', test: (s) => s.gems >= 50 },

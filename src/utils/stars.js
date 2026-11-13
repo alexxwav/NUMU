@@ -33,6 +33,17 @@ export function sumStars(starsByLesson = {}) {
   );
 }
 
+/**
+ * ¿El estudiante terminó al menos una lección? Evidencia real: alguna ronda terminada con
+ * estrellas, ya sea por lección (lessonStars, también cargadas de Supabase) o, para datos
+ * históricos de antes del progreso por lección, en starsByLevel. Ya no depende del nivel general.
+ * @param {{lessonStars?: Record<string, number>, starsByLevel?: Record<string, number>}} state
+ */
+export function hasFinishedRound(state = {}) {
+  const earned = (values) => Object.values(values ?? {}).some((stars) => clampStars(stars) > 0);
+  return earned(state.lessonStars) || earned(state.starsByLevel);
+}
+
 /** Estrellas de una lección con valores seguros (0 a 3). */
 export function clampStars(stars) {
   return Math.max(0, Math.min(3, Math.round(Number(stars) || 0)));

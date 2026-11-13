@@ -5,6 +5,9 @@ import { getLessonById } from '../utils/lessonContent.js';
 import { adaptExerciseToGame } from '../utils/lessonGameAdapter.js';
 import { sfx, speak } from '../utils/audio.js';
 import { store } from '../state/store.js';
+import { useLessonProgress } from '../hooks/useLessonProgress.js';
+import { lessonLevelFromState, MAX_LESSON_LEVEL } from '../utils/lessonLevel.js';
+import { QUESTIONS_PER_ROUND } from '../utils/lessonRound.js';
 import mascotUrl from '../assets/brand/mascot/numu-morado.png';
 import { COURSE_STYLE } from './CoursesView.jsx';
 
@@ -40,12 +43,14 @@ function guidedExampleHtml(visual) {
 export default function LessonView() {
   const navigate = useNavigate();
   const { lessonId } = useParams();
+  useLessonProgress(); // carga el progreso guardado (estrellas y nivel de cada lección)
   const found = getLessonById(catalog, lessonId);
   if (!found) return <Navigate to="/cursos" replace />;
 
   const { lesson, course } = found;
   const style = COURSE_STYLE[course.id] ?? COURSE_STYLE.aritmetica;
   const exampleHtml = guidedExampleHtml(lesson.guided_example?.visual);
+  const level = lessonLevelFromState(store.get(), lesson.id);
 
   const practice = () => {
     sfx.tap();
@@ -66,7 +71,7 @@ export default function LessonView() {
             {lesson.position}
           </span>
           <div>
-            <p className="text-sm font-bold text-numu-purple">Lección {lesson.position} de {course.lessons.length}</p>
+            <p className="text-sm font-bold text-numu-purple">Lección {lesson.position} de {course.lessons.length} · Nivel {level} de {MAX_LESSON_LEVEL}</p>
             <h1 className="text-3xl md:text-4xl font-fredoka font-bold text-numu-deep-indigo">{lesson.title}</h1>
           </div>
         </header>
@@ -106,7 +111,7 @@ export default function LessonView() {
 
         <button type="button" onClick={practice}
           className="w-full min-h-touch-lg bg-sunshine-yellow text-text-dark font-fredoka font-bold text-2xl rounded-btn shadow-3d-yellow hover:translate-y-1 hover:shadow-none transition-all">
-          ¡PRACTICAR! ({lesson.exercises.length} ejercicios)
+          ¡PRACTICAR! ({QUESTIONS_PER_ROUND} ejercicios)
         </button>
       </div>
     </div>

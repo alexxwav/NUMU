@@ -40,7 +40,7 @@ export default function Recommendations({ recommendations = [], unavailableInter
                 <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-white text-sm font-bold ${style.badge}`}>
                   <style.Icon className="w-4 h-4" /> {style.label}
                 </span>
-                <span className="text-xs font-semibold text-gray-400">{rec.courseTitle}</span>
+                <span className="text-xs font-semibold text-gray-400">{rec.courseTitle}{rec.level ? ` · Nivel ${rec.level}` : ''}</span>
               </div>
               <h4 className="text-xl font-fredoka font-bold">{rec.title}</h4>
               <p className="font-semibold text-numu-deep-indigo">{rec.message}</p>

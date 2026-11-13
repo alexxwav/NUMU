@@ -9,14 +9,14 @@ import { useLessonProgress } from './useLessonProgress.js';
  * Usa los mismos datos que el resto de la app, sin otra fuente de verdad:
  *   - intereses y aciertos del diagnóstico: state.profile (se cargan de Supabase al iniciar sesión);
  *   - estrellas por lección: useLessonProgress (tabla progreso_leccion, RLS: solo las propias).
- *     Si useLessonProgress devuelve latestStarsByLesson (propuesta_ultima_ronda.sql), se usa la
- *     última ronda para decidir; mientras no exista, el recomendador decide con la mejor.
+ *     useLessonProgress también da la última ronda (latestStarsByLesson) y el nivel académico de
+ *     cada lección (levelByLesson), del dispositivo y de Supabase cuando la migración esté aplicada.
  * @param {Object} [options]
- * @param {{lessonId: string, stars: number, approved: boolean}|null} [options.lastRound] - Ronda recién terminada.
+ * @param {{lessonId: string, stars: number, approved: boolean, levelBefore?: number, levelAfter?: number}|null} [options.lastRound] - Ronda recién terminada.
  * @param {number} [options.limit] - Máximo de recomendaciones.
  */
 export function useRecommendations({ lastRound = null, limit = 3 } = {}) {
-  const { starsByLesson, latestStarsByLesson } = useLessonProgress();
+  const { starsByLesson, latestStarsByLesson, levelByLesson } = useLessonProgress();
   const [state, setState] = useState(() => store.get());
 
   useEffect(() => store.subscribe(() => setState(store.get())), []);
@@ -31,8 +31,11 @@ export function useRecommendations({ lastRound = null, limit = 3 } = {}) {
   }
   const starsKey = JSON.stringify(stars);
   const latestKey = JSON.stringify(latestStarsByLesson ?? {});
+  const levelKey = JSON.stringify(levelByLesson ?? {});
   const interestsKey = JSON.stringify(profile.interests ?? []);
-  const roundKey = lastRound ? `${lastRound.lessonId}:${lastRound.stars}:${lastRound.approved}` : '';
+  const roundKey = lastRound
+    ? `${lastRound.lessonId}:${lastRound.stars}:${lastRound.approved}:${lastRound.levelBefore}:${lastRound.levelAfter}`
+    : '';
 
   return useMemo(() => buildRecommendations({
     catalog,
@@ -40,7 +43,8 @@ export function useRecommendations({ lastRound = null, limit = 3 } = {}) {
     diagnosticScore,
     starsByLesson: JSON.parse(starsKey),
     latestStarsByLesson: JSON.parse(latestKey),
+    levelByLesson: JSON.parse(levelKey),
     lastRound,
     limit,
-  }), [interestsKey, diagnosticScore, starsKey, latestKey, roundKey, limit]); // eslint-disable-line react-hooks/exhaustive-deps
+  }), [interestsKey, diagnosticScore, starsKey, latestKey, levelKey, roundKey, limit]); // eslint-disable-line react-hooks/exhaustive-deps
 }

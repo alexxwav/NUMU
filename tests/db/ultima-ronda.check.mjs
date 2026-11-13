@@ -58,9 +58,11 @@ catch (e) { ok('aplica propuesta_ultima_ronda.sql', false, e.message); process.e
 try { await db.exec(sql('propuesta_ultima_ronda.sql')); ok('se puede volver a ejecutar sin error', true); }
 catch (e) { ok('se puede volver a ejecutar sin error', false, e.message); }
 const columnas = (await q(`select column_name from information_schema.columns where table_schema='public' and table_name='progreso_leccion'`)).map((r) => r.column_name);
-ok('agrega ultimas_estrellas y ultimo_intento', columnas.includes('ultimas_estrellas') && columnas.includes('ultimo_intento'));
+ok('agrega ultimas_estrellas, ultimo_intento y nivel', ['ultimas_estrellas', 'ultimo_intento', 'nivel'].every((c) => columnas.includes(c)));
 const [vieja] = await q(`select * from public.progreso_leccion where leccion_id='figuras'`);
-ok('las filas existentes no inventan su última ronda (null)', vieja.estrellas === 3 && vieja.ultimas_estrellas === null);
+ok('las filas existentes no inventan su última ronda ni su nivel (null)', vieja.estrellas === 3 && vieja.ultimas_estrellas === null && vieja.nivel === null);
+const firmas = (await q(`select pg_get_function_identity_arguments(oid) a from pg_proc where proname='registrar_resultado_leccion'`)).map((r) => r.a);
+ok('queda una sola función, con p_nivel opcional', firmas.length === 1 && /p_nivel integer/.test(firmas[0]), `(${firmas.join(' | ')})`);
 ok('se conservan las 3 políticas RLS', (await q(`select count(*)::int n from pg_policies where tablename='progreso_leccion'`))[0].n === 3);
 
 console.log('Mejor y última puntuación (caso 3 y luego 1)');
@@ -76,10 +78,25 @@ ok('una ronda nueva reemplaza la última y no baja la mejor', r2.estrellas === 3
 const [vieja2] = await q(`select * from public.registrar_resultado_leccion('figuras', 1)`);
 ok('una fila vieja empieza a guardar su última ronda', vieja2.estrellas === 3 && vieja2.ultimas_estrellas === 1);
 await expectError('sigue rechazando más de 3 estrellas', `select public.registrar_resultado_leccion('patrones', 4)`, /estrellas fuera de rango/);
+
+console.log('Nivel académico por lección');
+const [s1] = await q(`select * from public.registrar_resultado_leccion('sumas-basicas', 3, 3)`);
+const [f1] = await q(`select * from public.registrar_resultado_leccion('patrones', 2, 1)`);
+ok('cada lección guarda su propio nivel (sumas 3, patrones 1)', s1.nivel === 3 && f1.nivel === 1);
+const [s2] = await q(`select * from public.registrar_resultado_leccion('sumas-basicas', 2, 3)`);
+ok('el nivel se conserva con 2 estrellas (R8) y no cambia otras lecciones', s2.nivel === 3
+  && (await q(`select nivel from public.progreso_leccion where leccion_id='patrones' and usuario_id=$1`, [ua.id]))[0].nivel === 1);
+const [s3] = await q(`select * from public.registrar_resultado_leccion('sumas-basicas', 1)`);
+ok('la llamada antigua (sin p_nivel) sigue funcionando y conserva el nivel', s3.nivel === 3 && s3.ultimas_estrellas === 1 && s3.estrellas === 3);
+await expectError('rechaza nivel 4', `select public.registrar_resultado_leccion('figuras', 2, 4)`, /nivel fuera de rango/);
+await expectError('rechaza nivel 0', `select public.registrar_resultado_leccion('figuras', 2, 0)`, /nivel fuera de rango/);
+await asAdmin();
+await expectError('la columna nivel solo acepta 1 a 3', `update public.progreso_leccion set nivel = 5 where leccion_id='figuras'`, /check/i);
+await asUser(A.id);
 await expectError('rechaza ultimas_estrellas fuera de rango', `update public.progreso_leccion set ultimas_estrellas = 5 where leccion_id='figuras'`, /check/i);
 
 console.log('Respaldo del cliente (lessonProgressService sin RPC)');
-const [u] = await q(`insert into public.progreso_leccion (usuario_id, leccion_id, estrellas, intentos) values ($1, 'patrones', 2, 1)
+const [u] = await q(`insert into public.progreso_leccion (usuario_id, leccion_id, estrellas, intentos) values ($1, 'leccion-respaldo', 2, 1)
   on conflict (usuario_id, leccion_id) do update set estrellas = greatest(progreso_leccion.estrellas, excluded.estrellas) returning *`, [ua.id]);
 ok('el upsert actual del servicio sigue funcionando (última = null)', u.estrellas === 2 && u.ultimas_estrellas === null);
 

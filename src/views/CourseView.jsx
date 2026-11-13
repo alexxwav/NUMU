@@ -5,6 +5,8 @@ import { getCourseById, getLessonsForCourse } from '../utils/lessonContent.js';
 import { sfx } from '../utils/audio.js';
 import { useLessonProgress } from '../hooks/useLessonProgress.js';
 import LessonStars from '../components/LessonStars.jsx';
+import { store } from '../state/store.js';
+import { lessonLevelFromState, MAX_LESSON_LEVEL } from '../utils/lessonLevel.js';
 import { COURSE_STYLE } from './CoursesView.jsx';
 
 export default function CourseView() {
@@ -45,7 +47,12 @@ export default function CourseView() {
             <div className="flex-1">
               <h3 className="text-xl font-fredoka font-bold">{lesson.title}</h3>
               <p className="text-gray-500 text-sm mt-1">{lesson.objective}</p>
-              <LessonStars stars={starsByLesson[lesson.id] ?? 0} className="mt-2" />
+              <div className="flex flex-wrap items-center gap-3 mt-2">
+                <LessonStars stars={starsByLesson[lesson.id] ?? 0} />
+                <span className="rounded-full bg-soft-lavender text-numu-purple font-fredoka font-bold text-sm px-3 py-1">
+                  Nivel {lessonLevelFromState(store.get(), lesson.id)} de {MAX_LESSON_LEVEL}
+                </span>
+              </div>
             </div>
             <ChevronRight className="w-8 h-8 text-numu-purple shrink-0" />
           </Link>

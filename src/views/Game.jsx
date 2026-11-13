@@ -4,6 +4,8 @@ import confetti from 'canvas-confetti';
 import { X, Volume2 } from 'lucide-react';
 import { store } from '../state/store.js';
 import { generateQuestions } from '../state/questions.js';
+import { lessonForModule, lessonLevelFromState, levelAfterRound, MAX_LESSON_LEVEL } from '../utils/lessonLevel.js';
+import { buildLessonRound, QUESTIONS_PER_ROUND } from '../utils/lessonRound.js';
 import { sfx, speak } from '../utils/audio.js';
 import { useAuth } from '../hooks/useAuth.jsx';
 import { useLessonProgress } from '../hooks/useLessonProgress.js';
@@ -12,12 +14,9 @@ import Recommendations from '../components/Recommendations.jsx';
 import { starsForRound } from '../utils/stars.js';
 import { normalizeModuleId } from '../data/subjects.js';
 import lessonCatalog from '../data/lessonContent.json';
-import { getLessonById, shuffleExerciseOptions } from '../utils/lessonContent.js';
-import { adaptExerciseToGame } from '../utils/lessonGameAdapter.js';
+import { getLessonById } from '../utils/lessonContent.js';
 import mascotUrl from '../assets/brand/mascot/numu-morado.png';
 import { heartOn, heartOff, starIcon } from '../components/iconAssets.js';
-
-const QUESTIONS_PER_ROUND = 6;
 
 function burst({ particleCount = 60, spread = 70 } = {}) {
   if (store.get().settings?.reduceMotion) return;
@@ -29,16 +28,22 @@ export default function Game() {
   const { recordRound } = useAuth();
   const { saveLessonResult } = useLessonProgress();
   const { nivel, lessonId } = useParams(); // módulo ('conteo', 'sumas', …) o lección del catálogo
-  const lessonEntry = lessonId ? getLessonById(lessonCatalog, lessonId) : null;
-  const exitTo = lessonEntry ? `/lecciones/${lessonEntry.lesson.id}` : '/inicio';
+  // La lección del catálogo: la de la ruta /lecciones/:id/jugar o, desde /jugar/:modulo, la de ese módulo.
+  const [lessonEntry] = useState(() => (lessonId
+    ? getLessonById(lessonCatalog, lessonId)
+    : lessonForModule(lessonCatalog, nivel ?? store.get().module)));
+  const exitTo = lessonId && lessonEntry ? `/lecciones/${lessonEntry.lesson.id}` : '/inicio';
+
+  // Nivel ACADÉMICO de esta lección (1 a 3): el guardado o el inicial del diagnóstico (R1–R3).
+  // Es independiente del nivel general (state.level), que solo es gamificación.
+  const [lessonLevel] = useState(() => (lessonEntry ? lessonLevelFromState(store.get(), lessonEntry.lesson.id) : null));
 
   // Estados del juego
   const [questions] = useState(() => {
-    // Desde una lección: sus propios ejercicios, con las opciones mezcladas.
-    if (lessonEntry) return lessonEntry.lesson.exercises.map((exercise) => adaptExerciseToGame(shuffleExerciseOptions(exercise)));
-    const state = store.get();
-    const moduleId = normalizeModuleId(nivel ?? state.module) ?? 'conteo';
-    return generateQuestions(moduleId, state.level, QUESTIONS_PER_ROUND);
+    // Lección: ejercicios según su nivel (nivel 1 catálogo de Viviana; 2 y 3 generador con R12–R14).
+    if (lessonEntry) return buildLessonRound({ lesson: lessonEntry.lesson, level: lessonLevel });
+    const moduleId = normalizeModuleId(nivel ?? store.get().module) ?? 'conteo';
+    return generateQuestions(moduleId, 1, QUESTIONS_PER_ROUND);
   });
 
   const [index, setIndex] = useState(0);
@@ -48,6 +53,9 @@ export default function Game() {
   const [sheet, setSheet] = useState(null); // Controla el mensaje emergente de abajo
   const [isFinished, setIsFinished] = useState(false);
   const [lives, setLives] = useState(() => store.get().lives);
+  // R10: si en esta ronda las vidas llegaron a 0, no hay avance académico aunque se recarguen.
+  const [livesDepleted, setLivesDepleted] = useState(false);
+  const [levelResult, setLevelResult] = useState(null);
   
   const currentQ = questions[index];
   const maxLives = store.get().maxLives;
@@ -56,7 +64,13 @@ export default function Game() {
   const roundStars = starsForRound({ total: questions.length, mistakes, approved: lives > 0 });
   // Siguiente actividad recomendada a partir del resultado que ya decidió el motor (solo rondas de lección).
   const { recommendations: nextSteps } = useRecommendations({
-    lastRound: isFinished && lessonEntry ? { lessonId: lessonEntry.lesson.id, stars: roundStars, approved: lives > 0 } : null,
+    lastRound: isFinished && lessonEntry ? {
+      lessonId: lessonEntry.lesson.id,
+      stars: roundStars,
+      approved: lives > 0 && !livesDepleted,
+      levelBefore: lessonLevel,
+      levelAfter: levelResult?.level ?? lessonLevel,
+    } : null,
     limit: 1,
   });
 
@@ -99,6 +113,7 @@ export default function Game() {
       setLives(updated.lives);
 
       if (updated.lives <= 0) {
+        setLivesDepleted(true);
         setSheet({
           kind: 'danger',
           title: '¡Se acabaron las vidas!',
@@ -138,11 +153,13 @@ export default function Game() {
     recordRound({ stars }).then(({ error }) => {
       if (error) console.warn('No se pudo guardar el progreso en la cuenta:', error);
     });
-    // Estrellas por lección (0 a 3): se conserva la mejor puntuación.
+    // Progreso de la lección: mejor y última puntuación, y su nivel académico (R7–R10).
     const finishedLessonId = lessonEntry?.lesson?.id;
-    if (finishedLessonId && stars > 0) {
-      saveLessonResult({ lessonId: finishedLessonId, stars }).then(({ error }) => {
-        if (error) console.warn('No se pudieron guardar las estrellas de la lección:', error);
+    if (finishedLessonId) {
+      const result = levelAfterRound({ level: lessonLevel, stars, livesDepleted });
+      setLevelResult(result);
+      saveLessonResult({ lessonId: finishedLessonId, stars, level: result.level }).then(({ error }) => {
+        if (error) console.warn('No se pudo guardar el progreso de la lección:', error);
       });
     }
     sfx.win();
@@ -174,6 +191,16 @@ export default function Game() {
           {questions.length} respuestas · {stars * 10} XP · +{stars * 5} gemas
         </div>
 
+        {lessonEntry && levelResult && (
+          <p className="relative z-10 -mt-4 mb-8 font-fredoka font-bold text-xl" role="status">
+            {levelResult.advanced
+              ? `¡Subiste al nivel ${levelResult.level} de ${lessonEntry.lesson.title}!`
+              : levelResult.rule === 'R10'
+                ? `Se acabaron las vidas: sigues en el nivel ${levelResult.level} de ${MAX_LESSON_LEVEL}.`
+                : `${lessonEntry.lesson.title}: nivel ${levelResult.level} de ${MAX_LESSON_LEVEL}`}
+          </p>
+        )}
+
         {lessonEntry && nextSteps.length > 0 && (
           <div className="relative z-10 w-full max-w-md mb-8">
             <p className="font-fredoka font-bold text-xl mb-3">¿Qué sigue?</p>
@@ -203,6 +230,12 @@ export default function Game() {
             <X className="w-7 h-7" />
           </button>
           
+          {lessonLevel && (
+            <span className="shrink-0 rounded-full bg-soft-lavender text-numu-purple font-fredoka font-bold text-sm px-3 py-1" title={`Nivel de ${lessonEntry.lesson.title}`}>
+              Nivel {lessonLevel}
+            </span>
+          )}
+
           {/* Barra de Progreso */}
           <div className="flex-1 bg-gray-100 rounded-full h-4 overflow-hidden border border-gray-200">
             <div className="bg-numu-purple h-full rounded-full transition-all duration-300" style={{ width: `${progressPercent}%` }}></div>

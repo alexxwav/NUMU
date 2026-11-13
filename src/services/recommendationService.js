@@ -1,12 +1,17 @@
+import { initialLevelForScore, lessonLevelFor, MAX_LESSON_LEVEL } from '../utils/lessonLevel.js';
+
 // Sistema de recomendación de NUMU: reglas deterministas, sin modelos predictivos.
 //
 // No es otro motor adaptativo. Lee las decisiones que ya toma el motor de Dante
 // y propone la siguiente actividad:
-//   - R1–R3: nivel inicial según los aciertos del diagnóstico (lo aplica store.completeOnboarding).
+//   - R1–R3: nivel inicial de cada lección según los aciertos del diagnóstico (utils/lessonLevel.js).
 //   - R4–R6: curso recomendado según los intereses (subjects.js).
 //   - R7–R9: estrellas de cada ronda según los errores (utils/stars.js → starsForRound).
+//   - R7–R10 también deciden el nivel académico de cada lección (utils/lessonLevel.js → levelAfterRound):
+//            3 estrellas sube un nivel; 2 y 1 lo conservan; si se acaban las vidas no hay avance.
 //   - R10:   si se acaban las vidas la ronda no se aprueba (0 estrellas); tiene prioridad.
-// El recomendador no calcula estrellas, no cambia niveles ni vidas y no escribe datos.
+// El recomendador no calcula estrellas, no cambia niveles, vidas ni premios y no escribe datos:
+// solo LEE el nivel académico que ya decidió el motor.
 //
 // Criterios propios del recomendador (NO son reglas de Dante), documentados aquí:
 export const CRITERIA = Object.freeze({
@@ -19,6 +24,7 @@ export const CRITERIA = Object.freeze({
   C7: 'Si todas las lecciones están dominadas, se sugiere un repaso de la primera lección del curso de interés.',
   C8: 'Se muestran como máximo 3 recomendaciones y nunca dos sobre la misma lección.',
   C9: 'Para decidir reforzar, continuar o avanzar se usa la última ronda de cada lección cuando existe; si no, la mejor puntuación. La mejor sigue siendo la que cuentan premios y logros.',
+  C10: 'Si una lección se dominó (3 estrellas) y por eso subió de nivel sin llegar al máximo, se recomienda practicarla en su nuevo nivel antes de pasar a otra lección.',
 });
 
 export const RECOMMENDATION_TYPES = Object.freeze({
@@ -43,13 +49,8 @@ const INTEREST_NAMES = Object.freeze({
 // Intereses con nombre de módulo que guardaba el cuestionario anterior.
 const INTEREST_ALIASES = Object.freeze({ conteo: 'aritmetica', sumas: 'aritmetica', formas: 'geometria' });
 
-/** R1–R3 de Dante: 0–1 aciertos → 1, 2–3 → 2, 4–5 → 3. null si no hay diagnóstico. */
-export function initialLevelForScore(score) {
-  if (!Number.isInteger(score) || score < 0) return null;
-  if (score <= 1) return 1;
-  if (score <= 3) return 2;
-  return 3;
-}
+// R1–R3 viven en utils/lessonLevel.js (una sola implementación); se reexporta por compatibilidad.
+export { initialLevelForScore };
 
 function normalizeInterests(interests) {
   const result = [];
@@ -74,8 +75,10 @@ const clamp = (stars) => Math.max(0, Math.min(3, Math.round(Number(stars) || 0))
  *   Es la que cuentan premios y logros; aquí solo sirve para saber qué lecciones ya se empezaron.
  * @param {Record<string, number>} [input.latestStarsByLesson] - Estrellas de la ÚLTIMA ronda por lección (0–3).
  *   Opcional: si una lección no la tiene, se decide con la mejor (C9).
- * @param {{lessonId: string, stars: number, approved: boolean}|null} [input.lastRound]
- *   Resultado de la ronda recién terminada, tal como lo decidió el motor (starsForRound).
+ * @param {Record<string, number>} [input.levelByLesson] - Nivel académico guardado por lección (1–3).
+ *   Si una lección no lo tiene, su nivel es el inicial del diagnóstico (R1–R3).
+ * @param {{lessonId: string, stars: number, approved: boolean, levelBefore?: number, levelAfter?: number}|null} [input.lastRound]
+ *   Resultado de la ronda recién terminada, tal como lo decidieron starsForRound y levelAfterRound.
  * @param {number} [input.limit] - Máximo de recomendaciones (C8).
  * @returns {{recommendations: Array<Object>, unavailableInterests: Array<{id: string, name: string}>,
  *   recommendedCourseId: string|null, initialLevel: number|null}}
@@ -86,6 +89,7 @@ export function buildRecommendations({
   diagnosticScore = null,
   starsByLesson = {},
   latestStarsByLesson = {},
+  levelByLesson = {},
   lastRound = null,
   limit = 3,
 } = {}) {
@@ -123,6 +127,11 @@ export function buildRecommendations({
     latest[round.lessonId] = round.approved ? clamp(round.stars) : 0;
     if (round.approved) best[round.lessonId] = Math.max(best[round.lessonId] ?? 0, clamp(round.stars));
   }
+  // Nivel académico de cada lección: el guardado, el que dejó la ronda recién terminada o el inicial.
+  const levels = { ...(levelByLesson ?? {}) };
+  if (round && Number.isInteger(round.levelAfter)) levels[round.lessonId] = round.levelAfter;
+  const levelOf = (lessonId) => lessonLevelFor({ lessonId, levelByLesson: levels, diagnosticScore });
+  const hasStoredLevel = (lessonId) => levels[lessonId] !== null && levels[lessonId] !== undefined;
   const bestOf = (lessonId) => best[lessonId] ?? 0;
   const hasLatest = (lessonId) => Object.hasOwn(latest, lessonId);
   // C9: se decide con la última ronda cuando existe; si no, con la mejor puntuación.
@@ -149,6 +158,7 @@ export function buildRecommendations({
       route: `/lecciones/${id}`,
       bestStars: bestOf(id),
       latestStars: hasLatest(id) ? latest[id] : null,
+      level: levelOf(id),
     });
   };
   const nextUnstarted = (afterLessonId = null) => {
@@ -160,15 +170,22 @@ export function buildRecommendations({
   if (round) {
     const entry = byId.get(round.lessonId);
     const name = entry.lesson.title.toLowerCase();
+    const at = ` Sigues en el nivel ${levelOf(round.lessonId)} de esta lección.`;
+    const leveledUp = Number.isInteger(round.levelBefore) && Number.isInteger(round.levelAfter)
+      && round.levelAfter > round.levelBefore;
     if (!round.approved) {
       add(REFORZAR, entry, `Se acabaron las vidas en ${name}. Recarga y vuelve a intentarlo con calma.`,
-        'La ronda se pausó porque las vidas llegaron a cero, así que todavía no se puede avanzar.', ['R10', 'C1']);
+        `La ronda se pausó porque las vidas llegaron a cero, así que todavía no se puede avanzar.${at}`, ['R10', 'C1']);
     } else if (round.stars === 1) {
       add(REFORZAR, entry, `Practiquemos nuevamente ${name} para mejorar tus habilidades.`,
-        'Tuviste 4 o más errores en esta ronda: conviene reforzar antes de avanzar.', ['R9', 'C1']);
+        `Tuviste 4 o más errores en esta ronda: conviene reforzar antes de avanzar.${at}`, ['R9', 'C1']);
     } else if (round.stars === 2) {
       add(CONTINUAR, entry, `¡Vas muy bien en ${name}! Una ronda más para ganar las 3 estrellas.`,
-        'Tuviste 2 o 3 errores: se mantiene la dificultad y se sigue practicando.', ['R8', 'C1']);
+        `Tuviste 2 o 3 errores: se mantiene la dificultad y se sigue practicando.${at}`, ['R8', 'C1']);
+    } else if (round.stars === 3 && leveledUp) {
+      add(AVANZAR, entry, `¡Excelente! Sube la dificultad: ${name}, nivel ${round.levelAfter}.`,
+        `Dominaste el nivel ${round.levelBefore} con 0 o 1 errores, así que esta lección sube al nivel ${round.levelAfter}.`,
+        ['R7', 'C1', 'C10']);
     } else if (round.stars === 3) {
       const next = nextUnstarted(round.lessonId);
       if (next) {
@@ -187,11 +204,11 @@ export function buildRecommendations({
     const stars = decisionOf(id);
     if (stars === 1) {
       add(REFORZAR, entry, `Te recomendamos repasar ${entry.lesson.title.toLowerCase()}.`,
-        `${which(id)} en esta lección obtuvo 1 estrella: un repaso te ayudará a avanzar.${scoreNote(id)}`,
+        `${which(id)} en esta lección (nivel ${levelOf(id)}) obtuvo 1 estrella: un repaso te ayudará a avanzar.${scoreNote(id)}`,
         hasLatest(id) ? ['R9', 'C2', 'C9'] : ['R9', 'C2']);
     } else if (stars === 0 && started(id)) {
       add(REFORZAR, entry, `Vuelve a intentar ${entry.lesson.title.toLowerCase()} con calma.`,
-        `Tu última ronda en esta lección no se completó porque se acabaron las vidas.${scoreNote(id)}`, ['R10', 'C2', 'C9']);
+        `Tu última ronda en esta lección no se completó porque se acabaron las vidas. Sigues en el nivel ${levelOf(id)}.${scoreNote(id)}`, ['R10', 'C2', 'C9']);
     }
   }
   // C3: continuar (ronda con 2 estrellas, R8).
@@ -199,12 +216,21 @@ export function buildRecommendations({
     const id = entry.lesson.id;
     if (decisionOf(id) === 2) {
       add(CONTINUAR, entry, `Has mejorado mucho en ${entry.lesson.title.toLowerCase()}. ¡Continúa aprendiendo!`,
-        `${which(id)} obtuvo 2 estrellas: una ronda más y puedes conseguir las 3.${scoreNote(id)}`,
+        `${which(id)} en el nivel ${levelOf(id)} obtuvo 2 estrellas: una ronda más y puedes conseguir las 3.${scoreNote(id)}`,
         hasLatest(id) ? ['R8', 'C3', 'C9'] : ['R8', 'C3']);
     }
   }
   // C4: avanzar después de dominar una lección (3 estrellas, R7).
   const mastered = ordered.filter((entry) => decisionOf(entry.lesson.id) === 3);
+  // C10: lección dominada que subió de nivel sin llegar al máximo → practicarla en su nuevo nivel.
+  // (Con la última ronda en 3 y un nivel guardado menor al máximo, la lección acaba de subir: R7.)
+  for (const entry of mastered) {
+    const id = entry.lesson.id;
+    if (hasLatest(id) && hasStoredLevel(id) && levelOf(id) < MAX_LESSON_LEVEL) {
+      add(AVANZAR, entry, `¡Sube la dificultad en ${entry.lesson.title.toLowerCase()}! Ahora juegas en el nivel ${levelOf(id)}.`,
+        `Tu última ronda obtuvo 3 estrellas, así que esta lección pasó al nivel ${levelOf(id)}.`, ['R7', 'C10', 'C9']);
+    }
+  }
   if (mastered.length) {
     const next = nextUnstarted(mastered[mastered.length - 1].lesson.id);
     if (next) {
@@ -221,7 +247,7 @@ export function buildRecommendations({
     if (!entry) continue;
     const isInterest = interestCourses.includes(course.id);
     add(INICIAR, entry, `¡Vamos a practicar ${entry.lesson.title.toLowerCase()}!`,
-      `${isInterest ? `Elegiste ${course.title} entre tus intereses.` : `Es la primera lección disponible de ${course.title}.`} ${levelText}`,
+      `${isInterest ? `Elegiste ${course.title} entre tus intereses.` : `Es la primera lección disponible de ${course.title}.`} ${levelText} Empezarás en el nivel ${levelOf(entry.lesson.id)} de esta lección.`,
       [
         ...(isInterest ? [course.id === 'aritmetica' ? 'R4' : 'R5'] : ['C6']),
         ...(initialLevel ? [`R${initialLevel}`] : []), // R1, R2 o R3 según el nivel inicial
@@ -232,7 +258,9 @@ export function buildRecommendations({
   if (!recommendations.length && ordered.length) {
     const entry = ordered[0];
     add(CONTINUAR, entry, `¡Dominaste todas las lecciones! Repasa ${entry.lesson.title.toLowerCase()} cuando quieras.`,
-      'Obtuviste 3 estrellas en todas las lecciones publicadas.', ['R7', 'C7']);
+      ordered.every((e) => levelOf(e.lesson.id) === MAX_LESSON_LEVEL)
+        ? `Obtuviste 3 estrellas en todas las lecciones publicadas, en su nivel más alto (${MAX_LESSON_LEVEL}).`
+        : 'Obtuviste 3 estrellas en todas las lecciones publicadas.', ['R7', 'C7']);
   }
 
   return {

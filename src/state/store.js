@@ -1,3 +1,5 @@
+import { mergeLessonProgress, clampLessonLevel } from '../utils/lessonLevel.js';
+
 const STORAGE_KEY = 'numu-state-v1';
 
 const DEFAULT_STATE = {
@@ -12,6 +14,8 @@ const DEFAULT_STATE = {
   module: 'conteo',
   starsByLevel: {},
   lessonStars: {},
+  // Última ronda y nivel académico por lección: { [lessonId]: { latestStars, level, at } }.
+  lessonRounds: {},
   owned: [],
   profile: {
     completed: false,
@@ -188,6 +192,30 @@ export const store = {
     const earned = Math.max(0, Math.min(3, Math.round(Number(stars) || 0)));
     const best = Math.max(state.lessonStars[lessonId] ?? 0, earned);
     return store.set({ lessonStars: { ...state.lessonStars, [lessonId]: best } });
+  },
+
+  /**
+   * Registra en el dispositivo una ronda terminada de una lección: la mejor puntuación no baja,
+   * la última ronda y el nivel académico se reemplazan (con su fecha para combinar con Supabase).
+   * @param {{lessonId: string, stars: number, level: number, at?: string}} round
+   */
+  recordLessonRound({ lessonId, stars, level, at = new Date().toISOString() } = {}) {
+    if (!lessonId) return state;
+    const earned = Math.max(0, Math.min(3, Math.round(Number(stars) || 0)));
+    return store.set({
+      lessonStars: { ...state.lessonStars, [lessonId]: Math.max(state.lessonStars[lessonId] ?? 0, earned) },
+      lessonRounds: { ...state.lessonRounds, [lessonId]: { latestStars: earned, level: clampLessonLevel(level), at } },
+    });
+  },
+
+  /**
+   * Combina el progreso leído de Supabase con el del dispositivo sin perder lo más reciente
+   * (ver mergeLessonProgress en utils/lessonLevel.js).
+   * @param {{stars?: Record<string, number>, rounds?: Record<string, Object>}} remote
+   */
+  applyLessonProgress(remote = {}) {
+    const merged = mergeLessonProgress({ stars: state.lessonStars, rounds: state.lessonRounds }, remote);
+    return store.set({ lessonStars: merged.stars, lessonRounds: merged.rounds });
   },
 };
 

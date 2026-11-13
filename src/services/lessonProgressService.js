@@ -1,14 +1,26 @@
 import { requireSupabase } from '../lib/supabase.js';
 import { profileService } from './profileService.js';
 import { clampStars, sumStars } from '../utils/stars.js';
+import { clampLessonLevel, MIN_LESSON_LEVEL, MAX_LESSON_LEVEL } from '../utils/lessonLevel.js';
 
 // Progreso por lección del proyecto "numu":
 //   progreso_leccion(usuario_id, leccion_id, estrellas, intentos, created_at, updated_at)
 // con una fila por usuario y lección. El RPC registrar_resultado_leccion conserva
 // la mejor puntuación (greatest) al repetir una lección.
+// Con supabase/propuesta_ultima_ronda.sql (preparada, aún NO aplicada) la fila guarda además
+// ultimas_estrellas, ultimo_intento y nivel (nivel académico de la lección, 1 a 3), y el RPC
+// recibe p_nivel. Mientras no se aplique, el servicio usa las columnas y la firma de siempre.
 
 const TABLE = 'progreso_leccion';
 const RPC = 'registrar_resultado_leccion';
+
+const FULL_COLUMNS = 'leccion_id, estrellas, intentos, ultimas_estrellas, nivel, ultimo_intento';
+const BASE_COLUMNS = 'leccion_id, estrellas, intentos';
+
+/** La migración de última ronda / nivel aún no está aplicada (columna inexistente). */
+function isMissingColumn(message = '') {
+  return /column .* does not exist|could not find the .* column|42703|PGRST204/i.test(message);
+}
 
 /** El RPC aún no está desplegado: se hace el guardado desde el cliente. */
 function isMissingFunction(message = '') {
@@ -16,28 +28,47 @@ function isMissingFunction(message = '') {
 }
 
 export function createLessonProgressService(getClient = requireSupabase, profiles = profileService) {
+  const empty = (error) => ({
+    starsByLesson: {}, latestStarsByLesson: {}, levelByLesson: {}, attemptsByLesson: {}, rounds: {}, totalStars: 0, error,
+  });
+
   return {
     /**
-     * Estrellas guardadas del usuario con sesión.
-     * @returns {Promise<{starsByLesson: Record<string, number>, totalStars: number, error: string|null}>}
+     * Progreso guardado del usuario con sesión, por lección.
+     * · starsByLesson: mejor puntuación. · latestStarsByLesson: última ronda (si ya se guarda).
+     * · levelByLesson: nivel académico guardado (si ya se guarda). · attemptsByLesson: rondas.
+     * · rounds: { latestStars, level, at } para combinar con el dispositivo sin perder lo reciente.
      */
     async getLessonProgress() {
       const client = getClient();
       const { usuarioId, error: idError } = await profiles.currentUsuarioId();
-      if (idError) return { starsByLesson: {}, totalStars: 0, error: idError };
+      if (idError) return empty(idError);
 
-      const { data, error } = await client
-        .from(TABLE)
-        .select('leccion_id, estrellas')
-        .eq('usuario_id', usuarioId);
-      if (error) return { starsByLesson: {}, totalStars: 0, error: error.message };
+      const read = (columns) => client.from(TABLE).select(columns).eq('usuario_id', usuarioId);
+      let { data, error } = await read(FULL_COLUMNS);
+      if (error && isMissingColumn(error.message)) ({ data, error } = await read(BASE_COLUMNS));
+      if (error) return empty(error.message);
 
-      const starsByLesson = {};
+      const result = empty(null);
       for (const row of data ?? []) {
-        if (!row?.leccion_id) continue;
-        starsByLesson[row.leccion_id] = Math.max(starsByLesson[row.leccion_id] ?? 0, clampStars(row.estrellas));
+        const id = row?.leccion_id;
+        if (!id) continue;
+        result.starsByLesson[id] = Math.max(result.starsByLesson[id] ?? 0, clampStars(row.estrellas));
+        if (Number.isInteger(row.intentos)) result.attemptsByLesson[id] = row.intentos;
+        const latest = row.ultimas_estrellas ?? null;
+        const level = row.nivel ?? null;
+        if (latest !== null) result.latestStarsByLesson[id] = clampStars(latest);
+        if (level !== null) result.levelByLesson[id] = clampLessonLevel(level);
+        if (latest !== null || level !== null) {
+          result.rounds[id] = {
+            latestStars: latest === null ? null : clampStars(latest),
+            level: level === null ? null : clampLessonLevel(level),
+            at: row.ultimo_intento ?? null,
+          };
+        }
       }
-      return { starsByLesson, totalStars: sumStars(starsByLesson), error: null };
+      result.totalStars = sumStars(result.starsByLesson);
+      return result;
     },
 
     /**
@@ -45,24 +76,39 @@ export function createLessonProgressService(getClient = requireSupabase, profile
      * @param {Object} options
      * @param {string} options.lessonId - Id del catálogo editorial (src/data/lessonContent.json).
      * @param {number} options.stars - Estrellas ganadas (0 a 3).
-     * @returns {Promise<{stars: number, error: string|null}>} Estrellas guardadas (la mejor).
+     * @param {number} [options.level] - Nivel académico de la lección tras la ronda (1 a 3, R7–R10).
+     * @returns {Promise<{stars: number, latestStars: number, level: number|null, error: string|null}>}
      */
-    async saveLessonResult({ lessonId, stars } = {}) {
+    async saveLessonResult({ lessonId, stars, level } = {}) {
+      const fail = (error) => ({ stars: 0, latestStars: 0, level: null, error });
       if (typeof lessonId !== 'string' || lessonId.trim() === '') {
-        return { stars: 0, error: 'Falta el identificador de la lección.' };
+        return fail('Falta el identificador de la lección.');
       }
       if (!Number.isInteger(stars) || stars < 0 || stars > 3) {
-        return { stars: 0, error: 'Las estrellas deben ser un entero entre 0 y 3.' };
+        return fail('Las estrellas deben ser un entero entre 0 y 3.');
       }
+      const hasLevel = level !== undefined && level !== null;
+      if (hasLevel && (!Number.isInteger(level) || level < MIN_LESSON_LEVEL || level > MAX_LESSON_LEVEL)) {
+        return fail(`El nivel debe ser un entero entre ${MIN_LESSON_LEVEL} y ${MAX_LESSON_LEVEL}.`);
+      }
+      const done = (row, fallbackBest) => ({
+        stars: clampStars(row?.estrellas ?? fallbackBest),
+        latestStars: stars,
+        level: row?.nivel ?? (hasLevel ? level : null),
+        error: null,
+      });
 
       const client = getClient();
-      const { data, error } = await client.rpc(RPC, { p_leccion_id: lessonId, p_estrellas: stars });
-      if (!error) return { stars: clampStars(data?.estrellas ?? stars), error: null };
-      if (!isMissingFunction(error.message)) return { stars: 0, error: error.message };
+      const args = { p_leccion_id: lessonId, p_estrellas: stars };
+      let { data, error } = await client.rpc(RPC, hasLevel ? { ...args, p_nivel: level } : args);
+      // Firma anterior (sin p_nivel): la migración aún no está aplicada.
+      if (error && hasLevel && isMissingFunction(error.message)) ({ data, error } = await client.rpc(RPC, args));
+      if (!error) return done(data, stars);
+      if (!isMissingFunction(error.message)) return fail(error.message);
 
       // Respaldo cuando el RPC no está desplegado: lectura + upsert con el máximo.
       const { usuarioId, error: idError } = await profiles.currentUsuarioId();
-      if (idError) return { stars: 0, error: idError };
+      if (idError) return fail(idError);
 
       const { data: current, error: readError } = await client
         .from(TABLE)
@@ -70,9 +116,10 @@ export function createLessonProgressService(getClient = requireSupabase, profile
         .eq('usuario_id', usuarioId)
         .eq('leccion_id', lessonId)
         .maybeSingle();
-      if (readError) return { stars: 0, error: readError.message };
+      if (readError) return fail(readError.message);
 
       const best = Math.max(clampStars(current?.estrellas), stars);
+      // Sin RPC tampoco está la migración de nivel: se guarda solo lo de siempre (mejor e intentos).
       const { data: saved, error: writeError } = await client
         .from(TABLE)
         .upsert({
@@ -83,8 +130,8 @@ export function createLessonProgressService(getClient = requireSupabase, profile
         }, { onConflict: 'usuario_id,leccion_id' })
         .select()
         .single();
-      if (writeError) return { stars: 0, error: writeError.message };
-      return { stars: clampStars(saved?.estrellas ?? best), error: null };
+      if (writeError) return fail(writeError.message);
+      return { ...done(saved, best), level: null }; // el nivel queda solo en el dispositivo
     },
   };
 }
