@@ -27,6 +27,28 @@ Scripts para un proyecto de Supabase **nuevo y exclusivo de NUMU**. No aplicar s
 | `migrations/20261029000002_rls.sql` | RLS: cada estudiante solo accede a lo suyo; catálogo de solo lectura. |
 | `migrations/20261029000003_grants.sql` | GRANT explícitos mínimos para `authenticated` (no depende de los permisos automáticos de Supabase). |
 | `seed.sql` | Catálogo del MVP: 2 cursos y 4 lecciones, con las descripciones de Viviana compatibles con los generadores (idempotente, fuente única del catálogo). |
+| `progreso_leccion.sql` | **Para el proyecto `numu`**: tabla `progreso_leccion` (0 a 3 estrellas por lección), RLS, permisos y RPC `registrar_resultado_leccion` (conserva la mejor puntuación). |
+
+## Progreso por lección (estrellas de 1 a 3)
+
+`progreso_leccion.sql` agrega al proyecto `numu` la tabla `progreso_leccion`:
+
+```text
+progreso_leccion(usuario_id -> usuarios.id, leccion_id text, estrellas 0-3, intentos, created_at, updated_at)
+```
+
+- `usuario_id` es llave foránea a `public.usuarios` (con borrado en cascada) y las
+  políticas RLS dejan que cada estudiante solo lea y escriba lo suyo.
+- `leccion_id` es el id del catálogo editorial de la app
+  (`src/data/lessonContent.json`: `conteo-basico`, `sumas-basicas`, `figuras`, `patrones`),
+  el mismo que aparece en la URL `/lecciones/<id>`. No lleva llave foránea a
+  `public.lecciones` porque ahí el id es un serial numérico del MVP.
+- El RPC `registrar_resultado_leccion(p_leccion_id, p_estrellas)` hace el guardado
+  atómico y conserva la mejor puntuación (`greatest`) al repetir una lección.
+
+Para aplicarlo, ejecuta el archivo completo en el SQL Editor del proyecto `numu`
+(el frontend ya lee y escribe esta tabla; sin ella, la app sigue funcionando
+solo con el progreso local).
 
 ## Aplicar (cuando exista el proyecto)
 

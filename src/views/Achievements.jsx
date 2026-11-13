@@ -1,17 +1,18 @@
 import { useState, useEffect } from 'react';
-import { Medal, Flame, Star, Gem, Trophy, Crown } from 'lucide-react';
+import { Medal, Gem, Trophy, Crown } from 'lucide-react';
 import { store } from '../state/store.js';
+import { flameOn, flameOff, starIcon } from '../components/iconAssets.js';
 
-// Función para mapear el nombre del ícono a los componentes de Lucide
-const getIcon = (name, className) => {
+// Función para mapear el nombre del ícono a los componentes de Lucide o a las imágenes de marca
+const getIcon = (name, className, has = true) => {
   switch (name) {
     case 'medal': return <Medal className={className} />;
-    case 'flame': return <Flame className={className} />;
-    case 'star': return <Star className={className} fill="currentColor" />;
+    case 'flame': return <img src={has ? flameOn : flameOff} alt="" className={`${className} object-contain`} />;
+    case 'star': return <img src={starIcon} alt="" className={`${className} object-contain brightness-0`} />;
     case 'gem': return <Gem className={className} />;
     case 'trophy': return <Trophy className={className} />;
     case 'crown': return <Crown className={className} />;
-    default: return <Star className={className} />;
+    default: return <img src={starIcon} alt="" className={`${className} object-contain brightness-0`} />;
   }
 };
 
@@ -63,7 +64,7 @@ export default function Achievements() {
                 className={`w-14 h-14 mx-auto mb-3 rounded-full flex items-center justify-center shadow-inner ${badge.tone}`} 
                 aria-hidden="true"
               >
-                {getIcon(badge.iconName, 'w-7 h-7')}
+                {getIcon(badge.iconName, 'w-7 h-7', has)}
               </div>
               <p className="font-fredoka font-bold text-sm text-text-dark leading-tight mb-1">
                 {badge.title}

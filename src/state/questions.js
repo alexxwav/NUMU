@@ -29,24 +29,25 @@ function buildOptions(answer, poolSize = 3) {
   return { options: labels, answerIndex };
 }
 
-/* ---------- CONTEO (objetos SVG, sin emojis) ---------- */
+/* ---------- CONTEO (objetos SVG o imágenes de marca, sin emojis) ---------- */
 const COUNT_ITEMS = [
   { iconName: 'ball', name: 'pelotas', color: 'text-cyan-ocean' },
   { iconName: 'fish', name: 'peces', color: 'text-orange-energy' },
-  { iconName: 'star', name: 'estrellas', color: 'text-sunshine-yellow' },
+  { iconName: 'star', name: 'estrellas', color: '' },
   { iconName: 'balloon', name: 'globos', color: 'text-coral-alert' },
-  { iconName: 'heart', name: 'corazones', color: 'text-numu-purple' },
+  { iconName: 'heart', name: 'corazones', color: '' },
 ];
 
 function countQuestion(level) {
   const item = COUNT_ITEMS[rand(0, COUNT_ITEMS.length - 1)];
   const total = rand(2, Math.min(10, 4 + level));
   const { options, answerIndex } = buildOptions(total);
+  const itemClass = ['w-11 h-11 sm:w-14 sm:h-14', item.color, 'animate-pop-in'].filter(Boolean).join(' ');
   return {
     prompt: `¿Cuántos ${item.name} ves?`,
     speakText: `¿Cuántos ${item.name} hay?`,
     visual: `<div class="flex flex-wrap gap-3 justify-center items-center max-w-md mx-auto p-4 bg-white rounded-card border-2 border-border-gray" role="img" aria-label="${total} ${item.name}">
-        ${Array.from({ length: total }, () => icon(item.iconName, `w-11 h-11 sm:w-14 sm:h-14 ${item.color} animate-pop-in`)).join('')}
+        ${Array.from({ length: total }, () => icon(item.iconName, itemClass)).join('')}
       </div>`,
     options,
     answerIndex,

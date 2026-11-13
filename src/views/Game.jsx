@@ -1,16 +1,19 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import confetti from 'canvas-confetti';
-import { X, Volume2, Star, Heart } from 'lucide-react';
+import { X, Volume2 } from 'lucide-react';
 import { store } from '../state/store.js';
 import { generateQuestions } from '../state/questions.js';
 import { sfx, speak } from '../utils/audio.js';
 import { useAuth } from '../hooks/useAuth.jsx';
+import { useLessonProgress } from '../hooks/useLessonProgress.js';
+import { starsForRound } from '../utils/stars.js';
 import { normalizeModuleId } from '../data/subjects.js';
 import lessonCatalog from '../data/lessonContent.json';
 import { getLessonById, shuffleExerciseOptions } from '../utils/lessonContent.js';
 import { adaptExerciseToGame } from '../utils/lessonGameAdapter.js';
 import mascotUrl from '../assets/brand/mascot/numu-morado.png';
+import { heartOn, heartOff, starIcon } from '../components/iconAssets.js';
 
 const QUESTIONS_PER_ROUND = 6;
 
@@ -22,6 +25,7 @@ function burst({ particleCount = 60, spread = 70 } = {}) {
 export default function Game() {
   const navigate = useNavigate();
   const { recordRound } = useAuth();
+  const { saveLessonResult } = useLessonProgress();
   const { nivel, lessonId } = useParams(); // módulo ('conteo', 'sumas', …) o lección del catálogo
   const lessonEntry = lessonId ? getLessonById(lessonCatalog, lessonId) : null;
   const exitTo = lessonEntry ? `/lecciones/${lessonEntry.lesson.id}` : '/inicio';
@@ -46,6 +50,8 @@ export default function Game() {
   const currentQ = questions[index];
   const maxLives = store.get().maxLives;
   const progressPercent = (index / questions.length) * 100;
+  // Estrellas de la ronda: 0 si se acabaron las vidas, de 1 a 3 según los errores.
+  const roundStars = starsForRound({ total: questions.length, mistakes, approved: lives > 0 });
 
   // Escuchar la instrucción al cargar la pregunta
   useEffect(() => {
@@ -118,20 +124,27 @@ export default function Game() {
 
   const finishRound = () => {
     setIsFinished(true);
-    const stars = mistakes <= 1 ? 3 : mistakes <= 3 ? 2 : 1;
+    const stars = roundStars;
     store.addRewards({ gems: stars * 5, stars, xp: stars * 10, levelStars: stars });
     store.completeLevel();
     // Guarda el avance en la cuenta; si falla, el progreso sigue en este dispositivo.
     recordRound({ stars }).then(({ error }) => {
       if (error) console.warn('No se pudo guardar el progreso en la cuenta:', error);
     });
+    // Estrellas por lección (0 a 3): se conserva la mejor puntuación.
+    const finishedLessonId = lessonEntry?.lesson?.id;
+    if (finishedLessonId && stars > 0) {
+      saveLessonResult({ lessonId: finishedLessonId, stars }).then(({ error }) => {
+        if (error) console.warn('No se pudieron guardar las estrellas de la lección:', error);
+      });
+    }
     sfx.win();
     burst({ particleCount: 160, spread: 110 });
   };
 
   // --- Vista de Resultados (Frame 5) ---
   if (isFinished) {
-    const stars = mistakes <= 1 ? 3 : mistakes <= 3 ? 2 : 1;
+    const stars = roundStars;
     return (
       <div className="min-h-screen bg-numu-purple text-white flex flex-col items-center justify-center px-6 py-10 text-center relative overflow-hidden font-poppins">
         <div className="absolute -top-20 -right-20 w-72 h-72 rounded-full bg-white/5" aria-hidden="true"></div>
@@ -141,9 +154,11 @@ export default function Game() {
 
         <div className="flex gap-4 mb-7 relative z-10">
           {[0, 1, 2].map((i) => (
-            <Star 
-              key={i} 
-              className={`w-16 h-16 sm:w-20 sm:h-20 ${i < stars ? 'text-sunshine-yellow fill-sunshine-yellow animate-bounce' : 'text-white/30 fill-white/30'}`} 
+            <img
+              key={i}
+              src={starIcon}
+              alt=""
+              className={`w-16 h-16 sm:w-20 sm:h-20 object-contain ${i < stars ? 'animate-bounce' : 'grayscale opacity-30'}`}
             />
           ))}
         </div>
@@ -182,7 +197,12 @@ export default function Game() {
           {/* Corazones (Vidas) */}
           <div className="flex items-center gap-1">
             {Array.from({ length: maxLives }).map((_, i) => (
-              <Heart key={i} className={`w-7 h-7 ${i < lives ? 'text-coral-alert fill-coral-alert animate-pulse' : 'text-gray-200 fill-gray-200'}`} />
+              <img
+                key={i}
+                src={i < lives ? heartOn : heartOff}
+                alt=""
+                className={`w-7 h-7 object-contain ${i < lives ? 'animate-pulse' : ''}`}
+              />
             ))}
           </div>
         </div>

@@ -41,10 +41,11 @@ test('Los 24 ejercicios cumplen el contrato del generador consumido por Game.jsx
   }
 });
 
-test('Conteo representa la cantidad exacta mediante iconos SVG locales', () => {
+test('Conteo representa la cantidad exacta mediante iconos locales', () => {
   for (const exercise of lessons[0].exercises) {
     const question = adaptExerciseToGame(exercise);
-    assert.equal((question.visual.match(/<svg\b/g) ?? []).length, exercise.visual.count);
+    const objectIcons = question.visual.match(/<svg\b|<img\b/g) ?? [];
+    assert.equal(objectIcons.length, exercise.visual.count);
     assert.ok(question.visual.includes(`aria-label="${exercise.visual.count} `));
     assert.equal(question.options[question.answerIndex].label, String(exercise.visual.count));
   }
@@ -145,7 +146,10 @@ test('Rechaza datos visuales inconsistentes en los cuatro tipos', () => {
 
 test('No interpola texto arbitrario como HTML ni acepta colores o iconos inyectados', () => {
   const exercise = copy('C01'); exercise.prompt = '<img src=x onerror=alert(1)>';
-  assert.ok(!adaptExerciseToGame(exercise).visual.includes('<img'));
+  const visual = adaptExerciseToGame(exercise).visual;
+  assert.ok(!visual.includes('onerror'));
+  assert.ok(!visual.includes('src=x'));
+  assert.ok(!visual.includes('alert('));
   exercise.visual.icon = 'star" onload="alert(1)';
   assert.throws(() => adaptExerciseToGame(exercise), TypeError);
   const pattern = copy('P01'); pattern.visual.sequence[0] = 'red; background:url(x)';

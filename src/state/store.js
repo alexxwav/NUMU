@@ -11,6 +11,7 @@ const DEFAULT_STATE = {
   level: 1,
   module: 'conteo',
   starsByLevel: {},
+  lessonStars: {},
   owned: [],
   profile: {
     completed: false,
@@ -173,6 +174,20 @@ export const store = {
 
   completeLevel() {
     return store.set({ level: state.level + 1 });
+  },
+
+  /* ---- Progreso por lección ---- */
+
+  /**
+   * Guarda las estrellas de una lección conservando la mejor puntuación.
+   * @param {string} lessonId - Id del catálogo editorial.
+   * @param {number} stars - Estrellas ganadas (0 a 3).
+   */
+  setLessonStars(lessonId, stars) {
+    if (!lessonId) return state;
+    const earned = Math.max(0, Math.min(3, Math.round(Number(stars) || 0)));
+    const best = Math.max(state.lessonStars[lessonId] ?? 0, earned);
+    return store.set({ lessonStars: { ...state.lessonStars, [lessonId]: best } });
   },
 };
 

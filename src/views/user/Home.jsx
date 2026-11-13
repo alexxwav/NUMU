@@ -1,16 +1,19 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
-  Menu, X, Star, Rocket, 
+  Menu, X, Rocket, ChevronRight,
   Home as HomeIcon, Trophy, Settings, LogOut, Store, Lock, BookOpen
 } from 'lucide-react';
 import { store, MODULES } from '../../state/store.js';
 import { sfx } from '../../utils/audio.js';
 import { useAuth } from '../../hooks/useAuth.jsx';
+import { useLessonProgress } from '../../hooks/useLessonProgress.js';
 import { normalizeModuleId } from '../../data/subjects.js';
 import catalog from '../../data/lessonContent.json';
 import { COURSE_STYLE } from '../CoursesView.jsx';
+import LessonStars from '../../components/LessonStars.jsx';
 import mascotUrl from '../../assets/brand/mascot/numu-morado.png';
+import { starIcon } from '../../components/iconAssets.js';
 
 const TOTAL_LEVELS = 10;
 
@@ -38,6 +41,12 @@ export default function Home() {
   const displayName = state.profile?.nickname || state.profile?.name || 'Explorador';
   const selectedModule = MODULES.find((m) => m.id === normalizeModuleId(state.module)) ?? MODULES[0];
   const courses = [...catalog.courses].sort((a, b) => a.position - b.position);
+  const lessons = catalog.courses.flatMap(course => course.lessons.map(lesson => ({ lesson, course })));
+
+  // Estrellas por lección guardadas en la cuenta; el contador nunca pierde las
+  // estrellas ya ganadas en el dispositivo.
+  const { starsByLesson, totalStars, loaded } = useLessonProgress();
+  const starCount = loaded ? Math.max(state.stars, totalStars) : state.stars;
 
   // Manejador para jugar un nivel
   const handlePlayLevel = (moduleId, levelNumber) => {
@@ -123,8 +132,8 @@ export default function Home() {
         </div>
         
         <div className="bg-white px-4 md:px-5 py-2 rounded-full shadow-sm border-2 border-gray-100 flex items-center gap-2">
-          <Star className="w-6 h-6 text-sunshine-yellow fill-sunshine-yellow" />
-          <span className="font-fredoka font-bold text-lg md:text-xl text-text-dark tabular-nums">{state.stars}</span>
+          <img src={starIcon} alt="" className="w-6 h-6 object-contain" />
+          <span className="font-fredoka font-bold text-lg md:text-xl text-text-dark tabular-nums">{starCount}</span>
         </div>
       </header>
 
@@ -175,6 +184,34 @@ export default function Home() {
           </div>
         </section>
 
+        {/* --- Lecciones con estrellas (progreso guardado en la cuenta) --- */}
+        <section>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-fredoka font-bold text-text-dark">Tus lecciones</h2>
+            <span className="inline-flex items-center gap-2 font-fredoka font-bold text-sm text-text-dark">
+              <img src={starIcon} alt="" className="w-5 h-5 object-contain" />
+              <span className="tabular-nums">{totalStars}</span>
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {lessons.map(({ lesson, course }) => (
+              <Link key={lesson.id} to={`/lecciones/${lesson.id}`} onClick={() => sfx.tap()}
+                className="bg-white rounded-card p-5 border-2 border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all flex items-center gap-4">
+                <span className="w-12 h-12 shrink-0 rounded-full bg-sunshine-yellow text-text-dark font-fredoka font-bold text-xl grid place-items-center">
+                  {lesson.position}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-bold uppercase tracking-wide text-gray-400">{course.title}</p>
+                  <h4 className="font-fredoka font-bold text-lg text-text-dark truncate">{lesson.title}</h4>
+                  <LessonStars stars={starsByLesson[lesson.id] ?? 0} className="mt-1" />
+                </div>
+                <ChevronRight className="w-6 h-6 text-numu-purple shrink-0" />
+              </Link>
+            ))}
+          </div>
+        </section>
+
         {/* --- Mapa de Niveles (El diseño de tu compañero traducido a React) --- */}
         <section>
           <div className="flex items-center justify-between mb-6">
@@ -196,8 +233,8 @@ export default function Home() {
                   {isDone && (
                     <button onClick={() => handlePlayLevel(selectedModule.id, level)} className="w-20 h-20 rounded-full bg-mint-success text-white shadow-3d-success font-fredoka font-bold text-3xl grid place-items-center active:translate-y-1 transition-transform relative">
                       {level}
-                      <div className="absolute -top-3 flex gap-0.5 text-sunshine-yellow">
-                        <Star className="w-5 h-5 fill-current" /><Star className="w-5 h-5 fill-current" /><Star className="w-5 h-5 fill-current" />
+                      <div className="absolute -top-3 flex gap-0.5">
+                        <img src={starIcon} alt="" className="w-5 h-5 object-contain" /><img src={starIcon} alt="" className="w-5 h-5 object-contain" /><img src={starIcon} alt="" className="w-5 h-5 object-contain" />
                       </div>
                     </button>
                   )}

@@ -1,4 +1,5 @@
 import { icons } from './icons.js';
+import { heartOn, starIcon } from './iconAssets.js';
 import mascotUrl from '../assets/brand/mascot/numu-morado.png';
 
 /** Opciones de avatar (iconos SVG limpios, sin emojis). */
@@ -6,8 +7,8 @@ export const AVATARS = [
   { id: 'mascot', type: 'image', src: mascotUrl, bg: 'bg-white', border: 'border-border-gray' },
   { id: 'person', type: 'icon', iconName: 'user', bg: 'bg-numu-purple', fg: 'text-white' },
   { id: 'smile', type: 'icon', iconName: 'smile', bg: 'bg-cyan-ocean', fg: 'text-white' },
-  { id: 'star', type: 'icon', iconName: 'star', bg: 'bg-sunshine-yellow', fg: 'text-text-dark' },
-  { id: 'heart', type: 'icon', iconName: 'heart', bg: 'bg-coral-alert', fg: 'text-white' },
+  { id: 'star', type: 'asset', src: starIcon, bg: 'bg-sunshine-yellow' },
+  { id: 'heart', type: 'asset', src: heartOn, bg: 'bg-coral-alert' },
   { id: 'bolt', type: 'icon', iconName: 'bolt', bg: 'bg-orange-energy', fg: 'text-white' },
   { id: 'moon', type: 'icon', iconName: 'moon', bg: 'bg-numu-deep-indigo', fg: 'text-white' },
   { id: 'leaf', type: 'icon', iconName: 'leaf', bg: 'bg-mint-success', fg: 'text-white' },
@@ -18,7 +19,7 @@ export const FRAMES = [
   { id: 'frame-gold', name: 'Marco Dorado', price: 60, iconName: 'crown', ring: 'border-sunshine-yellow' },
   { id: 'frame-mint', name: 'Marco Menta', price: 40, iconName: 'leaf', ring: 'border-mint-success' },
   { id: 'frame-cyan', name: 'Marco Océano', price: 40, iconName: 'sparkle', ring: 'border-cyan-ocean' },
-  { id: 'frame-coral', name: 'Marco Coral', price: 30, iconName: 'heart', ring: 'border-coral-alert' },
+  { id: 'frame-coral', name: 'Marco Coral', price: 30, iconSrc: heartOn, ring: 'border-coral-alert' },
   { id: 'frame-orange', name: 'Marco Energía', price: 30, iconName: 'bolt', ring: 'border-orange-energy' },
   { id: 'frame-indigo', name: 'Marco Profundo', price: 50, iconName: 'moon', ring: 'border-numu-deep-indigo' },
 ];
@@ -41,7 +42,9 @@ export function avatarHTML(avatarIndex = 0, { size = 'w-14 h-14', frame = null }
   const inner =
     avatar.type === 'image'
       ? `<img src="${avatar.src}" alt="" class="w-3/4 h-3/4 object-contain" />`
-      : `<span class="w-1/2 h-1/2 ${avatar.fg}">${icons[avatar.iconName] ?? ''}</span>`;
+      : avatar.type === 'asset'
+        ? `<img src="${avatar.src}" alt="" class="w-1/2 h-1/2 object-contain" />`
+        : `<span class="w-1/2 h-1/2 ${avatar.fg}">${icons[avatar.iconName] ?? ''}</span>`;
   const bg = avatar.type === 'image' ? `${avatar.bg} ${avatar.border ?? ''} border-2` : avatar.bg;
   return `<span class="${size} ${bg} ${ring} rounded-full grid place-items-center overflow-hidden shrink-0" aria-hidden="true">${inner}</span>`;
 }

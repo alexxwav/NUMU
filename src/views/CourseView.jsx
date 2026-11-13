@@ -3,10 +3,13 @@ import { ArrowLeft, ChevronRight } from 'lucide-react';
 import catalog from '../data/lessonContent.json';
 import { getCourseById, getLessonsForCourse } from '../utils/lessonContent.js';
 import { sfx } from '../utils/audio.js';
+import { useLessonProgress } from '../hooks/useLessonProgress.js';
+import LessonStars from '../components/LessonStars.jsx';
 import { COURSE_STYLE } from './CoursesView.jsx';
 
 export default function CourseView() {
   const { courseId } = useParams();
+  const { starsByLesson } = useLessonProgress();
   const course = getCourseById(catalog, courseId);
   if (!course) return <Navigate to="/cursos" replace />;
 
@@ -42,6 +45,7 @@ export default function CourseView() {
             <div className="flex-1">
               <h3 className="text-xl font-fredoka font-bold">{lesson.title}</h3>
               <p className="text-gray-500 text-sm mt-1">{lesson.objective}</p>
+              <LessonStars stars={starsByLesson[lesson.id] ?? 0} className="mt-2" />
             </div>
             <ChevronRight className="w-8 h-8 text-numu-purple shrink-0" />
           </Link>

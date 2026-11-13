@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { User, Volume2, Shield, Lock } from 'lucide-react';
 import { store } from '../state/store.js';
 import { sfx } from '../utils/audio.js';
+import { flameOn, flameOff } from '../components/iconAssets.js';
 
 // --- Constante de la pregunta parental ---
 const GATE_ANSWER = 6;
@@ -218,10 +219,13 @@ export default function SettingsView() {
                 { label: 'Nivel', value: state.level },
                 { label: 'Estrellas', value: state.stars },
                 { label: 'Gemas', value: state.gems },
-                { label: 'Racha', value: `${state.streak} d` }
+                { label: 'Racha', value: `${state.streak} d`, icon: state.streak > 0 ? flameOn : flameOff }
               ].map((m, i) => (
                 <div key={i} className="rounded-card bg-soft-lavender p-4 border-2 border-gray-100">
-                  <p className="font-fredoka font-bold text-2xl text-numu-purple">{m.value}</p>
+                  <p className={`font-fredoka font-bold text-2xl text-numu-purple ${m.icon ? 'flex items-center justify-center gap-2' : ''}`}>
+                    {m.icon && <img src={m.icon} alt="" className="w-6 h-6 object-contain" />}
+                    {m.value}
+                  </p>
                   <p className="text-xs font-bold text-gray-500 uppercase">{m.label}</p>
                 </div>
               ))}

@@ -11,11 +11,11 @@ const COLORS = Object.freeze({
   Coral: '#FF5A5F', Cian: '#00B4D8',
 });
 const OBJECTS = Object.freeze({
-  star: ['estrellas', 'text-sunshine-yellow'],
+  star: ['estrellas', ''],
   ball: ['pelotas', 'text-cyan-ocean'],
   fish: ['peces', 'text-orange-energy'],
   balloon: ['globos', 'text-coral-alert'],
-  heart: ['corazones', 'text-numu-purple'],
+  heart: ['corazones', ''],
 });
 const SHAPES = Object.freeze({
   triangle: ['triángulo', 3, '50,8 92,88 8,88'],
@@ -66,7 +66,8 @@ function renderVisual(visual) {
   switch (visual.type) {
     case 'objects': {
       const [name, colorClass] = OBJECTS[visual.icon];
-      const objects = Array.from({ length: visual.count }, () => icon(visual.icon, `w-11 h-11 sm:w-14 sm:h-14 ${colorClass}`)).join('');
+      const objectClass = ['w-11 h-11 sm:w-14 sm:h-14', colorClass].filter(Boolean).join(' ');
+      const objects = Array.from({ length: visual.count }, () => icon(visual.icon, objectClass)).join('');
       return `<div class="flex flex-wrap gap-3 justify-center items-center max-w-md mx-auto p-4 bg-white rounded-card border-2 border-border-gray" role="img" aria-label="${visual.count} ${name}">${objects}</div>`;
     }
     case 'expression': {

@@ -1,12 +1,10 @@
+import { assetIcon, hasAssetIcon } from './iconAssets.js';
+
 const svg = (paths, viewBox = '0 0 24 24', extra = '') => `
 <svg viewBox="${viewBox}" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ${extra}>${paths}</svg>`;
 
 export const icons = {
-  heart: `<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21s-7.5-4.7-9.6-9.2C.7 8.3 2.4 4.6 5.9 3.7c2.2-.6 4.4.3 5.6 2 1.2-1.7 3.4-2.6 5.6-2 3.5.9 5.2 4.6 3.5 8.1C19.5 16.3 12 21 12 21Z"/></svg>`,
-  heartBroken: `<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21s-7.5-4.7-9.6-9.2C.7 8.3 2.4 4.6 5.9 3.7c2.2-.6 4.4.3 5.6 2 .5-.7 1.3-1.3 2.2-1.7l-2 4.6 3.4 1.5-2.1 2.6 1.6 5.4c-.9.7-2 1.4-3.2 2L12 21Z"/><path d="M13 3.5 11 8l4 1.8-2.2 2.7" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>`,
-  star: `<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="m12 2.6 2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.4l-5.8 3.1 1.1-6.5L2.6 9.4l6.5-.9L12 2.6Z"/></svg>`,
   gem: `<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6 3h12l4 6-10 12L2 9l4-6Zm.9 2L4.4 8.6h4.2L10 5H6.9Zm5.1-.4L10.4 7H4l3.3-4H12Zm2.6 0 3.3 4h-6.4L14 4.6ZM20 8.6h-4.2L14 5h3.7L20 8.6ZM12 19.2 17 10.6h-2.3L12 15.6 9.3 10.6H7l5 8.6Z"/></svg>`,
-  flame: `<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M13 2c.6 3.2-1 5-2.6 6.5C8.7 10.1 7 11.7 7 15a5 5 0 0 0 10 0c0-2.4-1.2-4-2.4-5.4-.3 1-1 1.8-2 2.2.6-2.6-.4-6.6 2.4-9.8h-2ZM10.5 14c-1.5 1-2 2.2-2 3.4A2.6 2.6 0 0 0 11 20a2.5 2.5 0 0 0 2.5-2.5c0-1.2-.9-2.4-3-3.5Z"/></svg>`,
   gear: svg('<circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.9 2.9l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.9-2.9l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.9-2.9l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.9 2.9l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/>'),
   home: svg('<path d="m3 10 9-7 9 7v10a1.5 1.5 0 0 1-1.5 1.5h-5v-7h-5v7h-5A1.5 1.5 0 0 1 3 20V10Z"/>'),
   trophy: svg('<path d="M8 4h8v5a4 4 0 0 1-8 0V4Z"/><path d="M8 5H5.5A1.5 1.5 0 0 0 4 6.5v.5a4 4 0 0 0 4 4M16 5h2.5A1.5 1.5 0 0 1 20 6.5v.5a4 4 0 0 1-4 4"/><path d="M12 13v4m-4 3h8m-6.5-3h5"/>'),
@@ -56,5 +54,8 @@ export const icons = {
 };
 
 export function icon(name, className = 'w-6 h-6') {
+  if (hasAssetIcon(name)) {
+    return `<span class="inline-flex ${className}">${assetIcon(name, 'on', 'w-full h-full')}</span>`;
+  }
   return `<span class="inline-flex ${className}">${icons[name] ?? ''}</span>`;
 }
