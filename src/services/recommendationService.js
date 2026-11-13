@@ -18,6 +18,7 @@ export const CRITERIA = Object.freeze({
   C6: 'Desempate: primero los cursos de interés y luego el orden del catálogo (curso y lección).',
   C7: 'Si todas las lecciones están dominadas, se sugiere un repaso de la primera lección del curso de interés.',
   C8: 'Se muestran como máximo 3 recomendaciones y nunca dos sobre la misma lección.',
+  C9: 'Para decidir reforzar, continuar o avanzar se usa la última ronda de cada lección cuando existe; si no, la mejor puntuación. La mejor sigue siendo la que cuentan premios y logros.',
 });
 
 export const RECOMMENDATION_TYPES = Object.freeze({
@@ -70,6 +71,9 @@ const clamp = (stars) => Math.max(0, Math.min(3, Math.round(Number(stars) || 0))
  * @param {string[]} [input.interests] - Intereses elegidos en el cuestionario inicial.
  * @param {number|null} [input.diagnosticScore] - Aciertos del diagnóstico (0–5) o null si no hay.
  * @param {Record<string, number>} [input.starsByLesson] - Mejor estrella guardada por lección (0–3).
+ *   Es la que cuentan premios y logros; aquí solo sirve para saber qué lecciones ya se empezaron.
+ * @param {Record<string, number>} [input.latestStarsByLesson] - Estrellas de la ÚLTIMA ronda por lección (0–3).
+ *   Opcional: si una lección no la tiene, se decide con la mejor (C9).
  * @param {{lessonId: string, stars: number, approved: boolean}|null} [input.lastRound]
  *   Resultado de la ronda recién terminada, tal como lo decidió el motor (starsForRound).
  * @param {number} [input.limit] - Máximo de recomendaciones (C8).
@@ -81,6 +85,7 @@ export function buildRecommendations({
   interests = [],
   diagnosticScore = null,
   starsByLesson = {},
+  latestStarsByLesson = {},
   lastRound = null,
   limit = 3,
 } = {}) {
@@ -104,33 +109,51 @@ export function buildRecommendations({
     .map((lesson) => ({ lesson, course })));
   const byId = new Map(ordered.map((entry) => [entry.lesson.id, entry]));
 
-  // Mejor estrella por lección, incluyendo la ronda recién terminada (sin crear otra fuente de verdad).
+  // Mejor y última estrella por lección. La ronda recién terminada es la última y puede subir la mejor.
   const best = {};
   for (const [lessonId, stars] of Object.entries(starsByLesson ?? {})) {
     if (byId.has(lessonId)) best[lessonId] = clamp(stars);
   }
+  const latest = {};
+  for (const [lessonId, stars] of Object.entries(latestStarsByLesson ?? {})) {
+    if (byId.has(lessonId) && stars !== null && stars !== undefined) latest[lessonId] = clamp(stars);
+  }
   const round = lastRound && byId.has(lastRound.lessonId) ? lastRound : null;
-  if (round?.approved) best[round.lessonId] = Math.max(best[round.lessonId] ?? 0, clamp(round.stars));
-  const starsOf = (lessonId) => best[lessonId] ?? 0;
+  if (round) {
+    latest[round.lessonId] = round.approved ? clamp(round.stars) : 0;
+    if (round.approved) best[round.lessonId] = Math.max(best[round.lessonId] ?? 0, clamp(round.stars));
+  }
+  const bestOf = (lessonId) => best[lessonId] ?? 0;
+  const hasLatest = (lessonId) => Object.hasOwn(latest, lessonId);
+  // C9: se decide con la última ronda cuando existe; si no, con la mejor puntuación.
+  const decisionOf = (lessonId) => (hasLatest(lessonId) ? latest[lessonId] : bestOf(lessonId));
+  const started = (lessonId) => bestOf(lessonId) > 0 || hasLatest(lessonId);
+  // Si la última ronda fue peor que la mejor, el motivo lo dice (la mejor sigue contando para premios).
+  const scoreNote = (lessonId) => (hasLatest(lessonId) && latest[lessonId] < bestOf(lessonId)
+    ? ` Tu mejor marca sigue siendo de ${bestOf(lessonId)} estrellas.`
+    : '');
 
   const recommendations = [];
   const add = (type, entry, message, reason, rules) => {
     if (!entry || recommendations.some((rec) => rec.lessonId === entry.lesson.id)) return;
+    const id = entry.lesson.id;
     recommendations.push({
       type,
       courseId: entry.course.id,
-      lessonId: entry.lesson.id,
+      lessonId: id,
       title: entry.lesson.title,
       courseTitle: entry.course.title,
       message,
       reason,
       rules,
-      route: `/lecciones/${entry.lesson.id}`,
+      route: `/lecciones/${id}`,
+      bestStars: bestOf(id),
+      latestStars: hasLatest(id) ? latest[id] : null,
     });
   };
   const nextUnstarted = (afterLessonId = null) => {
     const start = afterLessonId ? ordered.findIndex((e) => e.lesson.id === afterLessonId) + 1 : 0;
-    return [...ordered.slice(start), ...ordered.slice(0, start)].find((e) => starsOf(e.lesson.id) === 0) ?? null;
+    return [...ordered.slice(start), ...ordered.slice(0, start)].find((e) => !started(e.lesson.id)) ?? null;
   };
 
   // C1: la ronda recién terminada manda (R10 antes que R7–R9).
@@ -155,22 +178,33 @@ export function buildRecommendations({
     }
   }
 
-  // C2: refuerzo (mejor ronda con 1 estrella, R9).
+  // Texto de qué ronda se usó para decidir (C9).
+  const which = (lessonId) => (hasLatest(lessonId) ? 'Tu última ronda' : 'Tu mejor ronda');
+
+  // C2: refuerzo (ronda con 1 estrella, R9; o última ronda sin aprobar, R10).
   for (const entry of ordered) {
-    if (starsOf(entry.lesson.id) === 1) {
+    const id = entry.lesson.id;
+    const stars = decisionOf(id);
+    if (stars === 1) {
       add(REFORZAR, entry, `Te recomendamos repasar ${entry.lesson.title.toLowerCase()}.`,
-        'Tu mejor ronda en esta lección obtuvo 1 estrella: un repaso te ayudará a avanzar.', ['R9', 'C2']);
+        `${which(id)} en esta lección obtuvo 1 estrella: un repaso te ayudará a avanzar.${scoreNote(id)}`,
+        hasLatest(id) ? ['R9', 'C2', 'C9'] : ['R9', 'C2']);
+    } else if (stars === 0 && started(id)) {
+      add(REFORZAR, entry, `Vuelve a intentar ${entry.lesson.title.toLowerCase()} con calma.`,
+        `Tu última ronda en esta lección no se completó porque se acabaron las vidas.${scoreNote(id)}`, ['R10', 'C2', 'C9']);
     }
   }
-  // C3: continuar (mejor ronda con 2 estrellas, R8).
+  // C3: continuar (ronda con 2 estrellas, R8).
   for (const entry of ordered) {
-    if (starsOf(entry.lesson.id) === 2) {
+    const id = entry.lesson.id;
+    if (decisionOf(id) === 2) {
       add(CONTINUAR, entry, `Has mejorado mucho en ${entry.lesson.title.toLowerCase()}. ¡Continúa aprendiendo!`,
-        'Tu mejor ronda obtuvo 2 estrellas: una ronda más y puedes conseguir las 3.', ['R8', 'C3']);
+        `${which(id)} obtuvo 2 estrellas: una ronda más y puedes conseguir las 3.${scoreNote(id)}`,
+        hasLatest(id) ? ['R8', 'C3', 'C9'] : ['R8', 'C3']);
     }
   }
   // C4: avanzar después de dominar una lección (3 estrellas, R7).
-  const mastered = ordered.filter((entry) => starsOf(entry.lesson.id) === 3);
+  const mastered = ordered.filter((entry) => decisionOf(entry.lesson.id) === 3);
   if (mastered.length) {
     const next = nextUnstarted(mastered[mastered.length - 1].lesson.id);
     if (next) {
@@ -183,7 +217,7 @@ export function buildRecommendations({
     ? `Tu diagnóstico te ubicó en el nivel ${initialLevel}.`
     : 'Todavía no tenemos tu diagnóstico, así que empezamos desde el principio.';
   for (const course of courses) {
-    const entry = ordered.find((e) => e.course.id === course.id && starsOf(e.lesson.id) === 0);
+    const entry = ordered.find((e) => e.course.id === course.id && !started(e.lesson.id));
     if (!entry) continue;
     const isInterest = interestCourses.includes(course.id);
     add(INICIAR, entry, `¡Vamos a practicar ${entry.lesson.title.toLowerCase()}!`,

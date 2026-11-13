@@ -9,12 +9,14 @@ import { useLessonProgress } from './useLessonProgress.js';
  * Usa los mismos datos que el resto de la app, sin otra fuente de verdad:
  *   - intereses y aciertos del diagnóstico: state.profile (se cargan de Supabase al iniciar sesión);
  *   - estrellas por lección: useLessonProgress (tabla progreso_leccion, RLS: solo las propias).
+ *     Si useLessonProgress devuelve latestStarsByLesson (propuesta_ultima_ronda.sql), se usa la
+ *     última ronda para decidir; mientras no exista, el recomendador decide con la mejor.
  * @param {Object} [options]
  * @param {{lessonId: string, stars: number, approved: boolean}|null} [options.lastRound] - Ronda recién terminada.
  * @param {number} [options.limit] - Máximo de recomendaciones.
  */
 export function useRecommendations({ lastRound = null, limit = 3 } = {}) {
-  const { starsByLesson } = useLessonProgress();
+  const { starsByLesson, latestStarsByLesson } = useLessonProgress();
   const [state, setState] = useState(() => store.get());
 
   useEffect(() => store.subscribe(() => setState(store.get())), []);
@@ -28,6 +30,7 @@ export function useRecommendations({ lastRound = null, limit = 3 } = {}) {
     stars[lessonId] = Math.max(stars[lessonId] ?? 0, value);
   }
   const starsKey = JSON.stringify(stars);
+  const latestKey = JSON.stringify(latestStarsByLesson ?? {});
   const interestsKey = JSON.stringify(profile.interests ?? []);
   const roundKey = lastRound ? `${lastRound.lessonId}:${lastRound.stars}:${lastRound.approved}` : '';
 
@@ -36,7 +39,8 @@ export function useRecommendations({ lastRound = null, limit = 3 } = {}) {
     interests: JSON.parse(interestsKey),
     diagnosticScore,
     starsByLesson: JSON.parse(starsKey),
+    latestStarsByLesson: JSON.parse(latestKey),
     lastRound,
     limit,
-  }), [interestsKey, diagnosticScore, starsKey, roundKey, limit]); // eslint-disable-line react-hooks/exhaustive-deps
+  }), [interestsKey, diagnosticScore, starsKey, latestKey, roundKey, limit]); // eslint-disable-line react-hooks/exhaustive-deps
 }

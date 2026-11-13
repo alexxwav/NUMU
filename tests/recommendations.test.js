@@ -135,3 +135,84 @@ test('datos desconocidos se ignoran: lecciones inexistentes y estrellas fuera de
   for (const rec of result.recommendations) assert.ok(LESSON_IDS.has(rec.lessonId));
   assert.equal(result.recommendations.some((r) => r.lessonId === 'figuras'), false); // 9 → 3 estrellas: dominada
 });
+
+// ---- Mejor puntuación frente a última ronda (C9) ----
+
+test('C9: mejor 3 y última 1 → reforzar, y la mejor sigue siendo 3 para premios', () => {
+  const result = buildRecommendations({ catalog, interests: ['aritmetica'],
+    starsByLesson: { 'conteo-basico': 3 }, latestStarsByLesson: { 'conteo-basico': 1 } });
+  const [rec] = result.recommendations;
+  assert.equal(rec.type, T.REFORZAR);
+  assert.equal(rec.lessonId, 'conteo-basico');
+  assert.deepEqual(rec.rules, ['R9', 'C2', 'C9']);
+  assert.match(rec.reason, /Tu última ronda/);
+  assert.match(rec.reason, /mejor marca sigue siendo de 3 estrellas/);
+  assert.equal(rec.bestStars, 3);
+  assert.equal(rec.latestStars, 1);
+  assert.equal(result.recommendations.some((r) => r.type === T.AVANZAR), false);
+});
+
+test('C9: mejor 3 y última 2 → continuar la misma lección', () => {
+  const rec = first({ starsByLesson: { figuras: 3 }, latestStarsByLesson: { figuras: 2 } });
+  assert.equal(rec.type, T.CONTINUAR);
+  assert.equal(rec.lessonId, 'figuras');
+  assert.ok(rec.rules.includes('R8') && rec.rules.includes('C9'));
+});
+
+test('C9: mejor 1 y última 3 → ya no se refuerza, se avanza', () => {
+  const result = buildRecommendations({ catalog, interests: ['aritmetica'],
+    starsByLesson: { 'conteo-basico': 1 }, latestStarsByLesson: { 'conteo-basico': 3 } });
+  assert.equal(result.recommendations.some((r) => r.type === T.REFORZAR), false);
+  assert.equal(result.recommendations[0].type, T.AVANZAR);
+  assert.equal(result.recommendations[0].lessonId, 'sumas-basicas');
+});
+
+test('C9: sin datos de última ronda se decide con la mejor (compatibilidad)', () => {
+  const withoutLatest = buildRecommendations({ catalog, starsByLesson: { 'sumas-basicas': 1, figuras: 2 } });
+  const emptyLatest = buildRecommendations({ catalog, starsByLesson: { 'sumas-basicas': 1, figuras: 2 }, latestStarsByLesson: {} });
+  const nullLatest = buildRecommendations({ catalog, starsByLesson: { 'sumas-basicas': 1, figuras: 2 },
+    latestStarsByLesson: { 'sumas-basicas': null, figuras: undefined } });
+  assert.deepEqual(emptyLatest, withoutLatest);
+  assert.deepEqual(nullLatest, withoutLatest);
+  assert.equal(withoutLatest.recommendations[0].type, T.REFORZAR);
+  assert.match(withoutLatest.recommendations[0].reason, /Tu mejor ronda/);
+  assert.equal(withoutLatest.recommendations[0].latestStars, null);
+});
+
+test('C9: datos parciales: cada lección usa su última ronda si la tiene', () => {
+  const result = buildRecommendations({ catalog,
+    starsByLesson: { 'conteo-basico': 3, figuras: 2 }, latestStarsByLesson: { 'conteo-basico': 1 } });
+  const byLesson = Object.fromEntries(result.recommendations.map((r) => [r.lessonId, r.type]));
+  assert.equal(byLesson['conteo-basico'], T.REFORZAR); // usa la última (1)
+  assert.equal(byLesson.figuras, T.CONTINUAR);         // sin última: usa la mejor (2)
+});
+
+test('C9: última ronda sin vidas (0) en una lección empezada → reforzar con R10', () => {
+  const rec = first({ starsByLesson: { patrones: 2 }, latestStarsByLesson: { patrones: 0 } });
+  assert.equal(rec.type, T.REFORZAR);
+  assert.equal(rec.lessonId, 'patrones');
+  assert.deepEqual(rec.rules, ['R10', 'C2', 'C9']);
+});
+
+test('C9: con última ronda pero sin mejor guardada, la lección cuenta como empezada', () => {
+  const rec = first({ latestStarsByLesson: { figuras: 2 } });
+  assert.equal(rec.type, T.CONTINUAR);
+  assert.equal(rec.lessonId, 'figuras');
+});
+
+test('C1 manda sobre la última ronda guardada: la ronda recién terminada es la nueva última', () => {
+  const rec = first({ starsByLesson: { 'sumas-basicas': 3 }, latestStarsByLesson: { 'sumas-basicas': 3 },
+    lastRound: round('sumas-basicas', 5) });
+  assert.equal(rec.type, T.REFORZAR);
+  assert.deepEqual(rec.rules, ['R9', 'C1']);
+  assert.equal(rec.bestStars, 3);
+  assert.equal(rec.latestStars, 1);
+});
+
+test('C9 no modifica los datos de entrada', () => {
+  const best = { 'conteo-basico': 3 };
+  const latest = { 'conteo-basico': 1 };
+  buildRecommendations({ catalog, starsByLesson: best, latestStarsByLesson: latest, lastRound: round('conteo-basico', 0) });
+  assert.deepEqual(best, { 'conteo-basico': 3 });
+  assert.deepEqual(latest, { 'conteo-basico': 1 });
+});
