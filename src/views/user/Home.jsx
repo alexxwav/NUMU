@@ -8,6 +8,8 @@ import { store, MODULES } from '../../state/store.js';
 import { sfx } from '../../utils/audio.js';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { useLessonProgress } from '../../hooks/useLessonProgress.js';
+import { useRecommendations } from '../../hooks/useRecommendations.js';
+import Recommendations from '../../components/Recommendations.jsx';
 import { normalizeModuleId } from '../../data/subjects.js';
 import catalog from '../../data/lessonContent.json';
 import { COURSE_STYLE } from '../CoursesView.jsx';
@@ -47,6 +49,7 @@ export default function Home() {
   // estrellas ya ganadas en el dispositivo.
   const { starsByLesson, totalStars, loaded } = useLessonProgress();
   const starCount = loaded ? Math.max(state.stars, totalStars) : state.stars;
+  const { recommendations, unavailableInterests } = useRecommendations();
 
   // Manejador para jugar un nivel
   const handlePlayLevel = (moduleId, levelNumber) => {
@@ -158,6 +161,9 @@ export default function Home() {
           </div>
           <div className="absolute top-[-50px] right-[-50px] w-64 h-64 bg-numu-deep-indigo rounded-full opacity-30"></div>
         </section>
+
+        {/* --- Recomendado para ti (sistema de recomendación por reglas) --- */}
+        <Recommendations recommendations={recommendations} unavailableInterests={unavailableInterests} />
 
         {/* --- Cursos (catálogo de lecciones de Viviana) --- */}
         <section>

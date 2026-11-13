@@ -7,6 +7,8 @@ import { generateQuestions } from '../state/questions.js';
 import { sfx, speak } from '../utils/audio.js';
 import { useAuth } from '../hooks/useAuth.jsx';
 import { useLessonProgress } from '../hooks/useLessonProgress.js';
+import { useRecommendations } from '../hooks/useRecommendations.js';
+import Recommendations from '../components/Recommendations.jsx';
 import { starsForRound } from '../utils/stars.js';
 import { normalizeModuleId } from '../data/subjects.js';
 import lessonCatalog from '../data/lessonContent.json';
@@ -52,6 +54,11 @@ export default function Game() {
   const progressPercent = (index / questions.length) * 100;
   // Estrellas de la ronda: 0 si se acabaron las vidas, de 1 a 3 según los errores.
   const roundStars = starsForRound({ total: questions.length, mistakes, approved: lives > 0 });
+  // Siguiente actividad recomendada a partir del resultado que ya decidió el motor (solo rondas de lección).
+  const { recommendations: nextSteps } = useRecommendations({
+    lastRound: isFinished && lessonEntry ? { lessonId: lessonEntry.lesson.id, stars: roundStars, approved: lives > 0 } : null,
+    limit: 1,
+  });
 
   // Escuchar la instrucción al cargar la pregunta
   useEffect(() => {
@@ -166,6 +173,13 @@ export default function Game() {
         <div className="bg-white text-text-dark rounded-card px-8 py-5 mb-8 font-fredoka font-bold text-2xl shadow-lg relative z-10">
           {questions.length} respuestas · {stars * 10} XP · +{stars * 5} gemas
         </div>
+
+        {lessonEntry && nextSteps.length > 0 && (
+          <div className="relative z-10 w-full max-w-md mb-8">
+            <p className="font-fredoka font-bold text-xl mb-3">¿Qué sigue?</p>
+            <Recommendations recommendations={nextSteps} compact />
+          </div>
+        )}
 
         <div className="flex flex-col sm:flex-row gap-4 relative z-10 w-full max-w-md">
           <button onClick={() => { sfx.tap(); navigate(exitTo); }} className="flex-1 bg-mint-success text-white font-fredoka font-bold text-xl py-4 rounded-btn shadow-3d-primary hover:translate-y-1 hover:shadow-none transition-all">
