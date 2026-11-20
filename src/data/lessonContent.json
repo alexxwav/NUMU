@@ -14,14 +14,14 @@
           "module_id": "conteo",
           "base_level": 1,
           "objective": "Contar conjuntos pequeños de objetos relacionando cada objeto con un número.",
-          "explanation": "Contar es descubrir cuántos objetos hay. Señalamos cada uno mientras decimos los números en orden. El último número nos indica la cantidad total.",
+          "explanation": "Contar nos ayuda a descubrir cuántas cosas hay. Señala cada objeto una sola vez y di los números en orden.",
           "guided_example": {
             "visual": {
               "type": "objects",
-              "icon": "star",
-              "count": 4
+              "icon": "balloon",
+              "count": 5
             },
-            "explanation": "Señala las estrellas una por una: uno, dos, tres, cuatro. El último número es cuatro: hay cuatro estrellas."
+            "explanation": "Selecciona cada globo una sola vez. Puedes empezar por la izquierda."
           },
           "exercises": [
             {
