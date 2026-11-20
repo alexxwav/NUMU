@@ -9,6 +9,7 @@ import { useLessonProgress } from '../hooks/useLessonProgress.js';
 import { lessonLevelFromState, MAX_LESSON_LEVEL } from '../utils/lessonLevel.js';
 import { QUESTIONS_PER_ROUND } from '../utils/lessonRound.js';
 import mascotUrl from '../assets/brand/mascot/numu-morado.png';
+import CountingExample from '../components/CountingExample.jsx';
 import { COURSE_STYLE } from './CoursesView.jsx';
 
 const COLOR_NAMES = ['Morado', 'Amarillo', 'Verde', 'Coral', 'Cian'];
@@ -49,7 +50,8 @@ export default function LessonView() {
 
   const { lesson, course } = found;
   const style = COURSE_STYLE[course.id] ?? COURSE_STYLE.aritmetica;
-  const exampleHtml = guidedExampleHtml(lesson.guided_example?.visual);
+  const isCountingLesson = lesson.id === 'conteo-basico';
+  const exampleHtml = isCountingLesson ? null : guidedExampleHtml(lesson.guided_example?.visual);
   const level = lessonLevelFromState(store.get(), lesson.id);
 
   const practice = () => {
@@ -57,6 +59,17 @@ export default function LessonView() {
     store.set({ module: lesson.module_id });
     navigate(`/lecciones/${lesson.id}/jugar`);
   };
+
+  const practiceButton = (disabled = false) => (
+    <button type="button" onClick={practice} disabled={disabled}
+      className={`w-full min-h-touch-lg bg-sunshine-yellow text-text-dark font-fredoka font-bold text-2xl rounded-btn shadow-3d-yellow ${
+        isCountingLesson
+          ? 'enabled:motion-safe:hover:translate-y-1 enabled:hover:shadow-none motion-safe:transition-all disabled:opacity-60'
+          : 'hover:translate-y-1 hover:shadow-none transition-all'
+      }`}>
+      ¡PRACTICAR! ({QUESTIONS_PER_ROUND} ejercicios)
+    </button>
+  );
 
   return (
     <div className="min-h-screen bg-soft-lavender font-poppins text-text-dark p-6 md:p-10 pb-24">
@@ -76,19 +89,21 @@ export default function LessonView() {
           </div>
         </header>
 
-        <section className="bg-white rounded-card p-6 border-2 border-gray-100 shadow-sm flex gap-4">
-          <Target className="w-8 h-8 text-numu-purple shrink-0" />
-          <div>
-            <h2 className="font-fredoka font-bold text-xl mb-1">¿Qué vas a aprender?</h2>
-            <p className="text-gray-600">{lesson.objective}</p>
-          </div>
-        </section>
+        {!isCountingLesson && (
+          <section className="bg-white rounded-card p-6 border-2 border-gray-100 shadow-sm flex gap-4">
+            <Target className="w-8 h-8 text-numu-purple shrink-0" />
+            <div>
+              <h2 className="font-fredoka font-bold text-xl mb-1">¿Qué vas a aprender?</h2>
+              <p className="text-gray-600">{lesson.objective}</p>
+            </div>
+          </section>
+        )}
 
         <section className="bg-white rounded-card p-6 border-2 border-gray-100 shadow-sm flex gap-4 items-start">
           <img src={mascotUrl} alt="NUMU" className="w-14 h-14 object-contain shrink-0" />
           <div className="flex-1">
             <div className="flex items-center justify-between gap-3 mb-1">
-              <h2 className="font-fredoka font-bold text-xl">Octo te explica</h2>
+              <h2 className="font-fredoka font-bold text-xl">{isCountingLesson ? '¡Vamos a contar!' : 'Octo te explica'}</h2>
               <button type="button" onClick={() => speak(lesson.explanation)} aria-label="Escuchar la explicación"
                 className="w-12 h-12 shrink-0 grid place-items-center rounded-full bg-numu-purple text-white shadow-3d-primary active:translate-y-1 transition-transform">
                 <Volume2 className="w-6 h-6" />
@@ -98,7 +113,7 @@ export default function LessonView() {
           </div>
         </section>
 
-        {lesson.guided_example && (
+        {!isCountingLesson && lesson.guided_example && (
           <section className="bg-white rounded-card p-6 border-2 border-gray-100 shadow-sm space-y-4">
             <div className="flex gap-4">
               <Lightbulb className="w-8 h-8 text-sunshine-yellow shrink-0" />
@@ -109,10 +124,9 @@ export default function LessonView() {
           </section>
         )}
 
-        <button type="button" onClick={practice}
-          className="w-full min-h-touch-lg bg-sunshine-yellow text-text-dark font-fredoka font-bold text-2xl rounded-btn shadow-3d-yellow hover:translate-y-1 hover:shadow-none transition-all">
-          ¡PRACTICAR! ({QUESTIONS_PER_ROUND} ejercicios)
-        </button>
+        {isCountingLesson
+          ? <CountingExample example={lesson.guided_example} renderPractice={practiceButton} />
+          : practiceButton()}
       </div>
     </div>
   );
