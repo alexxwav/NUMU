@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import confetti from 'canvas-confetti';
-import { X, Volume2 } from 'lucide-react';
+import { Lightbulb, X, Volume2 } from 'lucide-react';
 import { store } from '../state/store.js';
 import { generateQuestions } from '../state/questions.js';
 import { lessonForModule, lessonLevelFromState, levelAfterRound, MAX_LESSON_LEVEL } from '../utils/lessonLevel.js';
@@ -18,6 +18,13 @@ import { getLessonById } from '../utils/lessonContent.js';
 import mascotUrl from '../assets/brand/mascot/numu-morado.png';
 import { heartOn, heartOff, starIcon } from '../components/iconAssets.js';
 
+const ROUND_TIPS = {
+  conteo: 'Señala un objeto a la vez mientras cuentas. El último número que digas es el total.',
+  aritmetica: 'Empieza en el primer número. Avanza si ves + o retrocede si ves −. El segundo número te dice cuántos pasos dar.',
+  geometria: 'Elige una esquina y recorre el borde. Cuenta cada lado una sola vez hasta volver a esa esquina.',
+  patrones: 'Busca el grupo de colores que se repite. Sigue ese mismo orden hasta llegar al espacio vacío.',
+};
+
 function burst({ particleCount = 60, spread = 70 } = {}) {
   if (store.get().settings?.reduceMotion) return;
   confetti({ particleCount, spread, origin: { y: 0.7 }, colors: ['#5124EE', '#FFC700', '#00D282', '#00B4D8', '#FF8800'] });
@@ -32,6 +39,7 @@ export default function Game() {
   const [lessonEntry] = useState(() => (lessonId
     ? getLessonById(lessonCatalog, lessonId)
     : lessonForModule(lessonCatalog, nivel ?? store.get().module)));
+  const moduleId = lessonEntry?.lesson.module_id ?? normalizeModuleId(nivel ?? store.get().module) ?? 'conteo';
   const exitTo = lessonId && lessonEntry ? `/lecciones/${lessonEntry.lesson.id}` : '/inicio';
 
   // Nivel ACADÉMICO de esta lección (1 a 3): el guardado o el inicial del diagnóstico (R1–R3).
@@ -42,12 +50,12 @@ export default function Game() {
   const [questions] = useState(() => {
     // Lección: ejercicios según su nivel (nivel 1 catálogo de Viviana; 2 y 3 generador con R12–R14).
     if (lessonEntry) return buildLessonRound({ lesson: lessonEntry.lesson, level: lessonLevel });
-    const moduleId = normalizeModuleId(nivel ?? store.get().module) ?? 'conteo';
     return generateQuestions(moduleId, 1, QUESTIONS_PER_ROUND);
   });
 
   const [index, setIndex] = useState(0);
   const [mistakes, setMistakes] = useState(0);
+  const [isTipOpen, setIsTipOpen] = useState(false);
   const [answered, setAnswered] = useState(false);
   const [selectedOption, setSelectedOption] = useState(null);
   const [sheet, setSheet] = useState(null); // Controla el mensaje emergente de abajo
@@ -100,6 +108,7 @@ export default function Game() {
           if (index + 1 >= questions.length) {
             finishRound();
           } else {
+            setIsTipOpen(false);
             setIndex(index + 1);
             setAnswered(false);
             setSelectedOption(null);
@@ -166,6 +175,16 @@ export default function Game() {
     burst({ particleCount: 160, spread: 110 });
   };
 
+  const roundTipCard = isTipOpen && (
+    <aside className="flex items-start gap-3 rounded-card bg-soft-lavender border-2 border-numu-purple/20 px-4 py-3 text-left text-text-dark shadow-sm">
+      <Lightbulb className="mt-1 h-6 w-6 shrink-0 text-numu-purple" aria-hidden="true" />
+      <div>
+        <p className="font-fredoka text-xl font-bold text-numu-purple">¡Vamos paso a paso!</p>
+        <p className="text-sm sm:text-base">{ROUND_TIPS[moduleId]}</p>
+      </div>
+    </aside>
+  );
+
   // --- Vista de Resultados (Frame 5) ---
   if (isFinished) {
     const stars = roundStars;
@@ -200,6 +219,8 @@ export default function Game() {
                 : `${lessonEntry.lesson.title}: nivel ${levelResult.level} de ${MAX_LESSON_LEVEL}`}
           </p>
         )}
+
+        {roundTipCard && <div className="relative z-10 mb-8 w-full max-w-md">{roundTipCard}</div>}
 
         {lessonEntry && nextSteps.length > 0 && (
           <div className="relative z-10 w-full max-w-md mb-8">
@@ -253,6 +274,22 @@ export default function Game() {
             ))}
           </div>
         </div>
+        {mistakes >= 2 && (
+          <div className="mx-auto max-w-3xl px-4 pb-3">
+            <button
+              type="button"
+              aria-expanded={isTipOpen}
+              aria-controls="round-tip"
+              onClick={() => setIsTipOpen((open) => !open)}
+              className="inline-flex min-h-11 items-center gap-2 rounded-btn bg-soft-lavender px-4 font-fredoka text-xl font-bold text-numu-purple hover:bg-numu-purple/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-numu-purple"
+            >
+              {isTipOpen ? 'Ocultar pista' : <><span aria-hidden="true">💡</span> Pista</>}
+            </button>
+            <div id="round-tip" role="status" className={isTipOpen ? 'mt-3' : undefined}>
+              {roundTipCard}
+            </div>
+          </div>
+        )}
       </header>
 
       {/* Área de la Pregunta */}
