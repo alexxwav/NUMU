@@ -1,4 +1,4 @@
-import { Lock } from 'lucide-react';
+import { Check, Lock } from 'lucide-react';
 import mascotUrl from '../assets/brand/mascot/logo-mascota-morado.png';
 import { starIcon } from './iconAssets.js';
 import './OceanMap.css';
@@ -105,10 +105,12 @@ function Chest({ style }) {
  * @param {Object} props
  * @param {number} props.totalLevels - Cantidad de niveles del recorrido.
  * @param {number} props.currentLevel - Nivel general actual (state.level).
+ * @param {string} [props.activityTitle] - Lección que abren las paradas (solo para leerla en voz y en etiquetas).
  * @param {(level: number) => void} props.onPlayLevel - Abre un nivel completado o el actual.
  * @param {boolean} [props.reduceMotion] - Ajuste «Reducir animaciones».
  */
-export default function OceanMap({ totalLevels, currentLevel, onPlayLevel, reduceMotion = false }) {
+export default function OceanMap({ totalLevels, currentLevel, activityTitle, onPlayLevel, reduceMotion = false }) {
+  const what = activityTitle ? ` de ${activityTitle}` : '';
   const points = levelPositions(totalLevels);
   const height = PAD_TOP + (totalLevels - 1) * ROW + PAD_BOTTOM;
   const reached = Math.min(currentLevel, totalLevels);
@@ -199,10 +201,13 @@ export default function OceanMap({ totalLevels, currentLevel, onPlayLevel, reduc
                 <button
                   type="button"
                   onClick={() => onPlayLevel(level)}
-                  aria-label={`Nivel ${level}, completado. Jugar de nuevo`}
+                  aria-label={`Parada ${level}, completada. Jugar otra ronda${what}`}
                   className="w-20 h-20 rounded-full bg-mint-success text-white shadow-3d-success border-4 border-white font-fredoka font-bold text-3xl grid place-items-center active:translate-y-1 transition-transform relative"
                 >
                   {level}
+                  <span className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-white text-mint-success grid place-items-center shadow-sm" aria-hidden="true">
+                    <Check className="w-5 h-5" strokeWidth={3} />
+                  </span>
                   <span className="absolute -top-4 flex gap-0.5" aria-hidden="true">
                     <img src={starIcon} alt="" className="w-5 h-5 object-contain" />
                     <img src={starIcon} alt="" className="w-5 h-5 object-contain -translate-y-1" />
@@ -215,7 +220,7 @@ export default function OceanMap({ totalLevels, currentLevel, onPlayLevel, reduc
                 <button
                   type="button"
                   onClick={() => onPlayLevel(level)}
-                  aria-label={`Nivel ${level}, tu nivel actual. Jugar`}
+                  aria-label={`Parada ${level}, estás aquí. Jugar una ronda${what}`}
                   className="w-24 h-24 rounded-full bg-numu-purple text-white shadow-3d-primary border-4 border-white font-fredoka font-bold text-4xl grid place-items-center animate-pulse-active active:translate-y-1 transition-transform relative"
                 >
                   {level}
@@ -233,7 +238,7 @@ export default function OceanMap({ totalLevels, currentLevel, onPlayLevel, reduc
                 <button
                   type="button"
                   disabled
-                  aria-label={`Nivel ${level}, bloqueado`}
+                  aria-label={`Parada ${level}, bloqueada. Termina la parada anterior para abrirla`}
                   className="w-20 h-20 rounded-full bg-gray-200 text-gray-400 border-4 border-white/80 font-fredoka font-bold text-3xl grid place-items-center cursor-not-allowed shadow-3d-neutral opacity-90"
                 >
                   <Lock className="w-8 h-8" />

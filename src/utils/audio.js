@@ -60,14 +60,65 @@ export const sfx = {
   },
 };
 
-/** Lectura en voz alta de la instrucción (Web Speech API, sin dependencias). */
+/* ---------- Lectura en voz alta (Web Speech API, sin dependencias) ---------- */
+
+// Orden de preferencia de las voces en español. Si el navegador no tiene ninguna,
+// se pide 'es-ES' y el navegador decide (puede sonar con acento de otro idioma).
+const SPANISH_PREFERENCE = ['es-MX', 'es-US', 'es-419', 'es-ES'];
+const FALLBACK_LANG = 'es-ES';
+
+let cachedVoice; // undefined = sin buscar todavía; null = no hay voz en español
+
+function pickSpanishVoice() {
+  const synth = window.speechSynthesis;
+  const voices = synth.getVoices?.() ?? [];
+  if (!voices.length) return undefined; // las voces cargan en segundo plano: se reintenta después
+  const spanish = voices.filter((v) => v.lang?.toLowerCase().replace('_', '-').startsWith('es'));
+  const byLang = (lang) => spanish.filter((v) => v.lang.toLowerCase().replace('_', '-') === lang.toLowerCase());
+  for (const lang of SPANISH_PREFERENCE) {
+    const matches = byLang(lang);
+    if (matches.length) return matches.find((v) => v.localService) ?? matches[0];
+  }
+  return spanish[0] ?? null;
+}
+
+if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+  window.speechSynthesis.addEventListener?.('voiceschanged', () => { cachedVoice = undefined; });
+}
+
+/** Voz en español que usará NUMU, o null si el dispositivo no tiene ninguna instalada. */
+export function spanishVoice() {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return null;
+  if (cachedVoice === undefined) cachedVoice = pickSpanishVoice();
+  return cachedVoice ?? null;
+}
+
+/**
+ * Texto que recibe el sintetizador: el mismo que ve el niño. Solo se escriben con palabras
+ * los signos matemáticos, que algunas voces leen en inglés o se saltan («2 + 3» → «2 más 3»).
+ * No cambia palabras, género, número ni la puntuación (¿?¡!).
+ */
+export function toSpeechText(text) {
+  return String(text ?? '')
+    .replace(/(\d)\s*\+\s*(\d)/g, '$1 más $2')
+    .replace(/(\d)\s*[−–-]\s*(\d)/g, '$1 menos $2')
+    .replace(/(\d)\s*×\s*(\d)/g, '$1 por $2')
+    .replace(/(\d)\s*÷\s*(\d)/g, '$1 entre $2')
+    .replace(/\s*=\s*/g, ' igual a ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/** Lee en voz alta exactamente el texto indicado, con una voz en español si existe. */
 export function speak(text) {
   if (!enabled() || !('speechSynthesis' in window) || !text) return;
   const volume = masterVolume();
   if (volume <= 0) return;
   window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = 'es-ES';
+  const utterance = new SpeechSynthesisUtterance(toSpeechText(text));
+  const voice = spanishVoice();
+  if (voice) utterance.voice = voice;
+  utterance.lang = voice?.lang ?? FALLBACK_LANG;
   utterance.rate = 0.95;
   utterance.pitch = 1.1;
   utterance.volume = volume;

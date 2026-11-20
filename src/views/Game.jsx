@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import confetti from 'canvas-confetti';
-import { Lightbulb, X, Volume2 } from 'lucide-react';
+import { Home, Lightbulb, X, Volume2 } from 'lucide-react';
 import { store } from '../state/store.js';
 import { generateQuestions } from '../state/questions.js';
 import { lessonForModule, lessonLevelFromState, levelAfterRound, MAX_LESSON_LEVEL } from '../utils/lessonLevel.js';
@@ -12,6 +12,7 @@ import { useLessonProgress } from '../hooks/useLessonProgress.js';
 import { useRecommendations } from '../hooks/useRecommendations.js';
 import Recommendations from '../components/Recommendations.jsx';
 import { starsForRound } from '../utils/stars.js';
+import { ROUTES } from '../services/startRoute.js';
 import { normalizeModuleId } from '../data/subjects.js';
 import lessonCatalog from '../data/lessonContent.json';
 import { getLessonById } from '../utils/lessonContent.js';
@@ -56,6 +57,8 @@ export default function Game() {
   const [index, setIndex] = useState(0);
   const [mistakes, setMistakes] = useState(0);
   const [isTipOpen, setIsTipOpen] = useState(false);
+  const [hintSeen, setHintSeen] = useState(false); // etiqueta «¡Nueva!» del botón de pista
+  const reduceMotion = Boolean(store.get().settings?.reduceMotion);
   const [answered, setAnswered] = useState(false);
   const [selectedOption, setSelectedOption] = useState(null);
   const [sheet, setSheet] = useState(null); // Controla el mensaje emergente de abajo
@@ -237,6 +240,11 @@ export default function Game() {
             REPETIR
           </button>
         </div>
+
+        {/* El progreso ya se guardó en finishRound; este botón solo navega. */}
+        <button onClick={() => { sfx.tap(); navigate(ROUTES.home); }} className="relative z-10 mt-4 w-full max-w-md min-h-[64px] bg-white text-numu-purple font-fredoka font-bold text-xl py-4 rounded-btn shadow-3d-white hover:translate-y-1 hover:shadow-none transition-all inline-flex items-center justify-center gap-2">
+          <Home className="w-6 h-6" aria-hidden="true" /> Volver al inicio
+        </button>
       </div>
     );
   }
@@ -276,14 +284,21 @@ export default function Game() {
         </div>
         {mistakes >= 2 && (
           <div className="mx-auto max-w-3xl px-4 pb-3">
+            {/* Amarillo con sombra 3D para que destaque; aparece con un pequeño «pop» y la etiqueta
+                «¡Nueva!» hasta que se abre por primera vez (sin animación si se reducen las animaciones). */}
             <button
               type="button"
               aria-expanded={isTipOpen}
               aria-controls="round-tip"
-              onClick={() => setIsTipOpen((open) => !open)}
-              className="inline-flex min-h-11 items-center gap-2 rounded-btn bg-soft-lavender px-4 font-fredoka text-xl font-bold text-numu-purple hover:bg-numu-purple/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-numu-purple"
+              onClick={() => { sfx.tap(); setHintSeen(true); setIsTipOpen((open) => !open); }}
+              className={`relative inline-flex min-h-[64px] items-center gap-2 rounded-btn bg-sunshine-yellow px-6 font-fredoka text-2xl font-bold text-text-dark shadow-3d-yellow active:translate-y-1 active:shadow-none transition-all focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-numu-purple ${reduceMotion ? '' : 'animate-pop-in'}`}
             >
               {isTipOpen ? 'Ocultar pista' : <><span aria-hidden="true">💡</span> Pista</>}
+              {!hintSeen && (
+                <span className="absolute -top-3 -right-3 rounded-full bg-numu-purple px-2 py-0.5 font-poppins text-xs font-bold text-white shadow-sm">
+                  ¡Nueva!
+                </span>
+              )}
             </button>
             <div id="round-tip" role="status" className={isTipOpen ? 'mt-3' : undefined}>
               {roundTipCard}
