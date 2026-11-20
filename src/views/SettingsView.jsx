@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Volume2, Shield, Lock } from 'lucide-react';
+import { ArrowLeft, User, Volume2, Shield, Lock } from 'lucide-react';
+import { ROUTES } from '../services/startRoute.js';
 import { store } from '../state/store.js';
 import { sfx } from '../utils/audio.js';
 import { flameOn, flameOff } from '../components/iconAssets.js';
@@ -28,6 +29,15 @@ function Toggle({ label, description, checked, onChange }) {
 export default function SettingsView() {
   const navigate = useNavigate();
   
+  const handleBack = () => {
+  sfx.tap();
+  if (window.history.length > 1) {
+    navigate(-1);
+  } else {
+    navigate(ROUTES.home);
+  }
+};
+
   // Estado local sincronizado con el store
   const [state, setState] = useState(() => store.get());
   const [isParentalUnlocked, setIsParentalUnlocked] = useState(false);
@@ -76,14 +86,24 @@ export default function SettingsView() {
   return (
     <div className="p-6 md:p-10 max-w-4xl mx-auto space-y-8 font-poppins min-h-screen">
       
-      <header className="mb-8">
-        <h1 className="font-fredoka font-bold text-3xl md:text-4xl text-text-dark">
-          Configuración y Preferencias
-        </h1>
-        <p className="text-gray-500 mt-2 text-sm md:text-base">
-          Administra tu perfil, la accesibilidad y los controles para tutores.
-        </p>
-      </header>
+      <header className="flex items-center gap-4 mb-8">
+  <button
+    type="button"
+    onClick={handleBack}
+    aria-label="Regresar"
+    className="w-14 h-14 shrink-0 grid place-items-center rounded-full bg-white border-2 border-gray-100 shadow-sm hover:scale-105 transition-transform text-numu-deep-indigo"
+  >
+    <ArrowLeft className="w-7 h-7" />
+  </button>
+  <div>
+    <h1 className="font-fredoka font-bold text-3xl md:text-4xl text-text-dark">
+      Configuración y Preferencias
+    </h1>
+    <p className="text-gray-500 mt-1 text-sm md:text-base">
+      Administra tu perfil, la accesibilidad y los controles para tutores.
+    </p>
+  </div>
+</header>
 
       {/* --- SECCIÓN 1: Perfil --- */}
       <section className="bg-white rounded-card p-6 md:p-8 border-2 border-gray-100 shadow-sm space-y-6">

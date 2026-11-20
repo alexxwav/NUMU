@@ -19,9 +19,9 @@ export default {
     extend: {
       colors: {
         // Primarios de marca (DESIGN_SYSTEM.md §1.1)
-        "numu-purple": "#5124EE",
-        "numu-deep-indigo": "#2B0F8A",
-        "soft-lavender": "#F4F5FE",
+        "numu-purple": "#6D28D9",
+        "numu-deep-indigo": "#4C1D95",
+        "soft-lavender": "#F6F3FF",
         // Gamificación (DESIGN_SYSTEM.md §1.2)
         "sunshine-yellow": "#FFC700",
         "mint-success": "#00D282",
@@ -38,7 +38,7 @@ export default {
         "card-white": "#FFFFFF",
         "border-gray": "#E2E8F0",
         // Sombras 3D sólidas de cada color
-        "shadow-primary": "#2B0F8A",
+        "shadow-primary": "#4C1D95",
         "shadow-success": "#009E60",
         "shadow-yellow": "#C79A00",
         "shadow-coral": "#D32F2F",
@@ -66,7 +66,7 @@ export default {
       },
       boxShadow: {
         // Efecto botón 3D táctil (DESIGN_SYSTEM.md §3)
-        "3d-primary": "0px 6px 0px #2B0F8A",
+        "3d-primary": "0px 6px 0px #4C1D95",
         "3d-success": "0px 6px 0px #009E60",
         "3d-yellow": "0px 6px 0px #C79A00",
         "3d-coral": "0px 6px 0px #D32F2F",
@@ -91,8 +91,8 @@ export default {
           "60%": { transform: "translateY(0) scale(1.03, 0.97)" },
         },
         "pulse-active": {
-          "0%, 100%": { transform: "scale(1)", boxShadow: "0 0 0 0 rgba(81, 36, 238, 0.5)" },
-          "50%": { transform: "scale(1.05)", boxShadow: "0 0 0 14px rgba(81, 36, 238, 0)" },
+          "0%, 100%": { transform: "scale(1)", boxShadow: "0 0 0 0 rgba(109, 40, 217, 0.5)" },
+          "50%": { transform: "scale(1.05)", boxShadow: "0 0 0 14px rgba(109, 40, 217, 0)" },
         },
         "pop-in": {
           "0%": { transform: "scale(0.6)", opacity: "0" },
