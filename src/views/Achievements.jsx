@@ -1,8 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Medal, Gem, Trophy, Crown } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ArrowLeft, Medal, Gem, Trophy, Crown } from 'lucide-react';
 import { store } from '../state/store.js';
+import { sfx } from '../utils/audio.js';
+import { ROUTES } from '../services/startRoute.js';
 import { hasFinishedRound } from '../utils/stars.js';
 import { flameOn, flameOff, starIcon } from '../components/iconAssets.js';
+import numuMorado from '../assets/brand/mascot/numu-morado.png';
 
 // Función para mapear el nombre del ícono a los componentes de Lucide o a las imágenes de marca
 const getIcon = (name, className, has = true) => {
@@ -27,7 +31,6 @@ const BADGES = [
 ];
 
 export default function Achievements() {
-  // Sincronizamos el componente con el store global de tu compañero
   const [state, setState] = useState(() => store.get());
 
   useEffect(() => {
@@ -42,13 +45,24 @@ export default function Achievements() {
   return (
     <div className="p-6 md:p-10 max-w-5xl mx-auto space-y-8 font-poppins min-h-screen">
       
-      <header className="text-center mb-8">
-        <h1 className="font-fredoka font-bold text-3xl md:text-4xl text-text-dark">
-          Tu progreso
-        </h1>
-        <p className="text-gray-500 mt-2 text-sm md:text-base">
-          {unlocked} de {BADGES.length} insignias desbloqueadas
-        </p>
+      {/* Encabezado con botón de regreso */}
+      <header className="flex items-center gap-4 mb-8">
+        <Link
+          to={ROUTES.home}
+          onClick={() => sfx.tap()}
+          aria-label="Volver al inicio"
+          className="w-14 h-14 shrink-0 grid place-items-center rounded-full bg-white border-2 border-gray-100 shadow-sm hover:scale-105 transition-transform text-numu-deep-indigo"
+        >
+          <ArrowLeft className="w-7 h-7" />
+        </Link>
+        <div>
+          <h1 className="font-fredoka font-bold text-3xl md:text-4xl text-text-dark">
+            Tu progreso
+          </h1>
+          <p className="text-gray-500 mt-1 text-sm md:text-base">
+            {unlocked} de {BADGES.length} insignias desbloqueadas
+          </p>
+        </div>
       </header>
 
       {/* Cuadrícula de Insignias */}
@@ -58,9 +72,18 @@ export default function Achievements() {
           return (
             <div 
               key={badge.id} 
-              className={`bg-white rounded-card p-4 text-center border-2 border-gray-100 transition-all ${has ? 'shadow-sm hover:-translate-y-1 hover:shadow-md' : 'opacity-50 grayscale shadow-none'}`}
+              className={`relative bg-white rounded-card p-4 text-center border-2 border-gray-100 transition-all ${has ? 'shadow-sm hover:-translate-y-1 hover:shadow-md' : 'opacity-50 grayscale shadow-none'}`}
               aria-disabled={!has}
             >
+              {/* Pequeño pulpo decorativo solo cuando la insignia está desbloqueada */}
+              {has && (
+                <img
+                  src={numuMorado}
+                  alt=""
+                  aria-hidden="true"
+                  className="w-7 h-7 object-contain absolute -top-2.5 -right-2.5 bg-soft-lavender rounded-full p-1 border-2 border-white shadow-sm pointer-events-none"
+                />
+              )}
               <div 
                 className={`w-14 h-14 mx-auto mb-3 rounded-full flex items-center justify-center shadow-inner ${badge.tone}`} 
                 aria-hidden="true"
@@ -81,8 +104,14 @@ export default function Achievements() {
       {/* Tarjeta de Estadísticas Globales */}
       <div className="bg-white rounded-card border-2 border-gray-100 shadow-sm p-6 sm:p-8 grid grid-cols-3 gap-4 text-center mt-8 relative overflow-hidden">
         
-        {/* Decoración de fondo sutil */}
-        <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-soft-lavender opacity-50 pointer-events-none"></div>
+        {/* Decoración de fondo sutil + mascota NUMU */}
+        <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-soft-lavender opacity-60 pointer-events-none" aria-hidden="true"></div>
+        <img
+          src={numuMorado}
+          alt=""
+          aria-hidden="true"
+          className="hidden sm:block w-14 h-14 object-contain absolute bottom-2 right-3 opacity-20 pointer-events-none select-none"
+        />
 
         <div className="relative z-10">
           <p className="font-fredoka font-bold text-4xl sm:text-5xl text-numu-purple tabular-nums">

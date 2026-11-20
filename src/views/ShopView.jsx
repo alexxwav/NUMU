@@ -1,19 +1,19 @@
 import { useState, useEffect } from 'react';
-import { Gem } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ArrowLeft, Gem } from 'lucide-react';
 import { store } from '../state/store.js';
 import { sfx } from '../utils/audio.js';
-import { FRAMES } from '../components/Avatar.js'; // Asumiendo que FRAMES se exporta aquí
+import { ROUTES } from '../services/startRoute.js';
+import { FRAMES } from '../components/Avatar.js';
 
 export default function ShopView() {
-  // Estado local sincronizado con el store de tu compañero
   const [state, setState] = useState(() => store.get());
 
-  // Suscribirse a los cambios del store para actualizar la UI automáticamente
   useEffect(() => {
     const unsubscribe = store.subscribe(() => {
       setState(store.get());
     });
-    return () => unsubscribe(); // Limpieza al salir de la vista
+    return () => unsubscribe();
   }, []);
 
   // --- Handlers de acciones ---
@@ -37,15 +37,25 @@ export default function ShopView() {
   return (
     <div className="p-6 md:p-10 max-w-5xl mx-auto space-y-8 font-poppins min-h-screen">
       
-      {/* --- Encabezado --- */}
-      <header className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4">
-        <div>
-          <h1 className="font-fredoka font-bold text-3xl md:text-4xl text-text-dark">
-            Premios y Tienda
-          </h1>
-          <p className="text-gray-500 mt-2 text-sm md:text-base">
-            Canjea las gemas que ganas jugando por marcos de perfil.
-          </p>
+      {/* --- Encabezado con botón de regreso --- */}
+      <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Link
+            to={ROUTES.home}
+            onClick={() => sfx.tap()}
+            aria-label="Volver al inicio"
+            className="w-14 h-14 shrink-0 grid place-items-center rounded-full bg-white border-2 border-gray-100 shadow-sm hover:scale-105 transition-transform text-numu-deep-indigo"
+          >
+            <ArrowLeft className="w-7 h-7" />
+          </Link>
+          <div>
+            <h1 className="font-fredoka font-bold text-3xl md:text-4xl text-text-dark">
+              Premios y Tienda
+            </h1>
+            <p className="text-gray-500 mt-1 text-sm md:text-base">
+              Canjea las gemas que ganas jugando por marcos de perfil.
+            </p>
+          </div>
         </div>
         
         {/* Contador de Gemas */}
@@ -69,8 +79,6 @@ export default function ShopView() {
             >
               {/* Círculo de previsualización */}
               <div className="p-4 rounded-full bg-soft-lavender border-4 border-white shadow-inner flex items-center justify-center w-24 h-24">
-                {/* Si tienes un componente Avatar en React, podrías usarlo aquí. 
-                    Por ahora, dejamos un placeholder visual estilizado */}
                 <div className="w-full h-full rounded-full border-4 border-numu-purple border-dashed opacity-50"></div>
               </div>
               
