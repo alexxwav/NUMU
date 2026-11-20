@@ -1,0 +1,145 @@
+/* Mapa submarino de NUMU. Estilos exclusivos de OceanMap.jsx (prefijo ocean-map).
+   Solo usa las variables globales de index.css (--numu-*); no define colores de marca nuevos. */
+
+.ocean-map {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background-color: var(--numu-bg);
+  background-image: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--numu-cyan) 12%, #ffffff) 0%,
+    color-mix(in srgb, var(--numu-cyan) 26%, #ffffff) 45%,
+    color-mix(in srgb, var(--numu-cyan) 42%, #ffffff) 100%
+  );
+}
+
+/* Rayos de luz que entran desde la superficie */
+.ocean-map__rays {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 320px;
+  background-image: repeating-linear-gradient(
+    105deg,
+    rgba(255, 255, 255, 0.45) 0 22px,
+    rgba(255, 255, 255, 0) 22px 90px
+  );
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 0%, transparent 100%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Olas de la superficie */
+.ocean-map__surface {
+  position: absolute;
+  inset: 0 0 auto 0;
+  width: 100%;
+  height: 28px;
+  pointer-events: none;
+}
+
+/* Fondo de arena */
+.ocean-map__sand {
+  position: absolute;
+  inset: auto -10% 0 -10%;
+  height: 120px;
+  border-radius: 50% 50% 0 0 / 48px 48px 0 0;
+  background: color-mix(in srgb, var(--numu-yellow) 30%, #ffffff);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.ocean-map__deco {
+  position: absolute;
+  pointer-events: none;
+}
+
+/* Algas: se mecen desde la base */
+.ocean-map__weed {
+  transform-origin: 50% 100%;
+  animation: ocean-map-sway 4.5s ease-in-out infinite alternate;
+}
+
+/* Burbujas que suben por todo el mapa */
+.ocean-map__bubble {
+  position: absolute;
+  bottom: -24px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.55);
+  border: 2px solid rgba(255, 255, 255, 0.95);
+  box-shadow: inset -3px -3px 0 rgba(255, 255, 255, 0.6);
+  opacity: 0;
+  pointer-events: none;
+  animation: ocean-map-rise var(--duration, 12s) linear var(--delay, 0s) infinite;
+}
+
+/* Peces que cruzan el mapa */
+.ocean-map__fish {
+  position: absolute;
+  left: 0;
+  pointer-events: none;
+  animation: ocean-map-swim var(--duration, 22s) linear var(--delay, 0s) infinite;
+}
+
+.ocean-map__fish--left {
+  animation-name: ocean-map-swim-left;
+  transform: scaleX(-1);
+}
+
+@keyframes ocean-map-sway {
+  from { transform: rotate(-5deg); }
+  to { transform: rotate(5deg); }
+}
+
+@keyframes ocean-map-rise {
+  0% { transform: translate(0, 0); opacity: 0; }
+  10% { opacity: 0.9; }
+  50% { transform: translate(8px, calc(var(--travel, 1000px) * -0.5)); }
+  90% { opacity: 0.8; }
+  100% { transform: translate(-6px, calc(var(--travel, 1000px) * -1)); opacity: 0; }
+}
+
+@keyframes ocean-map-swim {
+  from { left: -80px; }
+  to { left: calc(100% + 20px); }
+}
+
+@keyframes ocean-map-swim-left {
+  from { left: calc(100% + 20px); }
+  to { left: -80px; }
+}
+
+/* Sin animaciones: ajuste «Reducir animaciones» o preferencia del sistema.
+   Las burbujas y los peces quedan quietos en un lugar visible. */
+.ocean-map--still *,
+.ocean-map--still *::before,
+.ocean-map--still *::after {
+  animation: none !important;
+}
+
+.ocean-map--still .ocean-map__bubble {
+  opacity: 0.8;
+  transform: translateY(calc(var(--travel, 1000px) * var(--rest, -0.5)));
+}
+
+.ocean-map--still .ocean-map__fish {
+  left: var(--rest-x, 10%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ocean-map *,
+  .ocean-map *::before,
+  .ocean-map *::after {
+    animation: none !important;
+  }
+
+  .ocean-map .ocean-map__bubble {
+    opacity: 0.8;
+    transform: translateY(calc(var(--travel, 1000px) * var(--rest, -0.5)));
+  }
+
+  .ocean-map .ocean-map__fish {
+    left: var(--rest-x, 10%);
+  }
+}

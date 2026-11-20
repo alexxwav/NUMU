@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   Menu, X, Rocket, ChevronRight,
-  Home as HomeIcon, Trophy, Settings, LogOut, Store, Lock, BookOpen
+  Home as HomeIcon, Trophy, Settings, LogOut, Store, BookOpen
 } from 'lucide-react';
 import { store, MODULES } from '../../state/store.js';
 import { sfx } from '../../utils/audio.js';
@@ -10,12 +10,13 @@ import { useAuth } from '../../hooks/useAuth.jsx';
 import { useLessonProgress } from '../../hooks/useLessonProgress.js';
 import { useRecommendations } from '../../hooks/useRecommendations.js';
 import Recommendations from '../../components/Recommendations.jsx';
+import OceanMap from '../../components/OceanMap.jsx';
 import { normalizeModuleId } from '../../data/subjects.js';
 import catalog from '../../data/lessonContent.json';
 import { COURSE_STYLE } from '../CoursesView.jsx';
 import LessonStars from '../../components/LessonStars.jsx';
-import mascotUrl from '../../assets/brand/mascot/numu-morado.png';
 import { starIcon } from '../../components/iconAssets.js';
+import { resolveContinueRoute } from '../../services/startRoute.js';
 
 const TOTAL_LEVELS = 10;
 
@@ -50,6 +51,22 @@ export default function Home() {
   const { starsByLesson, totalStars, loaded } = useLessonProgress();
   const starCount = loaded ? Math.max(state.stars, totalStars) : state.stars;
   const { recommendations, unavailableInterests } = useRecommendations();
+
+  // «¡Continuar Aventura!»: la última lección jugada; si no hay, la primera recomendación.
+  const continueTarget = resolveContinueRoute({
+    lessonRounds: state.lessonRounds,
+    catalog,
+    recommendations,
+    moduleId: selectedModule.id,
+  });
+  const continueLesson = continueTarget.lessonId
+    ? lessons.find(({ lesson }) => lesson.id === continueTarget.lessonId)?.lesson
+    : null;
+  const handleContinue = () => {
+    sfx.tap();
+    if (continueLesson) store.set({ module: continueLesson.module_id });
+    navigate(continueTarget.route);
+  };
 
   // Manejador para jugar un nivel
   const handlePlayLevel = (moduleId, levelNumber) => {
@@ -147,10 +164,12 @@ export default function Home() {
           <div className="relative z-10 space-y-4 text-center md:text-left">
             <h2 className="text-3xl md:text-4xl font-fredoka font-bold">Misión del día</h2>
             <p className="text-soft-lavender text-lg max-w-md">
-              Avanza en tu ruta de aprendizaje para ganar gemas.
+              {continueLesson
+                ? `${continueTarget.reason === 'ultima-leccion' ? 'Sigue donde te quedaste' : 'Te recomendamos'}: ${continueLesson.title}.`
+                : 'Avanza en tu ruta de aprendizaje para ganar gemas.'}
             </p>
             <button 
-              onClick={() => handlePlayLevel(selectedModule.id, state.level)}
+              onClick={handleContinue}
               className="mt-6 bg-sunshine-yellow text-text-dark font-fredoka font-bold text-xl py-3 px-8 rounded-btn shadow-3d-yellow hover:translate-y-1 hover:shadow-none transition-all"
             >
               ¡Continuar Aventura!
@@ -218,54 +237,18 @@ export default function Home() {
           </div>
         </section>
 
-        {/* --- Mapa de Niveles (El diseño de tu compañero traducido a React) --- */}
+        {/* --- Mapa de Niveles: aventura submarina (components/OceanMap.jsx) --- */}
         <section>
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-fredoka font-bold text-text-dark">Tu ruta: {selectedModule.name}</h2>
           </div>
           
-          <div className="relative flex flex-col items-center gap-12 py-10 px-4 rounded-card bg-white border-2 border-gray-100 shadow-sm overflow-hidden">
-            {/* Línea vertical del camino */}
-            <div className="absolute inset-x-0 top-10 bottom-10 w-2 -translate-x-1/2 left-1/2 bg-gray-200 rounded-full" aria-hidden="true"></div>
-            
-            {Array.from({ length: TOTAL_LEVELS }).map((_, i) => {
-              const level = i + 1;
-              const isDone = level < state.level;
-              const isCurrent = level === state.level;
-              const isLocked = level > state.level;
-
-              return (
-                <div key={level} className="relative z-10">
-                  {isDone && (
-                    <button onClick={() => handlePlayLevel(selectedModule.id, level)} className="w-20 h-20 rounded-full bg-mint-success text-white shadow-3d-success font-fredoka font-bold text-3xl grid place-items-center active:translate-y-1 transition-transform relative">
-                      {level}
-                      <div className="absolute -top-3 flex gap-0.5">
-                        <img src={starIcon} alt="" className="w-5 h-5 object-contain" /><img src={starIcon} alt="" className="w-5 h-5 object-contain" /><img src={starIcon} alt="" className="w-5 h-5 object-contain" />
-                      </div>
-                    </button>
-                  )}
-
-                  {isCurrent && (
-                    <button onClick={() => handlePlayLevel(selectedModule.id, level)} className="w-24 h-24 rounded-full bg-numu-purple text-white shadow-3d-primary font-fredoka font-bold text-4xl grid place-items-center animate-pulse active:translate-y-1 transition-transform relative">
-                      {level}
-                      <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-14 h-14 rounded-full bg-white grid place-items-center shadow-lg border-2 border-gray-100 p-1.5">
-                        <img src={mascotUrl} alt="NUMU" className="w-full h-full object-contain" />
-                      </div>
-                      <span className="absolute -bottom-8 whitespace-nowrap font-poppins font-bold text-sm text-numu-purple bg-white px-3 py-1 rounded-full shadow-sm border border-gray-100">
-                        ¡Vamos!
-                      </span>
-                    </button>
-                  )}
-
-                  {isLocked && (
-                    <button disabled className="w-20 h-20 rounded-full bg-gray-200 text-gray-400 shadow-none font-fredoka font-bold text-3xl grid place-items-center cursor-not-allowed border-2 border-gray-300">
-                      <Lock className="w-8 h-8" />
-                    </button>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+          <OceanMap
+            totalLevels={TOTAL_LEVELS}
+            currentLevel={state.level}
+            onPlayLevel={(level) => handlePlayLevel(selectedModule.id, level)}
+            reduceMotion={Boolean(state.settings?.reduceMotion)}
+          />
         </section>
 
       </main>
