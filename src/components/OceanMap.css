@@ -82,9 +82,19 @@
   animation: ocean-map-swim var(--duration, 22s) linear var(--delay, 0s) infinite;
 }
 
+/* El dibujo del pez mira a la izquierda (ojo a la izquierda, cola a la derecha).
+   Los que nadan a la derecha se voltean; los que nadan a la izquierda quedan como están. */
+.ocean-map__fish > svg {
+  display: block;
+  transform: scaleX(-1);
+}
+
 .ocean-map__fish--left {
   animation-name: ocean-map-swim-left;
-  transform: scaleX(-1);
+}
+
+.ocean-map__fish--left > svg {
+  transform: none;
 }
 
 @keyframes ocean-map-sway {

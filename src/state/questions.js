@@ -45,7 +45,7 @@ function countQuestion(level) {
   const itemClass = ['w-11 h-11 sm:w-14 sm:h-14', item.color, 'animate-pop-in'].filter(Boolean).join(' ');
   return {
     prompt: `¿Cuántos ${item.name} ves?`,
-    speakText: `¿Cuántos ${item.name} hay?`,
+    speakText: `¿Cuántos ${item.name} ves?`, // igual que el texto que se muestra
     visual: `<div class="flex flex-wrap gap-3 justify-center items-center max-w-md mx-auto p-4 bg-white rounded-card border-2 border-border-gray" role="img" aria-label="${total} ${item.name}">
         ${Array.from({ length: total }, () => icon(item.iconName, itemClass)).join('')}
       </div>`,
@@ -66,7 +66,7 @@ function arithmeticQuestion(level) {
   const { options, answerIndex } = buildOptions(answer);
   return {
     prompt: `¿Cuánto es ${a} ${symbol} ${b}?`,
-    speakText: `${a} ${useSubtraction ? 'menos' : 'más'} ${b}`,
+    speakText: `¿Cuánto es ${a} ${symbol} ${b}?`, // igual que el texto; speak() lee + y − como «más» y «menos»
     visual: `<div class="flex items-center justify-center gap-4 p-6 bg-white rounded-card border-2 border-border-gray">
         <span class="font-fredoka font-bold text-display-lg tabular-nums text-numu-purple">${a}</span>
         <span class="font-fredoka font-bold text-display-lg text-orange-energy">${symbol}</span>
