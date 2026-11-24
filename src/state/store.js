@@ -1,4 +1,5 @@
 import { mergeLessonProgress, clampLessonLevel } from '../utils/lessonLevel.js';
+import { normalizeModuleId } from '../data/subjects.js';
 
 const STORAGE_KEY = 'numu-state-v1';
 
@@ -13,6 +14,11 @@ const DEFAULT_STATE = {
   level: 1,
   module: 'conteo',
   starsByLevel: {},
+  // Progreso independiente de cada sección del mapa (/inicio):
+  //   levelByModule:     { [moduleId]: parada actual (empieza en 1) }.
+  //   starsByModuleLevel: { [moduleId]: { [parada]: mejores estrellas (0 a 3) } }.
+  levelByModule: {},
+  starsByModuleLevel: {},
   lessonStars: {},
   // Última ronda y nivel académico por lección: { [lessonId]: { latestStars, level, at } }.
   lessonRounds: {},
@@ -54,6 +60,31 @@ function deepMerge(base, saved) {
     } else if (saved[key] !== undefined) {
       result[key] = saved[key];
     }
+  }
+  return result;
+}
+
+function clampModuleLevel(value) {
+  const n = Number(value);
+  return Number.isFinite(n) && n >= 1 ? Math.floor(n) : 1;
+}
+
+function clampModuleStars(value) {
+  const n = Number(value);
+  return Number.isFinite(n) ? Math.max(0, Math.min(3, Math.round(n))) : 0;
+}
+
+/** Normaliza un objeto { [parada]: estrellas } que viene de localStorage o de Supabase. */
+function cleanModuleStars(raw = {}) {
+  const result = {};
+  let source = raw;
+  if (typeof source === 'string') {
+    try { source = JSON.parse(source); } catch { return result; }
+  }
+  if (!source || typeof source !== 'object' || Array.isArray(source)) return result;
+  for (const [level, stars] of Object.entries(source)) {
+    const key = clampModuleLevel(level);
+    result[key] = Math.max(result[key] ?? 0, clampModuleStars(stars));
   }
   return result;
 }
@@ -178,6 +209,56 @@ export const store = {
 
   completeLevel() {
     return store.set({ level: state.level + 1 });
+  },
+
+  /* ---- Progreso del mapa por sección (conteo, aritmética, geometría, patrones) ---- */
+
+  /**
+   * Registra en el dispositivo la ronda terminada de una sección.
+   * La parada actual nunca retrocede: repetir una parada ya completada no avanza.
+   * @param {{moduleId: string, stars: number, level?: number}} round
+   *        `level` es la parada que se acaba de terminar; por defecto la actual.
+   */
+  recordModuleRound({ moduleId, stars, level } = {}) {
+    const id = normalizeModuleId(moduleId);
+    if (!id) return state;
+    const earned = clampModuleStars(stars);
+    const current = clampModuleLevel(state.levelByModule[id] ?? 1);
+    const finished = level === undefined ? current : clampModuleLevel(level);
+    const next = Math.max(current, finished + 1);
+    const byLevel = cleanModuleStars(state.starsByModuleLevel[id]);
+    byLevel[finished] = Math.max(byLevel[finished] ?? 0, earned);
+    return store.set({
+      levelByModule: { ...state.levelByModule, [id]: next },
+      starsByModuleLevel: { ...state.starsByModuleLevel, [id]: byLevel },
+    });
+  },
+
+  /**
+   * Combina el progreso leído de Supabase con el local: gana el mayor nivel y
+   * la mejor puntuación de cada parada. No borra rondas recientes del dispositivo.
+   * @param {{levelByModule?: Object, starsByModuleLevel?: Object}} remote
+   */
+  applyModuleProgress(remote = {}) {
+    const levels = { ...state.levelByModule };
+    const stars = {};
+    for (const id of Object.keys(state.starsByModuleLevel)) stars[id] = cleanModuleStars(state.starsByModuleLevel[id]);
+
+    for (const [rawId, value] of Object.entries(remote.levelByModule ?? {})) {
+      const id = normalizeModuleId(rawId);
+      if (!id) continue;
+      levels[id] = Math.max(clampModuleLevel(levels[id] ?? 1), clampModuleLevel(value));
+    }
+    for (const [rawId, value] of Object.entries(remote.starsByModuleLevel ?? {})) {
+      const id = normalizeModuleId(rawId);
+      if (!id) continue;
+      const merged = cleanModuleStars(stars[id]);
+      for (const [level, earned] of Object.entries(cleanModuleStars(value))) {
+        merged[level] = Math.max(merged[level] ?? 0, earned);
+      }
+      stars[id] = merged;
+    }
+    return store.set({ levelByModule: levels, starsByModuleLevel: stars });
   },
 
   /* ---- Progreso por lección ---- */

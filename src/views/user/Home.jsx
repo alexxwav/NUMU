@@ -44,6 +44,9 @@ export default function Home() {
   // Datos dinámicos del usuario
   const displayName = state.profile?.nickname || state.profile?.name || 'Explorador';
   const selectedModule = MODULES.find((m) => m.id === normalizeModuleId(state.module)) ?? MODULES[0];
+  // Cada sección tiene su propia parada y sus estrellas; no se comparte el nivel global.
+  const moduleLevel = state.levelByModule?.[selectedModule.id] ?? 1;
+  const moduleStars = state.starsByModuleLevel?.[selectedModule.id] ?? {};
   const courses = [...catalog.courses].sort((a, b) => a.position - b.position);
   const lessons = catalog.courses.flatMap(course => course.lessons.map(lesson => ({ lesson, course })));
   // Lección que abren las paradas del mapa (la misma que carga /jugar/:modulo en Game.jsx).
@@ -75,7 +78,8 @@ export default function Home() {
   const handlePlayLevel = (moduleId, levelNumber) => {
     sfx.tap();
     store.set({ module: moduleId });
-    navigate(`/jugar/${moduleId}`);
+    // La parada elegida viaja en la URL para que Game.jsx guarde el avance de ESA sección.
+    navigate(`/jugar/${moduleId}?parada=${levelNumber}`);
   };
 
   return (
@@ -149,7 +153,7 @@ export default function Home() {
               ¡Hola, {displayName}!
             </h1>
             <p className="text-sm md:text-base font-medium text-gray-500">
-              Nivel {state.level} · {state.xp} XP
+              Parada {moduleLevel} · {selectedModule.name} · {state.xp} XP
             </p>
           </div>
         </div>
@@ -241,9 +245,8 @@ export default function Home() {
         </section>
 
         {/* --- Mapa de Niveles: aventura submarina (components/OceanMap.jsx) --- */}
-        {/* Cada parada del mapa es el nivel general (state.level): sube 1 al terminar cualquier ronda.
-            Todas las paradas abren una ronda de la lección de la ruta elegida (/jugar/:modulo).
-            Aquí solo se muestra con claridad; no cambia cómo se avanza ni qué se desbloquea. */}
+        {/* Cada sección tiene su propio avance: state.levelByModule[moduleId] y
+            state.starsByModuleLevel[moduleId]. Cambiar de pestaña muestra sus paradas reales. */}
         <section aria-labelledby="ruta-titulo">
           <div className="mb-4">
             <h2 id="ruta-titulo" className="text-2xl font-fredoka font-bold text-text-dark">
@@ -257,7 +260,6 @@ export default function Home() {
           {/* Qué lección practicas en el recorrido (lecciones reales del catálogo) */}
           <div role="group" aria-label="¿Qué quieres practicar en tu ruta?" className="mb-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
             {lessons.map(({ lesson }) => {
-              const style = MODULES.find((m) => m.id === lesson.module_id) ?? selectedModule;
               const active = lesson.module_id === selectedModule.id;
               return (
                 <button
@@ -266,7 +268,7 @@ export default function Home() {
                   aria-pressed={active}
                   onClick={() => { sfx.tap(); store.set({ module: lesson.module_id }); }}
                   className={`min-h-[64px] rounded-btn px-3 py-2 font-fredoka font-bold text-base sm:text-lg leading-tight border-2 transition-all ${active
-                    ? `${style.color} ${style.shadow} text-white border-white`
+                    ? 'bg-numu-purple shadow-3d-primary text-white border-white'
                     : 'bg-white text-text-dark border-gray-100 shadow-sm hover:-translate-y-0.5'}`}
                 >
                   {lesson.title}
@@ -293,8 +295,10 @@ export default function Home() {
 
           <OceanMap
             totalLevels={TOTAL_LEVELS}
-            currentLevel={state.level}
+            currentLevel={moduleLevel}
+            starsByLevel={moduleStars}
             activityTitle={routeLesson?.title ?? selectedModule.name}
+            moduleId={selectedModule.id}
             onPlayLevel={(level) => handlePlayLevel(selectedModule.id, level)}
             reduceMotion={Boolean(state.settings?.reduceMotion)}
           />

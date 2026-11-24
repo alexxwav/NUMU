@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import confetti from 'canvas-confetti';
 import { Home, Lightbulb, X, Volume2 } from 'lucide-react';
 import { store } from '../state/store.js';
@@ -33,14 +33,18 @@ function burst({ particleCount = 60, spread = 70 } = {}) {
 
 export default function Game() {
   const navigate = useNavigate();
-  const { recordRound } = useAuth();
+  const { recordRound, recordModuleRound } = useAuth();
   const { saveLessonResult } = useLessonProgress();
   const { nivel, lessonId } = useParams(); // módulo ('conteo', 'sumas', …) o lección del catálogo
+  const [searchParams] = useSearchParams(); // ?parada=N la envía el mapa de /inicio
   // La lección del catálogo: la de la ruta /lecciones/:id/jugar o, desde /jugar/:modulo, la de ese módulo.
   const [lessonEntry] = useState(() => (lessonId
     ? getLessonById(lessonCatalog, lessonId)
     : lessonForModule(lessonCatalog, nivel ?? store.get().module)));
   const moduleId = lessonEntry?.lesson.module_id ?? normalizeModuleId(nivel ?? store.get().module) ?? 'conteo';
+  // Parada del mapa que se está jugando; si viene de una lección, se usa la parada actual del módulo.
+  const fromMap = Number(searchParams.get('parada'));
+  const playedLevel = Math.max(1, Math.floor(fromMap || store.get().levelByModule?.[moduleId] || 1));
   const exitTo = lessonId && lessonEntry ? `/lecciones/${lessonEntry.lesson.id}` : '/inicio';
 
   // Nivel ACADÉMICO de esta lección (1 a 3): el guardado o el inicial del diagnóstico (R1–R3).
@@ -159,8 +163,14 @@ export default function Game() {
   const finishRound = () => {
     setIsFinished(true);
     const stars = roundStars;
+    const completedLevel = playedLevel; // parada de esta sección que se acaba de terminar
     store.addRewards({ gems: stars * 5, stars, xp: stars * 10, levelStars: stars });
+    // Avance de esta sección: parada siguiente y estrellas de la parada terminada.
+    store.recordModuleRound({ moduleId, stars, level: completedLevel });
     store.completeLevel();
+    recordModuleRound({ moduleId, stars, level: completedLevel }).then(({ error }) => {
+      if (error) console.warn('No se pudo guardar el progreso de la sección en la cuenta:', error);
+    });
     // Guarda el avance en la cuenta; si falla, el progreso sigue en este dispositivo.
     recordRound({ stars }).then(({ error }) => {
       if (error) console.warn('No se pudo guardar el progreso en la cuenta:', error);

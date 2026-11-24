@@ -4,6 +4,7 @@ import { authService } from '../services/authService.js';
 import { profileService } from '../services/profileService.js';
 import { onboardingService, toStoreProfile } from '../services/onboardingService.js';
 import { progressService } from '../services/progressService.js';
+import { moduleProgressService } from '../services/moduleProgressService.js';
 import { courseSlugForModule } from '../data/subjects.js';
 import { store } from '../state/store.js';
 
@@ -11,13 +12,16 @@ const AuthContext = createContext(null);
 
 // Carga lo guardado en la cuenta y lo vuelca en store.js, que sigue siendo la fuente de verdad de las vistas.
 async function loadProfile(userId) {
-  const [{ profile, error }, { diagnostic }, { progress }] = await Promise.all([
+  const [{ profile, error }, { diagnostic }, { progress }, moduleProgress] = await Promise.all([
     profileService.getProfile(),
     profileService.getLatestDiagnostic(),
     progressService.getProgress(),
+    moduleProgressService.getModuleProgress(),
   ]);
   if (error) return { profile: null, error };
   store.startSession(userId);
+  // El mapa de /inicio usa el progreso por sección guardado en la cuenta.
+  if (!moduleProgress.error) store.applyModuleProgress(moduleProgress);
   if (!profile) return { profile: null, error: null }; // aún no hace el cuestionario inicial
 
   const storeProfile = toStoreProfile(profile, diagnostic);
@@ -120,6 +124,19 @@ export function AuthProvider({ children }) {
         profileService.saveProfile({ gems: state.gems, xp: state.xp }),
       ]);
       return { error: round.error || totals.error };
+    },
+
+    // Guarda en la cuenta el avance de una sección del mapa (parada y estrellas).
+    async recordModuleRound({ moduleId, stars, level }) {
+      if (!session) return { error: null };
+      const result = await moduleProgressService.saveModuleRound({ moduleId, stars, level });
+      if (!result.error) {
+        store.applyModuleProgress({
+          levelByModule: { [result.moduleId]: result.currentLevel },
+          starsByModuleLevel: { [result.moduleId]: result.starsByLevel },
+        });
+      }
+      return { error: result.error };
     },
   }), [session, profile, loading, refreshProfile]);
 

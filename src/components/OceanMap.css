@@ -5,13 +5,118 @@
   position: relative;
   overflow: hidden;
   isolation: isolate;
-  background-color: var(--numu-bg);
+
+  /* Tema por defecto (conteo). Cada módulo sobreescribe estas variables. */
+  --ocean-bg-base: var(--numu-bg);
+  --ocean-bg-top: color-mix(in srgb, var(--numu-cyan) 12%, #ffffff);
+  --ocean-bg-mid: color-mix(in srgb, var(--numu-cyan) 26%, #ffffff);
+  --ocean-bg-bottom: color-mix(in srgb, var(--numu-cyan) 42%, #ffffff);
+  --ocean-deco-a: var(--numu-cyan);
+  --ocean-deco-b: var(--numu-green);
+  --ocean-deco-c: var(--numu-yellow);
+  --ocean-ray-angle: 105deg;
+  --ocean-ray-color: rgba(255, 255, 255, 0.45);
+  --ocean-surface: #ffffff;
+  --ocean-surface-opacity: 0.85;
+  --ocean-sand: color-mix(in srgb, var(--numu-yellow) 30%, #ffffff);
+  --ocean-bubble-bg: rgba(255, 255, 255, 0.55);
+  --ocean-bubble-border: rgba(255, 255, 255, 0.95);
+  --ocean-bubble-glow: rgba(255, 255, 255, 0.6);
+  --ocean-path-base: #ffffff;
+  --ocean-path-base-opacity: 0.9;
+  --ocean-path-width: 26px;
+  --ocean-path-line-width: 8px;
+  --ocean-path-done: var(--numu-green);
+  --ocean-path-pending: #cbd5e1;
+  --ocean-path-dash: 2 16;
+
+  background-color: var(--ocean-bg-base);
   background-image: linear-gradient(
     180deg,
-    color-mix(in srgb, var(--numu-cyan) 12%, #ffffff) 0%,
-    color-mix(in srgb, var(--numu-cyan) 26%, #ffffff) 45%,
-    color-mix(in srgb, var(--numu-cyan) 42%, #ffffff) 100%
+    var(--ocean-bg-top) 0%,
+    var(--ocean-bg-mid) 45%,
+    var(--ocean-bg-bottom) 100%
   );
+}
+
+/* --- Temas de mapa, uno por módulo activo en /inicio --- */
+
+/* Conteo: arrecife cian, puntos para contar y camino ancho de puntos. */
+.ocean-map--conteo {
+  --ocean-bg-base: color-mix(in srgb, var(--numu-cyan) 8%, #ffffff);
+  --ocean-bg-top: color-mix(in srgb, var(--numu-cyan) 14%, #ffffff);
+  --ocean-bg-mid: color-mix(in srgb, var(--numu-cyan) 30%, #ffffff);
+  --ocean-bg-bottom: color-mix(in srgb, var(--numu-cyan) 50%, #ffffff);
+  --ocean-deco-a: var(--numu-cyan);
+  --ocean-deco-b: var(--numu-green);
+  --ocean-deco-c: var(--numu-yellow);
+  --ocean-sand: color-mix(in srgb, var(--numu-yellow) 36%, #ffffff);
+  --ocean-path-done: var(--numu-cyan);
+  --ocean-path-pending: color-mix(in srgb, var(--numu-cyan) 35%, #ffffff);
+  --ocean-path-width: 28px;
+  --ocean-path-dash: 2 16;
+}
+
+/* Aritmética: atardecer cálido, burbujas con + y − y camino discontinuo corto. */
+.ocean-map--aritmetica {
+  --ocean-bg-base: color-mix(in srgb, var(--numu-yellow) 8%, #ffffff);
+  --ocean-bg-top: color-mix(in srgb, var(--numu-yellow) 18%, #ffffff);
+  --ocean-bg-mid: color-mix(in srgb, var(--numu-orange) 18%, #ffffff);
+  --ocean-bg-bottom: color-mix(in srgb, var(--numu-orange) 34%, #ffffff);
+  --ocean-deco-a: var(--numu-orange);
+  --ocean-deco-b: var(--numu-yellow);
+  --ocean-deco-c: var(--numu-coral);
+  --ocean-ray-angle: 72deg;
+  --ocean-ray-color: rgba(255, 236, 179, 0.55);
+  --ocean-surface: color-mix(in srgb, var(--numu-yellow) 30%, #ffffff);
+  --ocean-sand: color-mix(in srgb, var(--numu-orange) 32%, #ffffff);
+  --ocean-bubble-bg: rgba(255, 215, 120, 0.55);
+  --ocean-bubble-border: rgba(255, 255, 255, 0.9);
+  --ocean-bubble-glow: rgba(255, 255, 255, 0.7);
+  --ocean-path-base: color-mix(in srgb, var(--numu-yellow) 40%, #ffffff);
+  --ocean-path-done: var(--numu-orange);
+  --ocean-path-pending: color-mix(in srgb, var(--numu-orange) 30%, #ffffff);
+  --ocean-path-line-width: 7px;
+  --ocean-path-dash: 1 12;
+}
+
+/* Geometría: bosque de algas verdes, figuras y camino continuo más grueso. */
+.ocean-map--geometria {
+  --ocean-bg-base: color-mix(in srgb, var(--numu-green) 8%, #ffffff);
+  --ocean-bg-top: color-mix(in srgb, var(--numu-green) 12%, #ffffff);
+  --ocean-bg-mid: color-mix(in srgb, var(--numu-green) 26%, #ffffff);
+  --ocean-bg-bottom: color-mix(in srgb, var(--numu-green) 44%, #ffffff);
+  --ocean-deco-a: var(--numu-green);
+  --ocean-deco-b: var(--numu-cyan);
+  --ocean-deco-c: var(--numu-yellow);
+  --ocean-ray-angle: 100deg;
+  --ocean-sand: color-mix(in srgb, var(--numu-green) 24%, #ffffff);
+  --ocean-path-pending: color-mix(in srgb, var(--numu-green) 32%, #ffffff);
+  --ocean-path-width: 30px;
+  --ocean-path-line-width: 10px;
+  --ocean-path-dash: none;
+}
+
+/* Patrones: cueva violeta, secuencias de colores y camino punteado. */
+.ocean-map--patrones {
+  --ocean-bg-base: color-mix(in srgb, var(--numu-primary) 6%, #ffffff);
+  --ocean-bg-top: color-mix(in srgb, var(--numu-primary) 14%, #ffffff);
+  --ocean-bg-mid: color-mix(in srgb, var(--numu-primary) 26%, #ffffff);
+  --ocean-bg-bottom: color-mix(in srgb, var(--numu-primary-dark) 40%, #ffffff);
+  --ocean-deco-a: var(--numu-primary);
+  --ocean-deco-b: var(--numu-yellow);
+  --ocean-deco-c: var(--numu-coral);
+  --ocean-ray-angle: 120deg;
+  --ocean-ray-color: rgba(226, 208, 255, 0.55);
+  --ocean-surface: color-mix(in srgb, var(--numu-primary) 16%, #ffffff);
+  --ocean-sand: color-mix(in srgb, var(--numu-primary) 22%, #ffffff);
+  --ocean-bubble-bg: rgba(214, 188, 255, 0.55);
+  --ocean-bubble-border: rgba(255, 255, 255, 0.92);
+  --ocean-bubble-glow: rgba(255, 255, 255, 0.75);
+  --ocean-path-base: color-mix(in srgb, var(--numu-primary) 18%, #ffffff);
+  --ocean-path-done: var(--numu-primary);
+  --ocean-path-pending: color-mix(in srgb, var(--numu-primary) 28%, #ffffff);
+  --ocean-path-dash: 5 10;
 }
 
 /* Rayos de luz que entran desde la superficie */
@@ -20,9 +125,9 @@
   inset: 0 0 auto 0;
   height: 320px;
   background-image: repeating-linear-gradient(
-    105deg,
-    rgba(255, 255, 255, 0.45) 0 22px,
-    rgba(255, 255, 255, 0) 22px 90px
+    var(--ocean-ray-angle),
+    var(--ocean-ray-color) 0 22px,
+    transparent 22px 90px
   );
   -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 100%);
   mask-image: linear-gradient(180deg, #000 0%, transparent 100%);
@@ -39,13 +144,18 @@
   pointer-events: none;
 }
 
+.ocean-map__surface path {
+  fill: var(--ocean-surface);
+  opacity: var(--ocean-surface-opacity);
+}
+
 /* Fondo de arena */
 .ocean-map__sand {
   position: absolute;
   inset: auto -10% 0 -10%;
   height: 120px;
   border-radius: 50% 50% 0 0 / 48px 48px 0 0;
-  background: color-mix(in srgb, var(--numu-yellow) 30%, #ffffff);
+  background: var(--ocean-sand);
   pointer-events: none;
   z-index: -1;
 }
@@ -53,6 +163,37 @@
 .ocean-map__deco {
   position: absolute;
   pointer-events: none;
+}
+
+/* Colores de los SVG decorativos, según el tema del módulo. */
+.ocean-map__fill-a { fill: var(--ocean-deco-a); }
+.ocean-map__fill-b { fill: var(--ocean-deco-b); }
+.ocean-map__fill-c { fill: var(--ocean-deco-c); }
+
+/* SVG propios del módulo (puntos, operadores, figuras y secuencias). */
+.ocean-map__module-deco {
+  color: var(--ocean-deco-a);
+  opacity: 0.8;
+}
+
+/* Estilo del camino: lo definen los temas, sin tocar estados de las paradas. */
+.ocean-map__path--base {
+  stroke: var(--ocean-path-base);
+  stroke-opacity: var(--ocean-path-base-opacity);
+  stroke-width: var(--ocean-path-width);
+}
+
+.ocean-map__path {
+  stroke-width: var(--ocean-path-line-width);
+}
+
+.ocean-map__path--done {
+  stroke: var(--ocean-path-done);
+}
+
+.ocean-map__path--pending {
+  stroke: var(--ocean-path-pending);
+  stroke-dasharray: var(--ocean-path-dash);
 }
 
 /* Algas: se mecen desde la base */
@@ -66,9 +207,9 @@
   position: absolute;
   bottom: -24px;
   border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.55);
-  border: 2px solid rgba(255, 255, 255, 0.95);
-  box-shadow: inset -3px -3px 0 rgba(255, 255, 255, 0.6);
+  background: var(--ocean-bubble-bg);
+  border: 2px solid var(--ocean-bubble-border);
+  box-shadow: inset -3px -3px 0 var(--ocean-bubble-glow);
   opacity: 0;
   pointer-events: none;
   animation: ocean-map-rise var(--duration, 12s) linear var(--delay, 0s) infinite;
