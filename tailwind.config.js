@@ -24,6 +24,7 @@ export default {
         "soft-lavender": "#F6F3FF",
         // Gamificación (DESIGN_SYSTEM.md §1.2)
         "sunshine-yellow": "#FFC700",
+        "mustard-yellow": "#EAB308",
         "mint-success": "#00D282",
         "coral-alert": "#FF5A5F",
         "cyan-ocean": "#00B4D8",
@@ -41,6 +42,7 @@ export default {
         "shadow-primary": "#4C1D95",
         "shadow-success": "#009E60",
         "shadow-yellow": "#C79A00",
+        "shadow-mustard": "#CA8A04",
         "shadow-coral": "#D32F2F",
         "shadow-cyan": "#0077A3",
         "shadow-orange": "#CC6A00",
@@ -69,6 +71,7 @@ export default {
         "3d-primary": "0px 6px 0px #4C1D95",
         "3d-success": "0px 6px 0px #009E60",
         "3d-yellow": "0px 6px 0px #C79A00",
+        "3d-mustard": "0px 6px 0px #CA8A04",
         "3d-coral": "0px 6px 0px #D32F2F",
         "3d-cyan": "0px 6px 0px #0077A3",
         "3d-orange": "0px 6px 0px #CC6A00",

@@ -1,5 +1,13 @@
 import { icon } from '../components/icons.js';
 
+// Último respaldo: solo se usa si la pregunta no trae pista y no se puede deducir ninguna.
+export const ROUND_TIPS = Object.freeze({
+  conteo: 'Señala un objeto a la vez mientras cuentas. El último número que digas es el total.',
+  aritmetica: 'Empieza en el primer número. Avanza si ves + o retrocede si ves −. El segundo número te dice cuántos pasos dar.',
+  geometria: 'Elige una esquina y recorre el borde. Cuenta cada lado una sola vez hasta volver a esa esquina.',
+  patrones: 'Busca el grupo de colores que se repite. Sigue ese mismo orden hasta llegar al espacio vacío.',
+});
+
 const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
 const shuffle = (arr) => {
@@ -31,12 +39,14 @@ function buildOptions(answer, poolSize = 3) {
 
 /* ---------- CONTEO (objetos SVG o imágenes de marca, sin emojis) ---------- */
 const COUNT_ITEMS = [
-  { iconName: 'ball', name: 'pelotas', color: 'text-cyan-ocean' },
-  { iconName: 'fish', name: 'peces', color: 'text-orange-energy' },
-  { iconName: 'star', name: 'estrellas', color: '' },
-  { iconName: 'balloon', name: 'globos', color: 'text-coral-alert' },
-  { iconName: 'heart', name: 'corazones', color: '' },
+  { iconName: 'ball', name: 'pelotas', article: 'las', color: 'text-cyan-ocean' },
+  { iconName: 'fish', name: 'peces', article: 'los', color: 'text-orange-energy' },
+  { iconName: 'star', name: 'estrellas', article: 'las', color: '' },
+  { iconName: 'balloon', name: 'globos', article: 'los', color: 'text-coral-alert' },
+  { iconName: 'heart', name: 'corazones', article: 'los', color: '' },
 ];
+
+const COUNT_ARTICLES = Object.fromEntries(COUNT_ITEMS.map((item) => [item.name, item.article]));
 
 function countQuestion(level) {
   const item = COUNT_ITEMS[rand(0, COUNT_ITEMS.length - 1)];
@@ -49,6 +59,7 @@ function countQuestion(level) {
     visual: `<div class="flex flex-wrap gap-3 justify-center items-center max-w-md mx-auto p-4 bg-white rounded-card border-2 border-border-gray" role="img" aria-label="${total} ${item.name}">
         ${Array.from({ length: total }, () => icon(item.iconName, itemClass)).join('')}
       </div>`,
+    hint: `Señala y cuenta uno por uno ${item.article} ${item.name} de izquierda a derecha hasta el final.`,
     options,
     answerIndex,
   };
@@ -74,6 +85,7 @@ function arithmeticQuestion(level) {
         <span class="font-fredoka font-bold text-display-lg text-text-dark/40">=</span>
         <span class="font-fredoka font-bold text-display-lg text-text-dark/30">?</span>
       </div>`,
+    hint: `Empieza en ${a} y cuenta ${b} lugares más hacia ${useSubtraction ? 'atrás' : 'adelante'}.`,
     options,
     answerIndex,
   };
@@ -103,6 +115,7 @@ function geometryQuestion(level) {
     prompt: `¿Cuántos lados tiene el ${shape.name}?`,
     speakText: `¿Cuántos lados tiene el ${shape.name}?`,
     visual: `<div class="flex items-center justify-center p-4 bg-white rounded-card border-2 border-border-gray">${shapeSvg(shape)}</div>`,
+    hint: `Toca y cuenta cada esquina o lado recto del ${shape.name}: tiene ${shape.sides} lados.`,
     options,
     answerIndex,
   };
@@ -136,6 +149,7 @@ function patternQuestion(level) {
         ${sequence.map((c) => dot(c)).join('')}
         <span class="w-12 h-12 sm:w-14 sm:h-14 rounded-full border-4 border-dashed border-text-dark/40 grid place-items-center font-fredoka font-bold text-h2 text-text-dark/50">?</span>
       </div>`,
+    hint: `El grupo ${unit.map((color) => color.label).join(' + ')} se repite. Después de ${sequence[sequence.length - 1].label} vuelve ${answerColor.label}.`,
     options,
     answerIndex,
   };
@@ -147,6 +161,64 @@ const GENERATORS = {
   geometria: geometryQuestion,
   patrones: patternQuestion,
 };
+
+/* ---------- PISTAS: explicación no vacía para toda pregunta ---------- */
+const COLOR_LABELS = Object.fromEntries(PATTERN_COLORS.map(({ label, color }) => [color.toLowerCase(), label]));
+
+const promptMatch = (question, pattern) => typeof question?.prompt === 'string' ? question.prompt.match(pattern) : null;
+const visualText = (question) => typeof question?.visual === 'string' ? question.visual : '';
+
+function inferModule(question, moduleId) {
+  if (Object.hasOwn(ROUND_TIPS, moduleId)) return moduleId;
+  const prompt = typeof question?.prompt === 'string' ? question.prompt : '';
+  if (/¿Cuántos .+ ves\?/.test(prompt)) return 'conteo';
+  if (/¿Cuánto es \d+ [+−] \d+\?/.test(prompt)) return 'aritmetica';
+  if (/¿Cuántos lados tiene/.test(prompt)) return 'geometria';
+  if (/patrón/.test(prompt)) return 'patrones';
+  const visual = visualText(question);
+  if (/aria-label="\d+ /.test(visual)) return 'conteo';
+  if (visual.includes('<polygon')) return 'geometria';
+  if (visual.includes('border-dashed') && visual.includes('background:')) return 'patrones';
+  if (visual.includes('tabular-nums')) return 'aritmetica';
+  return null;
+}
+
+function describeQuestion(question, moduleId) {
+  const visual = visualText(question);
+  switch (moduleId) {
+    case 'conteo': {
+      const name = promptMatch(question, /¿Cuántos (.+) ves\?/)?.[1] ?? visual.match(/aria-label="\d+ (.+?)"/)?.[1];
+      return name
+        ? `Cuenta uno por uno ${COUNT_ARTICLES[name] ?? 'los'} ${name} de izquierda a derecha hasta el final.`
+        : 'Cuenta uno por uno cada objeto de izquierda a derecha hasta el final.';
+    }
+    case 'aritmetica': {
+      const match = promptMatch(question, /¿Cuánto es (\d+) ([+−]) (\d+)\?/);
+      if (!match) return '';
+      const [, a, symbol, b] = match;
+      return `Empieza en ${a} y cuenta ${b} lugares más hacia ${symbol === '+' ? 'adelante' : 'atrás'}.`;
+    }
+    case 'geometria': {
+      const shape = promptMatch(question, /¿Cuántos lados tiene el (.+)\?/)?.[1] ?? visual.match(/aria-label="(.+?)"/)?.[1];
+      return `Toca y cuenta cada esquina o lado recto de la figura${shape ? ` del ${shape}` : ''}: recorre el borde y cuenta sus lados.`;
+    }
+    case 'patrones': {
+      const colors = [...new Set([...visual.matchAll(/background:\s*(#[0-9A-Fa-f]{6})/g)]
+        .map((match) => COLOR_LABELS[match[1].toLowerCase()]).filter(Boolean))];
+      return `Mira los colores que se repiten en orden desde el inicio${colors.length ? ` (${colors.join(' → ')})` : ''} para descubrir cuál sigue.`;
+    }
+    default:
+      return '';
+  }
+}
+
+/** Pista editorial > explicación específica de la pregunta > respaldo del módulo. Nunca devuelve ''. */
+export function buildQuestionHint(question, moduleId) {
+  const hint = question?.hint;
+  if (typeof hint === 'string' && hint.trim()) return hint;
+  const module = inferModule(question, moduleId);
+  return describeQuestion(question, module) || ROUND_TIPS[module] || ROUND_TIPS.conteo;
+}
 
 /**
  * Genera una ronda de preguntas adaptadas al módulo y nivel actual.

@@ -1,10 +1,12 @@
 import { icon } from '../components/icons.js';
 import { getExerciseFeedback } from './lessonContent.js';
+import { buildQuestionHint } from '../state/questions.js';
 
 // Contrato leído en Game.jsx y questions.js (base 02deb61): visual es HTML,
 // options contiene { label: string, color?: string } y answerIndex es base cero.
 // Solo convierte una pregunta: no genera rondas, premios, progreso ni adaptación.
-// El juego todavía no consume hint/feedback_*; se conservan como metadatos.
+// La pista se garantiza con buildQuestionHint y el feedback editorial se entrega
+// tal cual para que Game.jsx muestre siempre una explicación al pedir una pista.
 // Los fragmentos siguen los recursos y estilos del generador existente.
 const COLORS = Object.freeze({
   Morado: '#5124EE', Amarillo: '#FFC700', Verde: '#00D282',
@@ -22,6 +24,9 @@ const SHAPES = Object.freeze({
   square: ['cuadrado', 4, '12,12 88,12 88,88 12,88'],
   pentagon: ['pentágono', 5, '50,6 94,38 77,92 23,92 6,38'],
   hexagon: ['hexágono', 6, '50,5 91,27.5 91,72.5 50,95 9,72.5 9,27.5'],
+});
+const HINT_MODULE = Object.freeze({
+  objects: 'conteo', expression: 'aritmetica', shape: 'geometria', color_sequence: 'patrones',
 });
 const own = (object, key) => Object.hasOwn(object, key);
 const nonnegativeInteger = value => Number.isSafeInteger(value) && value >= 0;
@@ -98,9 +103,12 @@ function renderVisual(visual) {
 export function adaptExerciseToGame(exercise) {
   if (!getExerciseFeedback(exercise, exercise?.answer_index).valid) invalid('faltan campos o la respuesta no es válida');
   validateVisual(exercise);
-  const { answer_index, visual, options, ...metadata } = structuredClone(exercise);
+  const { answer_index, visual, options, feedback_correct, feedback_incorrect, ...metadata } = structuredClone(exercise);
   return {
     ...metadata,
+    hint: buildQuestionHint(exercise, HINT_MODULE[visual.type]),
+    feedback_correct,
+    feedback_incorrect,
     prompt: exercise.prompt,
     speakText: visual.type === 'color_sequence'
       ? `${exercise.prompt} ${visual.sequence.join(', ')}. ¿Qué color sigue?`
