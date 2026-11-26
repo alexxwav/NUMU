@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Medal, Gem, Trophy, Crown } from 'lucide-react';
-import { store } from '../state/store.js';
+import { store, getTotalModuleStars } from '../state/store.js';
 import { sfx } from '../utils/audio.js';
 import { ROUTES } from '../services/startRoute.js';
 import { hasFinishedRound } from '../utils/stars.js';
@@ -24,7 +24,7 @@ const getIcon = (name, className, has = true) => {
 const BADGES = [
   { id: 'first', title: 'Primera lección', iconName: 'medal', tone: 'bg-orange-energy text-white', test: (s) => hasFinishedRound(s) },
   { id: 'streak3', title: 'Racha de 3 días', iconName: 'flame', tone: 'bg-coral-alert text-white', test: (s) => s.streak >= 3 },
-  { id: 'stars20', title: '20 estrellas', iconName: 'star', tone: 'bg-sunshine-yellow text-text-dark', test: (s) => s.stars >= 20 },
+  { id: 'stars20', title: '20 estrellas', iconName: 'star', tone: 'bg-sunshine-yellow text-text-dark', test: (s) => getTotalModuleStars(s) >= 20 },
   { id: 'gems50', title: '50 gemas', iconName: 'gem', tone: 'bg-cyan-ocean text-white', test: (s) => s.gems >= 50 },
   { id: 'level5', title: 'Nivel 5', iconName: 'trophy', tone: 'bg-numu-purple text-white', test: (s) => s.level >= 5 },
   { id: 'perfect', title: 'Ronda perfecta', iconName: 'crown', tone: 'bg-mint-success text-white', test: (s) => Object.values(s.starsByLevel || {}).some((v) => v === 3) },
@@ -115,7 +115,7 @@ export default function Achievements() {
 
         <div className="relative z-10">
           <p className="font-fredoka font-bold text-4xl sm:text-5xl text-numu-purple tabular-nums">
-            {state.stars}
+            {getTotalModuleStars(state)}
           </p>
           <p className="font-poppins font-bold text-sm text-gray-500 mt-1 uppercase tracking-wider">Estrellas</p>
         </div>

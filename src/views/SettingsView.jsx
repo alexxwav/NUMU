@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, User, Volume2, Shield, Lock } from 'lucide-react';
 import { ROUTES } from '../services/startRoute.js';
-import { store } from '../state/store.js';
+import { store, getTotalModuleStars } from '../state/store.js';
 import { sfx } from '../utils/audio.js';
 import { flameOn, flameOff } from '../components/iconAssets.js';
 
@@ -237,7 +237,7 @@ export default function SettingsView() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
               {[
                 { label: 'Nivel', value: state.level },
-                { label: 'Estrellas', value: state.stars },
+                { label: 'Estrellas', value: getTotalModuleStars(state) },
                 { label: 'Gemas', value: state.gems },
                 { label: 'Racha', value: `${state.streak} d`, icon: state.streak > 0 ? flameOn : flameOff }
               ].map((m, i) => (

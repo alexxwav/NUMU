@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import confetti from 'canvas-confetti';
 import { Home, Lightbulb, X, Volume2 } from 'lucide-react';
-import { store } from '../state/store.js';
+import { store, getTotalXp } from '../state/store.js';
 import { generateQuestions, buildQuestionHint } from '../state/questions.js';
 import { lessonForModule, lessonLevelFromState, levelAfterRound, MAX_LESSON_LEVEL } from '../utils/lessonLevel.js';
 import { buildLessonRound, QUESTIONS_PER_ROUND } from '../utils/lessonRound.js';
@@ -67,6 +67,7 @@ export default function Game() {
   // R10: si en esta ronda las vidas llegaron a 0, no hay avance académico aunque se recarguen.
   const [livesDepleted, setLivesDepleted] = useState(false);
   const [levelResult, setLevelResult] = useState(null);
+  const [xpEarned, setXpEarned] = useState(0);
   
   const currentQ = questions[index];
   const maxLives = store.get().maxLives;
@@ -178,9 +179,12 @@ export default function Game() {
     setIsFinished(true);
     const stars = roundStars;
     const completedLevel = playedLevel; // parada de esta sección que se acaba de terminar
-    store.addRewards({ gems: stars * 5, stars, xp: stars * 10, levelStars: stars });
+    const xpBefore = getTotalXp(store.get());
+    store.addRewards({ gems: stars * 5, stars, xp: stars * 50, levelStars: stars });
     // Avance de esta sección: parada siguiente y estrellas de la parada terminada.
     store.recordModuleRound({ moduleId, stars, level: completedLevel });
+    // Repetir una parada con las mismas estrellas no añade XP; mejorar sí suma 50 por estrella.
+    setXpEarned(getTotalXp(store.get()) - xpBefore);
     store.completeLevel();
     recordModuleRound({ moduleId, stars, level: completedLevel }).then(({ error }) => {
       if (error) console.warn('No se pudo guardar el progreso de la sección en la cuenta:', error);
@@ -236,7 +240,7 @@ export default function Game() {
         </div>
 
         <div className="bg-white text-text-dark rounded-card px-8 py-5 mb-8 font-fredoka font-bold text-2xl shadow-lg relative z-10">
-          {questions.length} respuestas · {stars * 10} XP · +{stars * 5} gemas
+          {questions.length} respuestas · +{xpEarned} XP · +{stars * 5} gemas
         </div>
 
         {lessonEntry && levelResult && (

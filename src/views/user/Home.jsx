@@ -4,7 +4,7 @@ import {
   Menu, X, Rocket, ChevronRight, Check, Lock,
   Home as HomeIcon, Trophy, Settings, LogOut, Store, BookOpen
 } from 'lucide-react';
-import { store, MODULES } from '../../state/store.js';
+import { store, MODULES, getModuleStars, getTotalModuleStars, getTotalXp } from '../../state/store.js';
 import { sfx } from '../../utils/audio.js';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { useLessonProgress } from '../../hooks/useLessonProgress.js';
@@ -14,7 +14,6 @@ import OceanMap from '../../components/OceanMap.jsx';
 import { normalizeModuleId } from '../../data/subjects.js';
 import catalog from '../../data/lessonContent.json';
 import { COURSE_STYLE } from '../CoursesView.jsx';
-import LessonStars from '../../components/LessonStars.jsx';
 import { starIcon } from '../../components/iconAssets.js';
 import { resolveContinueRoute } from '../../services/startRoute.js';
 import { lessonForModule } from '../../utils/lessonLevel.js';
@@ -52,10 +51,12 @@ export default function Home() {
   // Lección que abren las paradas del mapa (la misma que carga /jugar/:modulo en Game.jsx).
   const routeLesson = lessonForModule(catalog, selectedModule.id)?.lesson ?? null;
 
-  // Estrellas por lección guardadas en la cuenta; el contador nunca pierde las
-  // estrellas ya ganadas en el dispositivo.
-  const { starsByLesson, totalStars, loaded } = useLessonProgress();
-  const starCount = loaded ? Math.max(state.stars, totalStars) : state.stars;
+  // Mantiene hidratado el progreso por lección que usan las recomendaciones.
+  useLessonProgress();
+
+  // Contador global: estrellas de las paradas completadas en las 4 rutas y su XP (50 por estrella).
+  const starCount = getTotalModuleStars(state);
+  const totalXp = getTotalXp(state);
   const { recommendations, unavailableInterests } = useRecommendations();
 
   // «¡Continuar Aventura!»: la última lección jugada; si no hay, la primera recomendación.
@@ -153,7 +154,7 @@ export default function Home() {
               ¡Hola, {displayName}!
             </h1>
             <p className="text-sm md:text-base font-medium text-gray-500">
-              Parada {moduleLevel} · {selectedModule.name} · {state.xp} XP
+              Parada {moduleLevel} · {selectedModule.name} · {totalXp} XP
             </p>
           </div>
         </div>
@@ -222,7 +223,7 @@ export default function Home() {
             <h2 className="text-2xl font-fredoka font-bold text-text-dark">Tus lecciones</h2>
             <span className="inline-flex items-center gap-2 font-fredoka font-bold text-sm text-text-dark">
               <img src={starIcon} alt="" className="w-5 h-5 object-contain" />
-              <span className="tabular-nums">{totalStars}</span>
+              <span className="tabular-nums">{starCount}</span>
             </span>
           </div>
 
@@ -236,7 +237,10 @@ export default function Home() {
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-bold uppercase tracking-wide text-gray-400">{course.title}</p>
                   <h4 className="font-fredoka font-bold text-lg text-text-dark truncate">{lesson.title}</h4>
-                  <LessonStars stars={starsByLesson[lesson.id] ?? 0} className="mt-1" />
+                  <span className="mt-1 inline-flex items-center gap-1 text-xs font-bold text-text-dark/60">
+                    <img src={starIcon} alt="" className="w-4 h-4 object-contain" />
+                    <span className="tabular-nums">{getModuleStars(state, lesson.module_id)}</span> estrellas en esta ruta
+                  </span>
                 </div>
                 <ChevronRight className="w-6 h-6 text-numu-purple shrink-0" />
               </Link>

@@ -3,6 +3,10 @@ import { normalizeModuleId } from '../data/subjects.js';
 
 const STORAGE_KEY = 'numu-state-v1';
 
+// Las 4 rutas del mapa; el total de estrellas se deriva de sus paradas, no de las lecciones.
+export const MODULE_IDS = ['conteo', 'aritmetica', 'geometria', 'patrones'];
+export const XP_PER_STAR = 50;
+
 const DEFAULT_STATE = {
   userId: null,
   lives: 5,
@@ -89,11 +93,30 @@ function cleanModuleStars(raw = {}) {
   return result;
 }
 
+/** Estrellas reales de una ruta: suma de la mejor puntuación de cada parada. */
+export function getModuleStars(state, moduleId) {
+  const id = normalizeModuleId(moduleId);
+  if (!id) return 0;
+  const byLevel = cleanModuleStars(state?.starsByModuleLevel?.[id]);
+  return Object.values(byLevel).reduce((total, value) => total + value, 0);
+}
+
+/** Total global: estrellas de las paradas de las 4 rutas (conteo, aritmética, geometría y patrones). */
+export function getTotalModuleStars(state) {
+  return MODULE_IDS.reduce((total, id) => total + getModuleStars(state, id), 0);
+}
+
+/** Cada estrella de una parada vale exactamente 50 XP. */
+export function getTotalXp(state) {
+  return getTotalModuleStars(state) * XP_PER_STAR;
+}
+
 function load() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return structuredClone(DEFAULT_STATE);
-    return deepMerge(DEFAULT_STATE, JSON.parse(raw));
+    const saved = deepMerge(DEFAULT_STATE, JSON.parse(raw));
+    return { ...saved, stars: getTotalModuleStars(saved), xp: getTotalXp(saved) };
   } catch {
     return structuredClone(DEFAULT_STATE);
   }
@@ -228,9 +251,12 @@ export const store = {
     const next = Math.max(current, finished + 1);
     const byLevel = cleanModuleStars(state.starsByModuleLevel[id]);
     byLevel[finished] = Math.max(byLevel[finished] ?? 0, earned);
+    const starsByModuleLevel = { ...state.starsByModuleLevel, [id]: byLevel };
     return store.set({
       levelByModule: { ...state.levelByModule, [id]: next },
-      starsByModuleLevel: { ...state.starsByModuleLevel, [id]: byLevel },
+      starsByModuleLevel,
+      stars: getTotalModuleStars({ ...state, starsByModuleLevel }),
+      xp: getTotalXp({ ...state, starsByModuleLevel }),
     });
   },
 
@@ -258,7 +284,12 @@ export const store = {
       }
       stars[id] = merged;
     }
-    return store.set({ levelByModule: levels, starsByModuleLevel: stars });
+    return store.set({
+      levelByModule: levels,
+      starsByModuleLevel: stars,
+      stars: getTotalModuleStars({ ...state, starsByModuleLevel: stars }),
+      xp: getTotalXp({ ...state, starsByModuleLevel: stars }),
+    });
   },
 
   /* ---- Progreso por lección ---- */
