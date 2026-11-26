@@ -1,24 +1,21 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { 
-  Menu, X, Rocket, ChevronRight, Check, Lock,
+import {
+  Menu, X, Rocket,
   Home as HomeIcon, Trophy, Settings, LogOut, Store, BookOpen
 } from 'lucide-react';
-import { store, MODULES, getModuleStars, getTotalModuleStars, getTotalXp } from '../../state/store.js';
+import { store, MODULES, getTotalModuleStars, getTotalXp } from '../../state/store.js';
 import { sfx } from '../../utils/audio.js';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { useLessonProgress } from '../../hooks/useLessonProgress.js';
 import { useRecommendations } from '../../hooks/useRecommendations.js';
 import Recommendations from '../../components/Recommendations.jsx';
-import OceanMap from '../../components/OceanMap.jsx';
 import { normalizeModuleId } from '../../data/subjects.js';
 import catalog from '../../data/lessonContent.json';
 import { COURSE_STYLE } from '../CoursesView.jsx';
 import { starIcon } from '../../components/iconAssets.js';
 import { resolveContinueRoute } from '../../services/startRoute.js';
-import { lessonForModule } from '../../utils/lessonLevel.js';
-
-const TOTAL_LEVELS = 10;
+import { RECOMMENDATION_TYPES } from '../../services/recommendationService.js';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -43,13 +40,10 @@ export default function Home() {
   // Datos dinámicos del usuario
   const displayName = state.profile?.nickname || state.profile?.name || 'Explorador';
   const selectedModule = MODULES.find((m) => m.id === normalizeModuleId(state.module)) ?? MODULES[0];
-  // Cada sección tiene su propia parada y sus estrellas; no se comparte el nivel global.
+  // Cada sección tiene su propia parada; no se comparte el nivel global.
   const moduleLevel = state.levelByModule?.[selectedModule.id] ?? 1;
-  const moduleStars = state.starsByModuleLevel?.[selectedModule.id] ?? {};
   const courses = [...catalog.courses].sort((a, b) => a.position - b.position);
   const lessons = catalog.courses.flatMap(course => course.lessons.map(lesson => ({ lesson, course })));
-  // Lección que abren las paradas del mapa (la misma que carga /jugar/:modulo en Game.jsx).
-  const routeLesson = lessonForModule(catalog, selectedModule.id)?.lesson ?? null;
 
   // Mantiene hidratado el progreso por lección que usan las recomendaciones.
   useLessonProgress();
@@ -58,6 +52,9 @@ export default function Home() {
   const starCount = getTotalModuleStars(state);
   const totalXp = getTotalXp(state);
   const { recommendations, unavailableInterests } = useRecommendations();
+  // Las tarjetas de refuerzo (pocas estrellas) van primero cuando existen.
+  const displayedRecommendations = [...recommendations].sort((a, b) =>
+    Number(b.type === RECOMMENDATION_TYPES.REFORZAR) - Number(a.type === RECOMMENDATION_TYPES.REFORZAR));
 
   // «¡Continuar Aventura!»: la última lección jugada; si no hay, la primera recomendación.
   const continueTarget = resolveContinueRoute({
@@ -73,14 +70,6 @@ export default function Home() {
     sfx.tap();
     if (continueLesson) store.set({ module: continueLesson.module_id });
     navigate(continueTarget.route);
-  };
-
-  // Manejador para jugar un nivel
-  const handlePlayLevel = (moduleId, levelNumber) => {
-    sfx.tap();
-    store.set({ module: moduleId });
-    // La parada elegida viaja en la URL para que Game.jsx guarde el avance de ESA sección.
-    navigate(`/jugar/${moduleId}?parada=${levelNumber}`);
   };
 
   return (
@@ -190,7 +179,7 @@ export default function Home() {
         </section>
 
         {/* --- Recomendado para ti (sistema de recomendación por reglas) --- */}
-        <Recommendations recommendations={recommendations} unavailableInterests={unavailableInterests} />
+        <Recommendations recommendations={displayedRecommendations} unavailableInterests={unavailableInterests} />
 
         {/* --- Cursos (catálogo de lecciones de Viviana) --- */}
         <section>
@@ -215,97 +204,6 @@ export default function Home() {
               );
             })}
           </div>
-        </section>
-
-        {/* --- Lecciones con estrellas (progreso guardado en la cuenta) --- */}
-        <section>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-fredoka font-bold text-text-dark">Tus lecciones</h2>
-            <span className="inline-flex items-center gap-2 font-fredoka font-bold text-sm text-text-dark">
-              <img src={starIcon} alt="" className="w-5 h-5 object-contain" />
-              <span className="tabular-nums">{starCount}</span>
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {lessons.map(({ lesson, course }) => (
-              <Link key={lesson.id} to={`/lecciones/${lesson.id}`} onClick={() => sfx.tap()}
-                className="bg-white rounded-card p-5 border-2 border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all flex items-center gap-4">
-                <span className="w-12 h-12 shrink-0 rounded-full bg-sunshine-yellow text-text-dark font-fredoka font-bold text-xl grid place-items-center">
-                  {lesson.position}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold uppercase tracking-wide text-gray-400">{course.title}</p>
-                  <h4 className="font-fredoka font-bold text-lg text-text-dark truncate">{lesson.title}</h4>
-                  <span className="mt-1 inline-flex items-center gap-1 text-xs font-bold text-text-dark/60">
-                    <img src={starIcon} alt="" className="w-4 h-4 object-contain" />
-                    <span className="tabular-nums">{getModuleStars(state, lesson.module_id)}</span> estrellas en esta ruta
-                  </span>
-                </div>
-                <ChevronRight className="w-6 h-6 text-numu-purple shrink-0" />
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        {/* --- Mapa de Niveles: aventura submarina (components/OceanMap.jsx) --- */}
-        {/* Cada sección tiene su propio avance: state.levelByModule[moduleId] y
-            state.starsByModuleLevel[moduleId]. Cambiar de pestaña muestra sus paradas reales. */}
-        <section aria-labelledby="ruta-titulo">
-          <div className="mb-4">
-            <h2 id="ruta-titulo" className="text-2xl font-fredoka font-bold text-text-dark">
-              Tu ruta: {routeLesson?.title ?? selectedModule.name}
-            </h2>
-            <p className="mt-1 text-base text-gray-600">
-              Cada vez que terminas una ronda, avanzas una parada. Toca la parada de NUMU para jugar.
-            </p>
-          </div>
-
-          {/* Qué lección practicas en el recorrido (lecciones reales del catálogo) */}
-          <div role="group" aria-label="¿Qué quieres practicar en tu ruta?" className="mb-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {lessons.map(({ lesson }) => {
-              const active = lesson.module_id === selectedModule.id;
-              return (
-                <button
-                  key={lesson.id}
-                  type="button"
-                  aria-pressed={active}
-                  onClick={() => { sfx.tap(); store.set({ module: lesson.module_id }); }}
-                  className={`min-h-[64px] rounded-btn px-3 py-2 font-fredoka font-bold text-base sm:text-lg leading-tight border-2 transition-all ${active
-                    ? 'bg-numu-purple shadow-3d-primary text-white border-white'
-                    : 'bg-white text-text-dark border-gray-100 shadow-sm hover:-translate-y-0.5'}`}
-                >
-                  {lesson.title}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Leyenda: completada · estás aquí · bloqueada */}
-          <ul className="mb-4 flex flex-wrap gap-x-5 gap-y-2 text-sm font-bold text-text-dark" aria-label="Cómo leer el mapa">
-            <li className="inline-flex items-center gap-2">
-              <span className="w-6 h-6 rounded-full bg-mint-success border-2 border-white shadow-sm grid place-items-center text-white" aria-hidden="true"><Check className="w-4 h-4" strokeWidth={3} /></span>
-              Completada
-            </li>
-            <li className="inline-flex items-center gap-2">
-              <span className="w-6 h-6 rounded-full bg-numu-purple border-2 border-white shadow-sm" aria-hidden="true" />
-              Estás aquí
-            </li>
-            <li className="inline-flex items-center gap-2">
-              <span className="w-6 h-6 rounded-full bg-gray-200 border-2 border-white shadow-sm grid place-items-center text-gray-400" aria-hidden="true"><Lock className="w-3.5 h-3.5" /></span>
-              Bloqueada: termina la parada anterior
-            </li>
-          </ul>
-
-          <OceanMap
-            totalLevels={TOTAL_LEVELS}
-            currentLevel={moduleLevel}
-            starsByLevel={moduleStars}
-            activityTitle={routeLesson?.title ?? selectedModule.name}
-            moduleId={selectedModule.id}
-            onPlayLevel={(level) => handlePlayLevel(selectedModule.id, level)}
-            reduceMotion={Boolean(state.settings?.reduceMotion)}
-          />
         </section>
 
       </main>

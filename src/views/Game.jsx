@@ -9,11 +9,9 @@ import { buildLessonRound, QUESTIONS_PER_ROUND } from '../utils/lessonRound.js';
 import { sfx, speak } from '../utils/audio.js';
 import { useAuth } from '../hooks/useAuth.jsx';
 import { useLessonProgress } from '../hooks/useLessonProgress.js';
-import { useRecommendations } from '../hooks/useRecommendations.js';
-import Recommendations from '../components/Recommendations.jsx';
-import { starsForRound } from '../utils/stars.js';
+import { needsReinforcement, starsForRound } from '../utils/stars.js';
 import { ROUTES } from '../services/startRoute.js';
-import { normalizeModuleId } from '../data/subjects.js';
+import { normalizeModuleId, courseSlugForModule } from '../data/subjects.js';
 import lessonCatalog from '../data/lessonContent.json';
 import { getLessonById } from '../utils/lessonContent.js';
 import mascotUrl from '../assets/brand/mascot/numu-morado.png';
@@ -29,7 +27,7 @@ export default function Game() {
   const { recordRound, recordModuleRound } = useAuth();
   const { saveLessonResult } = useLessonProgress();
   const { nivel, lessonId } = useParams(); // módulo ('conteo', 'sumas', …) o lección del catálogo
-  const [searchParams] = useSearchParams(); // ?parada=N la envía el mapa de /inicio
+  const [searchParams] = useSearchParams(); // ?parada=N la envía el mapa del curso
   // La lección del catálogo: la de la ruta /lecciones/:id/jugar o, desde /jugar/:modulo, la de ese módulo.
   const [lessonEntry] = useState(() => (lessonId
     ? getLessonById(lessonCatalog, lessonId)
@@ -38,7 +36,11 @@ export default function Game() {
   // Parada del mapa que se está jugando; si viene de una lección, se usa la parada actual del módulo.
   const fromMap = Number(searchParams.get('parada'));
   const playedLevel = Math.max(1, Math.floor(fromMap || store.get().levelByModule?.[moduleId] || 1));
-  const exitTo = lessonId && lessonEntry ? `/lecciones/${lessonEntry.lesson.id}` : '/inicio';
+  // Las rondas del mapa vuelven a la vista del curso con la ruta activa; las de lección, a su ficha.
+  const courseId = lessonEntry?.course?.id ?? courseSlugForModule(moduleId);
+  const exitTo = lessonId && lessonEntry
+    ? `/lecciones/${lessonEntry.lesson.id}`
+    : courseId ? `/cursos/${courseId}?modulo=${moduleId}` : ROUTES.home;
 
   // Nivel ACADÉMICO de esta lección (1 a 3): el guardado o el inicial del diagnóstico (R1–R3).
   // Es independiente del nivel general (state.level), que solo es gamificación.
@@ -74,17 +76,8 @@ export default function Game() {
   const progressPercent = (index / questions.length) * 100;
   // Estrellas de la ronda: 0 si se acabaron las vidas, de 1 a 3 según los errores.
   const roundStars = starsForRound({ total: questions.length, mistakes, approved: lives > 0 });
-  // Siguiente actividad recomendada a partir del resultado que ya decidió el motor (solo rondas de lección).
-  const { recommendations: nextSteps } = useRecommendations({
-    lastRound: isFinished && lessonEntry ? {
-      lessonId: lessonEntry.lesson.id,
-      stars: roundStars,
-      approved: lives > 0 && !livesDepleted,
-      levelBefore: lessonLevel,
-      levelAfter: levelResult?.level ?? lessonLevel,
-    } : null,
-    limit: 1,
-  });
+  // El resultado solo ofrece refuerzo tras una ronda con errores; con 3 estrellas no hay mensajes.
+  const showReinforcement = Boolean(lessonEntry) && needsReinforcement({ mistakes, stars: roundStars });
 
   // Escuchar la instrucción al cargar la pregunta
   useEffect(() => {
@@ -253,10 +246,19 @@ export default function Game() {
           </p>
         )}
 
-        {lessonEntry && nextSteps.length > 0 && (
-          <div className="relative z-10 w-full max-w-md mb-8">
-            <p className="font-fredoka font-bold text-xl mb-3">¿Qué sigue?</p>
-            <Recommendations recommendations={nextSteps} compact />
+        {showReinforcement && (
+          <div className="relative z-10 w-full max-w-md mb-8 rounded-card bg-white px-5 py-5 text-left text-text-dark shadow-lg">
+            <p className="font-fredoka font-bold text-xl text-numu-purple mb-1">Refuerza esta habilidad</p>
+            <p className="font-poppins text-base">
+              Tuviste varios errores en esta ronda. ¿Quieres practicar «{lessonEntry.lesson.title}» de nuevo para dominarla?
+            </p>
+            <button
+              type="button"
+              onClick={() => { sfx.tap(); navigate(`/lecciones/${lessonEntry.lesson.id}/jugar`); }}
+              className="mt-4 min-h-[64px] w-full rounded-btn bg-orange-energy text-white font-fredoka font-bold text-lg shadow-3d-orange active:translate-y-1 active:shadow-none transition-all"
+            >
+              Reforzar ahora
+            </button>
           </div>
         )}
 

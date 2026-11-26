@@ -48,3 +48,12 @@ export function hasFinishedRound(state = {}) {
 export function clampStars(stars) {
   return Math.max(0, Math.min(3, Math.round(Number(stars) || 0)));
 }
+
+/**
+ * Solo se sugiere reforzar cuando la ronda tuvo varios errores, una estrella
+ * o no se completó. Con buen desempeño no se muestra ninguna sugerencia.
+ */
+export function needsReinforcement({ mistakes = 0, stars = 3 } = {}) {
+  const failed = Math.max(0, Number(mistakes) || 0);
+  return failed >= 2 || clampStars(stars) <= 1;
+}

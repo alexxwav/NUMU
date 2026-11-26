@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createLessonProgressService } from '../src/services/lessonProgressService.js';
-import { starsForRound, sumStars, clampStars } from '../src/utils/stars.js';
+import { starsForRound, sumStars, clampStars, needsReinforcement } from '../src/utils/stars.js';
 import { store } from '../src/state/store.js';
 
 // Simula el query builder encadenable de supabase-js y registra cada llamada.
@@ -41,6 +41,14 @@ test('starsForRound da 0 estrellas si la ronda no se aprobó', () => {
   assert.equal(starsForRound({ total: 6, mistakes: 6 }), 0);
   assert.equal(starsForRound({ total: 0, mistakes: 0 }), 0);
   assert.equal(starsForRound(), 0);
+});
+
+test('needsReinforcement solo aparece con errores o pocas estrellas', () => {
+  assert.equal(needsReinforcement({ mistakes: 0, stars: 3 }), false);
+  assert.equal(needsReinforcement({ mistakes: 1, stars: 3 }), false);
+  assert.equal(needsReinforcement({ mistakes: 2, stars: 2 }), true);
+  assert.equal(needsReinforcement({ mistakes: 4, stars: 1 }), true);
+  assert.equal(needsReinforcement({ mistakes: 0, stars: 0 }), true);
 });
 
 test('sumStars y clampStars respetan el rango de 0 a 3', () => {
