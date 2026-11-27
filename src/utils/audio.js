@@ -60,67 +60,93 @@ export const sfx = {
   },
 };
 
-/* ---------- Lectura en voz alta (Web Speech API, sin dependencias) ---------- */
+/* Lectura en voz alta mediante las voces que ofrece el navegador. */
+const SPANISH_PREFERENCE = ['es-mx', 'es-us', 'es-419', 'es-es'];
+const FEMALE_VOICE = /\b(?:female|femenina|dal[ií]a|sabina|paulina|monica|mónica|paloma|helena|luc[ií]a)\b/i;
+const NATURAL_VOICE = /\b(?:natural|neural|premium|enhanced)\b/i;
+const normalizeLocale = locale => (locale ?? '').toLowerCase().replace(/_/g, '-');
 
-// Orden de preferencia de las voces en español. Si el navegador no tiene ninguna,
-// se pide 'es-ES' y el navegador decide (puede sonar con acento de otro idioma).
-const SPANISH_PREFERENCE = ['es-MX', 'es-US', 'es-419', 'es-ES'];
-const FALLBACK_LANG = 'es-ES';
-
-let cachedVoice; // undefined = sin buscar todavía; null = no hay voz en español
-
-function pickSpanishVoice() {
-  const synth = window.speechSynthesis;
-  const voices = synth.getVoices?.() ?? [];
-  if (!voices.length) return undefined; // las voces cargan en segundo plano: se reintenta después
-  const spanish = voices.filter((v) => v.lang?.toLowerCase().replace('_', '-').startsWith('es'));
-  const byLang = (lang) => spanish.filter((v) => v.lang.toLowerCase().replace('_', '-') === lang.toLowerCase());
-  for (const lang of SPANISH_PREFERENCE) {
-    const matches = byLang(lang);
-    if (matches.length) return matches.find((v) => v.localService) ?? matches[0];
-  }
-  return spanish[0] ?? null;
+export function selectSpanishVoice(voices) {
+  const spanish = voices.filter(voice => /^es(?:-|$)/.test(normalizeLocale(voice.lang)));
+  const dialectRank = voice => {
+    const index = SPANISH_PREFERENCE.indexOf(normalizeLocale(voice.lang));
+    return index === -1 ? SPANISH_PREFERENCE.length : index;
+  };
+  const quality = voice => 4 * Number(FEMALE_VOICE.test(voice.name))
+    + 2 * Number(NATURAL_VOICE.test(voice.name)) + Number(voice.localService === true);
+  return spanish.sort((a, b) => dialectRank(a) - dialectRank(b) || quality(b) - quality(a))[0] ?? null;
 }
 
-if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-  window.speechSynthesis.addEventListener?.('voiceschanged', () => { cachedVoice = undefined; });
-}
-
-/** Voz en español que usará NUMU, o null si el dispositivo no tiene ninguna instalada. */
 export function spanishVoice() {
-  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return null;
-  if (cachedVoice === undefined) cachedVoice = pickSpanishVoice();
-  return cachedVoice ?? null;
+  const synth = globalThis.window?.speechSynthesis;
+  return selectSpanishVoice(synth?.getVoices?.() ?? []);
 }
 
-/**
- * Texto que recibe el sintetizador: el mismo que ve el niño. Solo se escriben con palabras
- * los signos matemáticos, que algunas voces leen en inglés o se saltan («2 + 3» → «2 más 3»).
- * No cambia palabras, género, número ni la puntuación (¿?¡!).
- */
+const MATH_WORDS = {
+  '+': 'más', '-': 'menos', '−': 'menos', '–': 'menos', '×': 'por', '*': 'por',
+  '÷': 'entre', '/': 'entre', '=': 'igual a', '<': 'menor que', '>': 'mayor que',
+  '≤': 'menor o igual a', '≥': 'mayor o igual a',
+};
+
 export function toSpeechText(text) {
-  return String(text ?? '')
-    .replace(/(\d)\s*\+\s*(\d)/g, '$1 más $2')
-    .replace(/(\d)\s*[−–-]\s*(\d)/g, '$1 menos $2')
-    .replace(/(\d)\s*×\s*(\d)/g, '$1 por $2')
-    .replace(/(\d)\s*÷\s*(\d)/g, '$1 entre $2')
-    .replace(/\s*=\s*/g, ' igual a ')
+  const paragraphs = String(text ?? '').trim().split(/\s*\r?\n\s*/).filter(Boolean);
+  return paragraphs.map((line, index) =>
+    index < paragraphs.length - 1 && !/[.!?…]$/.test(line) ? line + '.' : line)
+    .join(' ')
+    .replace(/(?<=[\d□)])\s*([+−–×*÷/=<>≤≥-])\s*(?=[\d□(−-])/g, (_, sign) => ` ${MATH_WORDS[sign]} `)
+    .replace(/(^|[\s(])[-−](?=\d)/g, '$1menos ')
+    .replace(/(\d)\.(?=\d)/g, '$1 punto ')
+    .replace(/□/g, ' el número que falta ')
     .replace(/\s+/g, ' ')
+    .replace(/\s+([,.;:!?])/g, '$1')
     .trim();
 }
 
-/** Lee en voz alta exactamente el texto indicado, con una voz en español si existe. */
-export function speak(text) {
-  if (!enabled() || !('speechSynthesis' in window) || !text) return;
-  const volume = masterVolume();
-  if (volume <= 0) return;
-  window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(toSpeechText(text));
-  const voice = spanishVoice();
-  if (voice) utterance.voice = voice;
-  utterance.lang = voice?.lang ?? FALLBACK_LANG;
-  utterance.rate = 0.95;
-  utterance.pitch = 1.1;
-  utterance.volume = volume;
-  window.speechSynthesis.speak(utterance);
+let activeReading;
+
+function finishReading(reading) {
+  if (activeReading !== reading) return;
+  activeReading = undefined;
+  reading.onFinish?.();
 }
+
+export function stopSpeech() {
+  if (!activeReading) return;
+  const { synth, onFinish } = activeReading;
+  activeReading = undefined;
+  synth.cancel();
+  onFinish?.();
+}
+
+export function speak(text, { onFinish } = {}) {
+  const { speechSynthesis: synth, SpeechSynthesisUtterance: Utterance } = globalThis.window ?? {};
+  const spoken = toSpeechText(text);
+  const volume = masterVolume();
+  if (!synth || !Utterance || !enabled() || volume <= 0 || !spoken) return false;
+
+  // El juego puede solicitar la lectura automática y manual casi a la vez.
+  if (activeReading?.text === spoken) return false;
+  stopSpeech();
+  const voice = spanishVoice();
+  const natural = Boolean(voice && NATURAL_VOICE.test(voice.name));
+  const utterance = new Utterance(spoken);
+  if (voice) utterance.voice = voice;
+  utterance.lang = voice?.lang?.replace(/_/g, '-') ?? 'es-MX';
+  utterance.rate = natural ? 0.96 : 0.92;
+  utterance.pitch = natural ? 1.02 : 1.05;
+  utterance.volume = volume;
+
+  const reading = { synth, text: spoken, onFinish, utterance };
+  activeReading = reading;
+  utterance.onend = utterance.onerror = () => finishReading(reading);
+  try {
+    synth.speak(utterance);
+  } catch {
+    finishReading(reading);
+  }
+  return activeReading === reading;
+}
+
+store.subscribe(() => {
+  if (activeReading && (!enabled() || masterVolume() <= 0)) stopSpeech();
+});

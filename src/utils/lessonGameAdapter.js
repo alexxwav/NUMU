@@ -22,6 +22,7 @@ const SHAPES = Object.freeze({
 const SHAPE_NAMES = Object.values(SHAPES).map(([name]) => name);
 const HINT_MODULE = Object.freeze({
   objects: 'conteo',
+  object_groups: 'conteo',
   expression: 'aritmetica',
   object_subtraction: 'aritmetica',
   shape: 'geometria',
@@ -148,6 +149,35 @@ function shapeSetEvidence(exercise, type) {
   return [figures.map(figure => figure.shape).sort(), reference?.shape ?? null, target ?? null];
 }
 
+function countGroupEvidence(exercise, type) {
+  const { visual: { icon: item, groups, target_count: target, model_count: model }, options, correct_answer: answer } = exercise;
+  const validCount = count => Number.isInteger(count) && count >= 1 && count <= 6;
+  if (!own(OBJECTS, item) || !Array.isArray(groups) || groups.length !== 4
+    || !groups.every(group => isRecord(group) && /^[A-Z]$/.test(group.label) && validCount(group.count))) {
+    invalid('se necesitan cuatro grupos válidos de hasta seis objetos');
+  }
+  const labels = groups.map(group => group.label);
+  if (new Set(labels).size !== 4 || !options.every(option => labels.includes(option))) invalid('rótulos de los grupos inválidos');
+  const counts = groups.map(group => group.count);
+
+  if ((type === 'elegir-grupo-por-cantidad' ? !validCount(target) : target !== undefined)
+    || (type === 'emparejar-grupo-por-cantidad' ? !validCount(model) : model !== undefined)) {
+    invalid('la cantidad solicitada o la del modelo no corresponde a la consigna');
+  }
+
+  let expected;
+  switch (type) {
+    case 'elegir-grupo-por-cantidad': expected = target; break;
+    case 'emparejar-grupo-por-cantidad': expected = model; break;
+    case 'elegir-grupo-con-mas-objetos': expected = Math.max(...counts); break;
+    case 'elegir-grupo-con-menos-objetos': expected = Math.min(...counts); break;
+    default: invalid('comparación de grupos no admitida');
+  }
+  const matches = groups.filter(group => group.count === expected);
+  if (matches.length !== 1 || matches[0].label !== answer) invalid('los grupos no determinan una respuesta única y válida');
+  return [counts.sort((a, b) => a - b), target ?? model ?? null];
+}
+
 function defaultExerciseType(visual) {
   switch (visual.type) {
     case 'objects': return 'contar-objetos';
@@ -171,6 +201,7 @@ function mathematicalEvidence(exercise, type) {
       validateNumericAnswer(exercise, visual.count);
       return [visual.count];
     }
+    case 'object_groups': return countGroupEvidence(exercise, type);
     case 'expression': {
       const { operator, operands } = visual;
       if (!['+', '-'].includes(operator) || type !== defaultExerciseType(visual)
@@ -265,6 +296,21 @@ function renderShapeSet({ figures, reference }) {
   return `<div class="flex flex-col items-center gap-4 p-4 bg-white rounded-card border-2 border-border-gray" role="group" aria-label="Tarjetas de figuras">${model}<div class="flex flex-wrap justify-center gap-2">${cards}</div></div>`;
 }
 
+function renderObjectGroups({ icon: item, groups, model_count: model }) {
+  const [, color, name] = OBJECTS[item];
+  const picture = icon(item, `h-7 w-7 sm:h-8 sm:w-8 ${color}`);
+  const card = (title, count) => {
+    const description = [title, ...Array(count).fill(name)].join('. ') + '.';
+    return `<div role="img" aria-label="${description}" class="rounded-card border-2 border-border-gray bg-white p-2">
+      <span aria-hidden="true" class="block text-center font-fredoka text-base font-bold">${title}</span>
+      <div aria-hidden="true" class="flex min-h-10 flex-wrap items-center justify-center gap-2">${picture.repeat(count)}</div>
+    </div>`;
+  };
+  return `<div class="w-full max-w-md space-y-3">${model === undefined ? '' : card('Modelo', model)}
+    <div class="grid grid-cols-2 gap-2">${groups.map(group => card(`Grupo ${group.label}`, group.count)).join('')}</div>
+  </div>`;
+}
+
 function renderVisual(visual) {
   switch (visual.type) {
     case 'objects': {
@@ -273,6 +319,8 @@ function renderVisual(visual) {
       const pictures = Array.from({ length: visual.count }, () => objectIcon(visual.icon)).join('');
       return `<div class="flex flex-wrap gap-3 justify-center items-center max-w-md mx-auto p-4 bg-white rounded-card border-2 border-border-gray" role="img" aria-label="${description}">${pictures}</div>`;
     }
+    case 'object_groups':
+      return renderObjectGroups(visual);
     case 'object_subtraction':
       return renderObjectSubtraction(visual);
     case 'expression': {
@@ -308,7 +356,7 @@ export function adaptExerciseToGame(exercise) {
     feedback_incorrect,
     prompt: exercise.prompt,
     speakText: visual.type === 'color_sequence'
-      ? `${exercise.prompt} ${visual.sequence.join(', ')}. ¿Qué color sigue?`
+      ? `Colores: ${visual.sequence.join(', ')}. ${exercise.prompt}`
       : exercise.prompt,
     visual: renderVisual(visual),
     options: options.map(value => visual.type === 'color_sequence'
