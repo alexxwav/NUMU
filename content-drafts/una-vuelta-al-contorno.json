@@ -1,0 +1,776 @@
+{
+  "id": "una-vuelta-al-contorno",
+  "course_id": "geometria-patrones",
+  "title": "Una vuelta al contorno",
+  "position": 4,
+  "base_level": 1,
+  "published": false,
+  "objective": "Medir el perímetro recorriendo el contorno de una figura y sumando la longitud de sus lados.",
+  "explanation": "El perímetro dice cuánto mide una vuelta al borde de una figura. En la cuadrícula, el borde de una casilla mide una unidad. Empieza en una esquina y sigue los tramos que quedan expuestos hasta regresar al inicio. En un rectángulo, los lados de enfrente tienen la misma longitud. Suma el largo de sus cuatro lados para medir la vuelta completa.",
+  "guided_example": {
+    "mode": "visual",
+    "visual": {
+      "type": "measurement_grid",
+      "mode": "perimeter",
+      "figures": [
+        {
+          "label": "A",
+          "rows": 2,
+          "columns": 3,
+          "cells": [
+            [1, 1],
+            [1, 2],
+            [1, 3],
+            [2, 1],
+            [2, 2],
+            [2, 3]
+          ]
+        }
+      ],
+      "show_dimensions": true
+    },
+    "explanation": "Imagina una cuerda alrededor del rectángulo. El lado de arriba mide 3 unidades, el de la derecha mide 2, el de abajo mide 3 y el de la izquierda mide 2. La vuelta completa mide 3 + 2 + 3 + 2 = 10 unidades."
+  },
+  "levels": {
+    "1": {
+      "exercise_types": [
+        "contar-tramos-del-borde"
+      ],
+      "exercises": [
+        {
+          "id": "una-vuelta-al-contorno-n1-01",
+          "type": "contar-tramos-del-borde",
+          "prompt": "La figura es una baldosa sola. ¿Cuántos tramos de una unidad hay en su borde?",
+          "visual": {
+            "type": "measurement_grid",
+            "mode": "perimeter",
+            "figures": [
+              {
+                "label": "A",
+                "rows": 1,
+                "columns": 1,
+                "cells": [
+                  [1, 1]
+                ]
+              }
+            ]
+          },
+          "options": [
+            1,
+            3,
+            4,
+            6
+          ],
+          "correct_answer": 4,
+          "answer_index": 2,
+          "hint": "Empieza en cualquier esquina y sigue el borde hasta volver a ella.",
+          "feedback_correct": "¡Mide 4 unidades! La baldosa tiene cuatro bordes de una unidad.",
+          "feedback_incorrect": "Elige una esquina para empezar y señala cada tramo mientras avanzas."
+        },
+        {
+          "id": "una-vuelta-al-contorno-n1-02",
+          "type": "contar-tramos-del-borde",
+          "prompt": "¿Cuánto mide el borde de esta fila de baldosas, en unidades?",
+          "visual": {
+            "type": "measurement_grid",
+            "mode": "perimeter",
+            "figures": [
+              {
+                "label": "A",
+                "rows": 1,
+                "columns": 3,
+                "cells": [
+                  [1, 1],
+                  [1, 2],
+                  [1, 3]
+                ]
+              }
+            ]
+          },
+          "options": [
+            3,
+            8,
+            6,
+            10
+          ],
+          "correct_answer": 8,
+          "answer_index": 1,
+          "hint": "Recorre los lados largos y después los extremos. Cuenta cada tramo de la cuadrícula.",
+          "feedback_correct": "¡Mide 8 unidades! Los dos lados largos tienen tres tramos cada uno y los extremos tienen uno cada uno.",
+          "feedback_incorrect": "Cuenta también los extremos cortos. Solo forman parte del recorrido los tramos de afuera."
+        },
+        {
+          "id": "una-vuelta-al-contorno-n1-03",
+          "type": "contar-tramos-del-borde",
+          "prompt": "¿Cuántos tramos de una unidad recorrería NUMU al dar una vuelta al borde de la figura en forma de L?",
+          "visual": {
+            "type": "measurement_grid",
+            "mode": "perimeter",
+            "figures": [
+              {
+                "label": "A",
+                "rows": 2,
+                "columns": 2,
+                "cells": [
+                  [1, 1],
+                  [1, 2],
+                  [2, 1]
+                ]
+              }
+            ]
+          },
+          "options": [
+            3,
+            7,
+            10,
+            8
+          ],
+          "correct_answer": 8,
+          "answer_index": 3,
+          "hint": "Sigue el contorno por fuera. Da vuelta donde la figura se mete hacia adentro.",
+          "feedback_correct": "¡Mide 8 unidades! Al seguir todo el borde de la L, incluido el rincón, se cuentan ocho tramos.",
+          "feedback_incorrect": "El rincón también es parte del borde. Recorre la figura sin saltarte ese giro."
+        },
+        {
+          "id": "una-vuelta-al-contorno-n1-04",
+          "type": "contar-tramos-del-borde",
+          "prompt": "¿Cuánto mide el perímetro de esta figura en forma de T?",
+          "visual": {
+            "type": "measurement_grid",
+            "mode": "perimeter",
+            "figures": [
+              {
+                "label": "A",
+                "rows": 2,
+                "columns": 3,
+                "cells": [
+                  [1, 1],
+                  [1, 2],
+                  [1, 3],
+                  [2, 2]
+                ]
+              }
+            ]
+          },
+          "options": [
+            10,
+            4,
+            8,
+            12
+          ],
+          "correct_answer": 10,
+          "answer_index": 0,
+          "hint": "Sigue el borde de la parte de arriba y baja alrededor del pie de la T.",
+          "feedback_correct": "¡Mide 10 unidades! La vuelta a la T mide diez unidades.",
+          "feedback_incorrect": "Marca el inicio. Cuenta cada tramo expuesto hasta regresar al mismo punto."
+        },
+        {
+          "id": "una-vuelta-al-contorno-n1-05",
+          "type": "contar-tramos-del-borde",
+          "prompt": "¿Cuántas unidades hay en el borde de esta figura con dos escalones?",
+          "visual": {
+            "type": "measurement_grid",
+            "mode": "perimeter",
+            "figures": [
+              {
+                "label": "A",
+                "rows": 2,
+                "columns": 3,
+                "cells": [
+                  [1, 1],
+                  [1, 2],
+                  [2, 2],
+                  [2, 3]
+                ]
+              }
+            ]
+          },
+          "options": [
+            4,
+            9,
+            10,
+            12
+          ],
+          "correct_answer": 10,
+          "answer_index": 2,
+          "hint": "Cuando subas o bajes un escalón, cuenta también el tramo corto.",
+          "feedback_correct": "¡Mide 10 unidades! Los escalones tienen tramos horizontales y verticales. Juntos suman diez unidades.",
+          "feedback_incorrect": "Sigue el contorno con el dedo. Incluye los tramos cortos que forman los escalones."
+        },
+        {
+          "id": "una-vuelta-al-contorno-n1-06",
+          "type": "contar-tramos-del-borde",
+          "prompt": "¿Cuánto mide el contorno de esta figura en forma de U?",
+          "visual": {
+            "type": "measurement_grid",
+            "mode": "perimeter",
+            "figures": [
+              {
+                "label": "A",
+                "rows": 2,
+                "columns": 3,
+                "cells": [
+                  [1, 1],
+                  [1, 3],
+                  [2, 1],
+                  [2, 2],
+                  [2, 3]
+                ]
+              }
+            ]
+          },
+          "options": [
+            5,
+            12,
+            10,
+            14
+          ],
+          "correct_answer": 12,
+          "answer_index": 1,
+          "hint": "Entra y sal por la abertura sin dejar de seguir el borde. El hueco abierto también tiene bordes.",
+          "feedback_correct": "¡Mide 12 unidades! El borde de la U suma doce unidades, incluidos los tramos de la abertura.",
+          "feedback_incorrect": "Vuelve a la abertura de la U y revisa los tramos que faltaron en tu recorrido."
+        }
+      ]
+    },
+    "2": {
+      "exercise_types": [
+        "sumar-lados-de-rectangulo"
+      ],
+      "exercises": [
+        {
+          "id": "una-vuelta-al-contorno-n2-01",
+          "type": "sumar-lados-de-rectangulo",
+          "prompt": "El cuadrado tiene lados de 2 unidades. ¿Cuánto mide una vuelta a su contorno?",
+          "visual": {
+            "type": "measurement_grid",
+            "mode": "perimeter",
+            "figures": [
+              {
+                "label": "A",
+                "rows": 2,
+                "columns": 2,
+                "cells": [
+                  [1, 1],
+                  [1, 2],
+                  [2, 1],
+                  [2, 2]
+                ]
+              }
+            ],
+            "show_dimensions": true
+          },
+          "options": [
+            8,
+            4,
+            6,
+            10
+          ],
+          "correct_answer": 8,
+          "answer_index": 0,
+          "hint": "Cuenta una vez cada lado del cuadrado. Todos tienen la misma longitud.",
+          "feedback_correct": "¡El perímetro es 8! Recorres 2 + 2 + 2 + 2 unidades.",
+          "feedback_incorrect": "Si solo sumaste dos lados, te faltan los que cierran la vuelta."
+        },
+        {
+          "id": "una-vuelta-al-contorno-n2-02",
+          "type": "sumar-lados-de-rectangulo",
+          "prompt": "El rectángulo tiene 3 unidades de ancho y 2 de alto. ¿Cuál es su perímetro?",
+          "visual": {
+            "type": "measurement_grid",
+            "mode": "perimeter",
+            "figures": [
+              {
+                "label": "A",
+                "rows": 2,
+                "columns": 3,
+                "cells": [
+                  [1, 1],
+                  [1, 2],
+                  [1, 3],
+                  [2, 1],
+                  [2, 2],
+                  [2, 3]
+                ]
+              }
+            ],
+            "show_dimensions": true
+          },
+          "options": [
+            5,
+            6,
+            10,
+            12
+          ],
+          "correct_answer": 10,
+          "answer_index": 2,
+          "hint": "Empieza arriba. Al dar la vuelta encontrarás otro lado del mismo largo abajo.",
+          "feedback_correct": "¡El perímetro es 10! Recorres 3 + 2 + 3 + 2 unidades.",
+          "feedback_incorrect": "Suma el ancho de arriba y el de abajo. Agrega los lados de la izquierda y la derecha."
+        },
+        {
+          "id": "una-vuelta-al-contorno-n2-03",
+          "type": "sumar-lados-de-rectangulo",
+          "prompt": "Un lado horizontal mide 4 unidades y uno vertical mide 2. ¿Cuánto mide todo el borde del rectángulo?",
+          "visual": {
+            "type": "measurement_grid",
+            "mode": "perimeter",
+            "figures": [
+              {
+                "label": "A",
+                "rows": 2,
+                "columns": 4,
+                "cells": [
+                  [1, 1],
+                  [1, 2],
+                  [1, 3],
+                  [1, 4],
+                  [2, 1],
+                  [2, 2],
+                  [2, 3],
+                  [2, 4]
+                ]
+              }
+            ],
+            "show_dimensions": true
+          },
+          "options": [
+            6,
+            12,
+            8,
+            14
+          ],
+          "correct_answer": 12,
+          "answer_index": 1,
+          "hint": "Imagina que recorres los cuatro lados. Alterna un lado largo y uno corto.",
+          "feedback_correct": "¡El perímetro es 12! Recorres 4 + 2 + 4 + 2 unidades.",
+          "feedback_incorrect": "Un ancho y una altura cubren media vuelta. Repite esos dos tramos para cerrar el recorrido."
+        },
+        {
+          "id": "una-vuelta-al-contorno-n2-04",
+          "type": "sumar-lados-de-rectangulo",
+          "prompt": "El rectángulo tiene lados de 4 y 3 unidades. ¿Cuánto mide su contorno completo?",
+          "visual": {
+            "type": "measurement_grid",
+            "mode": "perimeter",
+            "figures": [
+              {
+                "label": "A",
+                "rows": 3,
+                "columns": 4,
+                "cells": [
+                  [1, 1],
+                  [1, 2],
+                  [1, 3],
+                  [1, 4],
+                  [2, 1],
+                  [2, 2],
+                  [2, 3],
+                  [2, 4],
+                  [3, 1],
+                  [3, 2],
+                  [3, 3],
+                  [3, 4]
+                ]
+              }
+            ],
+            "show_dimensions": true
+          },
+          "options": [
+            7,
+            12,
+            16,
+            14
+          ],
+          "correct_answer": 14,
+          "answer_index": 3,
+          "hint": "Los lados que se miran de frente miden lo mismo. Suma cada medida una vez por cada lado que la tiene.",
+          "feedback_correct": "¡El perímetro es 14! Recorres 4 + 3 + 4 + 3 unidades.",
+          "feedback_incorrect": "Escribe los cuatro lados antes de sumar. Así será más fácil revisar si falta alguno."
+        },
+        {
+          "id": "una-vuelta-al-contorno-n2-05",
+          "type": "sumar-lados-de-rectangulo",
+          "prompt": "El rectángulo mide 5 unidades de ancho y 3 de alto. ¿Cuántas unidades recorre NUMU al darle la vuelta?",
+          "visual": {
+            "type": "measurement_grid",
+            "mode": "perimeter",
+            "figures": [
+              {
+                "label": "A",
+                "rows": 3,
+                "columns": 5,
+                "cells": [
+                  [1, 1],
+                  [1, 2],
+                  [1, 3],
+                  [1, 4],
+                  [1, 5],
+                  [2, 1],
+                  [2, 2],
+                  [2, 3],
+                  [2, 4],
+                  [2, 5],
+                  [3, 1],
+                  [3, 2],
+                  [3, 3],
+                  [3, 4],
+                  [3, 5]
+                ]
+              }
+            ],
+            "show_dimensions": true
+          },
+          "options": [
+            8,
+            15,
+            16,
+            18
+          ],
+          "correct_answer": 16,
+          "answer_index": 2,
+          "hint": "Suma un lado largo y uno corto. Piensa qué parte de la vuelta falta todavía.",
+          "feedback_correct": "¡El perímetro es 16! Recorres 5 + 3 + 5 + 3 unidades.",
+          "feedback_incorrect": "Las medidas de los lados se cuentan a lo largo del borde. Marca cada lado que ya sumaste."
+        },
+        {
+          "id": "una-vuelta-al-contorno-n2-06",
+          "type": "sumar-lados-de-rectangulo",
+          "prompt": "Una cancha rectangular mide 6 unidades por 4. ¿Cuánto se camina por su borde completo?",
+          "visual": {
+            "type": "measurement_grid",
+            "mode": "perimeter",
+            "figures": [
+              {
+                "label": "A",
+                "rows": 4,
+                "columns": 6,
+                "cells": [
+                  [1, 1],
+                  [1, 2],
+                  [1, 3],
+                  [1, 4],
+                  [1, 5],
+                  [1, 6],
+                  [2, 1],
+                  [2, 2],
+                  [2, 3],
+                  [2, 4],
+                  [2, 5],
+                  [2, 6],
+                  [3, 1],
+                  [3, 2],
+                  [3, 3],
+                  [3, 4],
+                  [3, 5],
+                  [3, 6],
+                  [4, 1],
+                  [4, 2],
+                  [4, 3],
+                  [4, 4],
+                  [4, 5],
+                  [4, 6]
+                ]
+              }
+            ],
+            "show_dimensions": true
+          },
+          "options": [
+            10,
+            20,
+            18,
+            24
+          ],
+          "correct_answer": 20,
+          "answer_index": 1,
+          "hint": "Empieza en una esquina y alterna la medida larga con la corta hasta volver.",
+          "feedback_correct": "¡El perímetro es 20! Recorres 6 + 4 + 6 + 4 unidades.",
+          "feedback_incorrect": "Dibuja una marca en cada lado al contarlo. Una vuelta suma dos anchos y dos alturas."
+        }
+      ]
+    },
+    "3": {
+      "exercise_types": [
+        "comparar-perimetros"
+      ],
+      "exercises": [
+        {
+          "id": "una-vuelta-al-contorno-n3-01",
+          "type": "comparar-perimetros",
+          "prompt": "¿Cuántas unidades de diferencia hay entre el perímetro de la T y el del escalón?",
+          "visual": {
+            "type": "measurement_grid",
+            "mode": "perimeter",
+            "figures": [
+              {
+                "label": "A",
+                "rows": 2,
+                "columns": 3,
+                "cells": [
+                  [1, 1],
+                  [1, 2],
+                  [1, 3],
+                  [2, 2]
+                ]
+              },
+              {
+                "label": "B",
+                "rows": 2,
+                "columns": 3,
+                "cells": [
+                  [1, 1],
+                  [1, 2],
+                  [2, 2],
+                  [2, 3]
+                ]
+              }
+            ]
+          },
+          "options": [
+            2,
+            4,
+            0,
+            10
+          ],
+          "correct_answer": 0,
+          "answer_index": 2,
+          "hint": "Traza cada borde por separado. Dos figuras de forma distinta pueden tener bordes igual de largos.",
+          "feedback_correct": "A mide 10 unidades y B mide 10. La diferencia es 0. Las dos vueltas tienen la misma longitud.",
+          "feedback_incorrect": "Revisa los escalones y los giros de la T antes de comparar los totales."
+        },
+        {
+          "id": "una-vuelta-al-contorno-n3-02",
+          "type": "comparar-perimetros",
+          "prompt": "¿Cuántas unidades de diferencia hay entre los perímetros de A y B?",
+          "visual": {
+            "type": "measurement_grid",
+            "mode": "perimeter",
+            "figures": [
+              {
+                "label": "A",
+                "rows": 2,
+                "columns": 2,
+                "cells": [
+                  [1, 1],
+                  [1, 2],
+                  [2, 1]
+                ]
+              },
+              {
+                "label": "B",
+                "rows": 2,
+                "columns": 3,
+                "cells": [
+                  [1, 1],
+                  [1, 3],
+                  [2, 1],
+                  [2, 2],
+                  [2, 3]
+                ]
+              }
+            ]
+          },
+          "options": [
+            0,
+            4,
+            2,
+            6
+          ],
+          "correct_answer": 4,
+          "answer_index": 1,
+          "hint": "Mide la vuelta de cada figura. Revisa con cuidado el rincón de la L y la abertura de la U.",
+          "feedback_correct": "A mide 8 unidades y B mide 12. La diferencia es 4. La diferencia se obtiene al quitar al perímetro más largo lo que mide el más corto.",
+          "feedback_incorrect": "Una vez que tengas ambas medidas, resta la menor de la mayor."
+        },
+        {
+          "id": "una-vuelta-al-contorno-n3-03",
+          "type": "comparar-perimetros",
+          "prompt": "La figura A tiene forma de T y la B de cruz. ¿En cuántas unidades difieren sus perímetros?",
+          "visual": {
+            "type": "measurement_grid",
+            "mode": "perimeter",
+            "figures": [
+              {
+                "label": "A",
+                "rows": 2,
+                "columns": 3,
+                "cells": [
+                  [1, 1],
+                  [1, 2],
+                  [1, 3],
+                  [2, 2]
+                ]
+              },
+              {
+                "label": "B",
+                "rows": 3,
+                "columns": 3,
+                "cells": [
+                  [1, 2],
+                  [2, 1],
+                  [2, 2],
+                  [2, 3],
+                  [3, 2]
+                ]
+              }
+            ]
+          },
+          "options": [
+            2,
+            0,
+            4,
+            6
+          ],
+          "correct_answer": 2,
+          "answer_index": 0,
+          "hint": "En la cruz hay un giro entre cada brazo. Cuenta cada tramo expuesto.",
+          "feedback_correct": "A mide 10 unidades y B mide 12. La diferencia es 2. Aunque los dos dibujos tienen salientes, sus bordes tienen longitudes distintas.",
+          "feedback_incorrect": "Cuenta las vueltas completas de A y B. Luego compara solo lo que mide cada borde."
+        },
+        {
+          "id": "una-vuelta-al-contorno-n3-04",
+          "type": "comparar-perimetros",
+          "prompt": "¿Cuántas unidades de diferencia hay entre estos dos contornos?",
+          "visual": {
+            "type": "measurement_grid",
+            "mode": "perimeter",
+            "figures": [
+              {
+                "label": "A",
+                "rows": 2,
+                "columns": 3,
+                "cells": [
+                  [1, 1],
+                  [1, 2],
+                  [1, 3],
+                  [2, 1],
+                  [2, 2]
+                ]
+              },
+              {
+                "label": "B",
+                "rows": 3,
+                "columns": 3,
+                "cells": [
+                  [1, 1],
+                  [1, 2],
+                  [1, 3],
+                  [2, 1],
+                  [3, 1]
+                ]
+              }
+            ]
+          },
+          "options": [
+            0,
+            4,
+            12,
+            2
+          ],
+          "correct_answer": 2,
+          "answer_index": 3,
+          "hint": "Fíjate en el largo de los brazos. Sigue cada borde aunque las figuras parezcan ocupar un espacio parecido.",
+          "feedback_correct": "A mide 10 unidades y B mide 12. La diferencia es 2. La forma de brazo largo necesita una vuelta más larga.",
+          "feedback_incorrect": "Marca el inicio de las dos vueltas. Suma cada contorno por separado antes de restar."
+        },
+        {
+          "id": "una-vuelta-al-contorno-n3-05",
+          "type": "comparar-perimetros",
+          "prompt": "Las figuras tienen varios giros. ¿Por cuántas unidades difieren sus perímetros?",
+          "visual": {
+            "type": "measurement_grid",
+            "mode": "perimeter",
+            "figures": [
+              {
+                "label": "A",
+                "rows": 3,
+                "columns": 3,
+                "cells": [
+                  [1, 1],
+                  [1, 2],
+                  [2, 1],
+                  [2, 2],
+                  [2, 3],
+                  [3, 3]
+                ]
+              },
+              {
+                "label": "B",
+                "rows": 4,
+                "columns": 4,
+                "cells": [
+                  [1, 1],
+                  [1, 2],
+                  [2, 2],
+                  [2, 3],
+                  [3, 3],
+                  [3, 4],
+                  [4, 4]
+                ]
+              }
+            ]
+          },
+          "options": [
+            0,
+            2,
+            4,
+            8
+          ],
+          "correct_answer": 4,
+          "answer_index": 2,
+          "hint": "Cuenta una unidad cada vez que avances a la casilla siguiente por el borde, sea hacia un lado o hacia arriba o abajo.",
+          "feedback_correct": "A mide 12 unidades y B mide 16. La diferencia es 4. La figura escalonada necesita más unidades para recorrer su contorno.",
+          "feedback_incorrect": "Comprueba que contaste todos los giros cortos. Después obtén la diferencia usando los dos totales."
+        },
+        {
+          "id": "una-vuelta-al-contorno-n3-06",
+          "type": "comparar-perimetros",
+          "prompt": "¿Cuántas unidades de diferencia hay entre el borde de la cruz y el de la figura B?",
+          "visual": {
+            "type": "measurement_grid",
+            "mode": "perimeter",
+            "figures": [
+              {
+                "label": "A",
+                "rows": 3,
+                "columns": 3,
+                "cells": [
+                  [1, 2],
+                  [2, 1],
+                  [2, 2],
+                  [2, 3],
+                  [3, 2]
+                ]
+              },
+              {
+                "label": "B",
+                "rows": 3,
+                "columns": 3,
+                "cells": [
+                  [1, 1],
+                  [1, 2],
+                  [1, 3],
+                  [2, 1],
+                  [2, 2],
+                  [2, 3],
+                  [3, 1]
+                ]
+              }
+            ]
+          },
+          "options": [
+            0,
+            2,
+            4,
+            12
+          ],
+          "correct_answer": 0,
+          "answer_index": 0,
+          "hint": "No decidas por cuántas baldosas ves. Recorre ambos bordes completos.",
+          "feedback_correct": "A mide 12 unidades y B mide 12. La diferencia es 0. Aunque B ocupa más baldosas, los contornos miden lo mismo.",
+          "feedback_incorrect": "Vuelve a contar el borde de cada figura y fíjate si las dos medidas coinciden."
+        }
+      ]
+    }
+  }
+}

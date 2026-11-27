@@ -1,0 +1,894 @@
+{
+  "id": "llenamos-el-mosaico",
+  "course_id": "geometria-patrones",
+  "title": "Llenamos el mosaico",
+  "position": 5,
+  "base_level": 1,
+  "published": false,
+  "objective": "Medir la superficie de una figura con unidades cuadradas y comparar figuras de igual área con bordes distintos.",
+  "explanation": "El área dice cuánto espacio cubre una figura. Cubre el dibujo con baldosas del mismo tamaño, sin encimarlas ni dejar huecos. Cada baldosa vale una unidad cuadrada. Si el dibujo es un rectángulo, puedes multiplicar cuántas filas hay por cuántas baldosas caben en cada fila. Si reacomodas las mismas baldosas, el área se conserva aunque el borde cambie.",
+  "guided_example": {
+    "mode": "interactive",
+    "explanation": "Cubre el rectángulo con baldosas. Coloca una por casilla hasta completar todas las filas. Al final cuenta cuántas usaste.",
+    "visual": {
+      "type": "measurement_grid",
+      "mode": "area",
+      "figures": [
+        {
+          "label": "A",
+          "rows": 2,
+          "columns": 3,
+          "cells": [
+            [1, 1],
+            [1, 2],
+            [1, 3],
+            [2, 1],
+            [2, 2],
+            [2, 3]
+          ]
+        }
+      ]
+    },
+    "interaction": {
+      "type": "place_tiles",
+      "instructions": [
+        "Elige una casilla vacía del rectángulo y coloca una baldosa.",
+        "Vuelve a tocar otra casilla vacía. Completa una fila y después la otra.",
+        "Cuando quede cubierto, cuenta las baldosas que colocaste."
+      ],
+      "feedback_on_complete": "¡Usaste 6 baldosas! Dos filas de tres cubren seis unidades cuadradas. Puedes escribirlo como 2 × 3 = 6.",
+      "restart_label": "Volver a empezar"
+    }
+  },
+  "levels": {
+    "1": {
+      "exercise_types": [
+        "contar-baldosas"
+      ],
+      "exercises": [
+        {
+          "id": "llenamos-el-mosaico-n1-01",
+          "type": "contar-baldosas",
+          "prompt": "¿Cuántas baldosas cubre la tira del mosaico?",
+          "visual": {
+            "type": "measurement_grid",
+            "mode": "area",
+            "figures": [
+              {
+                "label": "A",
+                "rows": 1,
+                "columns": 2,
+                "cells": [
+                  [1, 1],
+                  [1, 2]
+                ]
+              }
+            ]
+          },
+          "options": [
+            1,
+            4,
+            2,
+            6
+          ],
+          "correct_answer": 2,
+          "answer_index": 2,
+          "hint": "Toca cada baldosa de la tira una sola vez.",
+          "feedback_correct": "¡Son 2 baldosas! Cada baldosa cubierta aporta una unidad cuadrada.",
+          "feedback_incorrect": "Cuenta las baldosas completas una por una. Los bordes son otra medida."
+        },
+        {
+          "id": "llenamos-el-mosaico-n1-02",
+          "type": "contar-baldosas",
+          "prompt": "¿Cuántas baldosas ocupa esta figura en forma de L?",
+          "visual": {
+            "type": "measurement_grid",
+            "mode": "area",
+            "figures": [
+              {
+                "label": "A",
+                "rows": 2,
+                "columns": 2,
+                "cells": [
+                  [1, 1],
+                  [1, 2],
+                  [2, 1]
+                ]
+              }
+            ]
+          },
+          "options": [
+            3,
+            2,
+            4,
+            8
+          ],
+          "correct_answer": 3,
+          "answer_index": 0,
+          "hint": "Cuenta las baldosas de la primera fila y luego las de la segunda.",
+          "feedback_correct": "¡Son 3 baldosas! La L cubre dos baldosas en la primera fila y una en la segunda.",
+          "feedback_incorrect": "Deja fuera la casilla vacía del rincón. Cuenta las que tienen baldosa."
+        },
+        {
+          "id": "llenamos-el-mosaico-n1-03",
+          "type": "contar-baldosas",
+          "prompt": "¿De cuántas baldosas es el área de la figura en forma de T?",
+          "visual": {
+            "type": "measurement_grid",
+            "mode": "area",
+            "figures": [
+              {
+                "label": "A",
+                "rows": 2,
+                "columns": 3,
+                "cells": [
+                  [1, 1],
+                  [1, 2],
+                  [1, 3],
+                  [2, 2]
+                ]
+              }
+            ]
+          },
+          "options": [
+            3,
+            5,
+            10,
+            4
+          ],
+          "correct_answer": 4,
+          "answer_index": 3,
+          "hint": "Mira la fila de arriba y recuerda la baldosa que forma el pie de la T.",
+          "feedback_correct": "¡Son 4 baldosas! La parte de arriba ocupa tres baldosas y el pie ocupa una.",
+          "feedback_incorrect": "Si contaste solo la fila de arriba, vuelve a mirar qué hay debajo."
+        },
+        {
+          "id": "llenamos-el-mosaico-n1-04",
+          "type": "contar-baldosas",
+          "prompt": "¿Cuántas baldosas necesita esta U para cubrir su superficie?",
+          "visual": {
+            "type": "measurement_grid",
+            "mode": "area",
+            "figures": [
+              {
+                "label": "A",
+                "rows": 2,
+                "columns": 3,
+                "cells": [
+                  [1, 1],
+                  [1, 3],
+                  [2, 1],
+                  [2, 2],
+                  [2, 3]
+                ]
+              }
+            ]
+          },
+          "options": [
+            3,
+            5,
+            6,
+            12
+          ],
+          "correct_answer": 5,
+          "answer_index": 1,
+          "hint": "Fíjate en la abertura y cuenta solo las casillas que sí llevan baldosa.",
+          "feedback_correct": "¡Son 5 baldosas! La casilla de la abertura se queda vacía. Las cinco baldosas forman la U.",
+          "feedback_incorrect": "Recorre las dos filas. Cuenta la fila de abajo completa y las baldosas de los extremos arriba."
+        },
+        {
+          "id": "llenamos-el-mosaico-n1-05",
+          "type": "contar-baldosas",
+          "prompt": "¿Cuántas baldosas cubren esta escalera?",
+          "visual": {
+            "type": "measurement_grid",
+            "mode": "area",
+            "figures": [
+              {
+                "label": "A",
+                "rows": 3,
+                "columns": 3,
+                "cells": [
+                  [1, 1],
+                  [1, 2],
+                  [1, 3],
+                  [2, 1],
+                  [2, 2],
+                  [3, 1]
+                ]
+              }
+            ]
+          },
+          "options": [
+            3,
+            5,
+            6,
+            9
+          ],
+          "correct_answer": 6,
+          "answer_index": 2,
+          "hint": "Cuenta de arriba a abajo. Junta solo las baldosas ocupadas de cada fila.",
+          "feedback_correct": "¡Son 6 baldosas! La escalera tiene una fila de tres, una de dos y una de una.",
+          "feedback_incorrect": "Marca cada fila que ya contaste para evitar repetirla o saltarla."
+        },
+        {
+          "id": "llenamos-el-mosaico-n1-06",
+          "type": "contar-baldosas",
+          "prompt": "¿Cuál es el área de este mosaico con una fila corta al final?",
+          "visual": {
+            "type": "measurement_grid",
+            "mode": "area",
+            "figures": [
+              {
+                "label": "A",
+                "rows": 3,
+                "columns": 3,
+                "cells": [
+                  [1, 1],
+                  [1, 2],
+                  [1, 3],
+                  [2, 1],
+                  [2, 2],
+                  [2, 3],
+                  [3, 1]
+                ]
+              }
+            ]
+          },
+          "options": [
+            7,
+            6,
+            8,
+            12
+          ],
+          "correct_answer": 7,
+          "answer_index": 0,
+          "hint": "Cuenta las filas completas y agrega la fila que solo tiene una parte ocupada.",
+          "feedback_correct": "¡Son 7 baldosas! Las dos filas completas aportan seis baldosas y la fila corta aporta una más.",
+          "feedback_incorrect": "Revisa la última fila antes de elegir. Las casillas vacías se quedan fuera del área."
+        }
+      ]
+    },
+    "2": {
+      "exercise_types": [
+        "calcular-area-de-rectangulo"
+      ],
+      "exercises": [
+        {
+          "id": "llenamos-el-mosaico-n2-01",
+          "type": "calcular-area-de-rectangulo",
+          "prompt": "El rectángulo tiene 2 filas con 3 baldosas en cada fila. ¿Cuántas baldosas lo cubren?",
+          "visual": {
+            "type": "measurement_grid",
+            "mode": "area",
+            "figures": [
+              {
+                "label": "A",
+                "rows": 2,
+                "columns": 3,
+                "cells": [
+                  [1, 1],
+                  [1, 2],
+                  [1, 3],
+                  [2, 1],
+                  [2, 2],
+                  [2, 3]
+                ]
+              }
+            ]
+          },
+          "options": [
+            5,
+            6,
+            8,
+            10
+          ],
+          "correct_answer": 6,
+          "answer_index": 1,
+          "hint": "Cuenta las baldosas de una fila y usa esa cantidad por cada fila.",
+          "feedback_correct": "¡Son 6 baldosas! 2 filas de 3 baldosas se pueden contar con 2 × 3.",
+          "feedback_incorrect": "Agrega una cantidad por fila. Cada fila aporta tres baldosas."
+        },
+        {
+          "id": "llenamos-el-mosaico-n2-02",
+          "type": "calcular-area-de-rectangulo",
+          "prompt": "¿Cuánto mide el área del rectángulo de 2 filas y 5 columnas, en unidades cuadradas?",
+          "visual": {
+            "type": "measurement_grid",
+            "mode": "area",
+            "figures": [
+              {
+                "label": "A",
+                "rows": 2,
+                "columns": 5,
+                "cells": [
+                  [1, 1],
+                  [1, 2],
+                  [1, 3],
+                  [1, 4],
+                  [1, 5],
+                  [2, 1],
+                  [2, 2],
+                  [2, 3],
+                  [2, 4],
+                  [2, 5]
+                ]
+              }
+            ]
+          },
+          "options": [
+            7,
+            9,
+            14,
+            10
+          ],
+          "correct_answer": 10,
+          "answer_index": 3,
+          "hint": "Busca cuántas piezas hay en una fila. Después cuenta cuántas filas aportan ese grupo.",
+          "feedback_correct": "¡Son 10 baldosas! 2 filas de 5 baldosas se pueden contar con 2 × 5.",
+          "feedback_incorrect": "Suma la cantidad de una fila una vez por cada fila, o multiplica filas por columnas."
+        },
+        {
+          "id": "llenamos-el-mosaico-n2-03",
+          "type": "calcular-area-de-rectangulo",
+          "prompt": "Para hacer este cuadrado necesitas 3 filas de 3 baldosas. ¿Cuántas baldosas usarías?",
+          "visual": {
+            "type": "measurement_grid",
+            "mode": "area",
+            "figures": [
+              {
+                "label": "A",
+                "rows": 3,
+                "columns": 3,
+                "cells": [
+                  [1, 1],
+                  [1, 2],
+                  [1, 3],
+                  [2, 1],
+                  [2, 2],
+                  [2, 3],
+                  [3, 1],
+                  [3, 2],
+                  [3, 3]
+                ]
+              }
+            ]
+          },
+          "options": [
+            9,
+            6,
+            8,
+            12
+          ],
+          "correct_answer": 9,
+          "answer_index": 0,
+          "hint": "Imagina que colocas todas las baldosas de una fila al mismo tiempo.",
+          "feedback_correct": "¡Son 9 baldosas! 3 filas de 3 baldosas se pueden contar con 3 × 3.",
+          "feedback_incorrect": "Comprueba que incluiste las tres filas enteras al hallar el total."
+        },
+        {
+          "id": "llenamos-el-mosaico-n2-04",
+          "type": "calcular-area-de-rectangulo",
+          "prompt": "¿Cuántas unidades cuadradas cubre el mosaico con 3 filas y 4 columnas?",
+          "visual": {
+            "type": "measurement_grid",
+            "mode": "area",
+            "figures": [
+              {
+                "label": "A",
+                "rows": 3,
+                "columns": 4,
+                "cells": [
+                  [1, 1],
+                  [1, 2],
+                  [1, 3],
+                  [1, 4],
+                  [2, 1],
+                  [2, 2],
+                  [2, 3],
+                  [2, 4],
+                  [3, 1],
+                  [3, 2],
+                  [3, 3],
+                  [3, 4]
+                ]
+              }
+            ]
+          },
+          "options": [
+            7,
+            10,
+            12,
+            14
+          ],
+          "correct_answer": 12,
+          "answer_index": 2,
+          "hint": "No hace falta contar cada baldosa por separado. Usa un grupo del tamaño de una fila por cada fila.",
+          "feedback_correct": "¡Son 12 baldosas! 3 filas de 4 baldosas se pueden contar con 3 × 4.",
+          "feedback_incorrect": "Sumar cuántas filas y columnas ves deja casillas fuera. Suma las baldosas de todas las filas."
+        },
+        {
+          "id": "llenamos-el-mosaico-n2-05",
+          "type": "calcular-area-de-rectangulo",
+          "prompt": "Un mosaico cuadrado tiene 4 filas con 4 baldosas cada una. ¿Cuántas baldosas lo cubren?",
+          "visual": {
+            "type": "measurement_grid",
+            "mode": "area",
+            "figures": [
+              {
+                "label": "A",
+                "rows": 4,
+                "columns": 4,
+                "cells": [
+                  [1, 1],
+                  [1, 2],
+                  [1, 3],
+                  [1, 4],
+                  [2, 1],
+                  [2, 2],
+                  [2, 3],
+                  [2, 4],
+                  [3, 1],
+                  [3, 2],
+                  [3, 3],
+                  [3, 4],
+                  [4, 1],
+                  [4, 2],
+                  [4, 3],
+                  [4, 4]
+                ]
+              }
+            ]
+          },
+          "options": [
+            8,
+            12,
+            20,
+            16
+          ],
+          "correct_answer": 16,
+          "answer_index": 3,
+          "hint": "Piensa en un montón igual por fila. Junta todos los montones.",
+          "feedback_correct": "¡Son 16 baldosas! 4 filas de 4 baldosas se pueden contar con 4 × 4.",
+          "feedback_incorrect": "Asegúrate de usar la cantidad de una fila una vez por cada una de las cuatro filas."
+        },
+        {
+          "id": "llenamos-el-mosaico-n2-06",
+          "type": "calcular-area-de-rectangulo",
+          "prompt": "El piso del dibujo mide 4 filas por 5 columnas. ¿Cuántas baldosas caben sin dejar huecos?",
+          "visual": {
+            "type": "measurement_grid",
+            "mode": "area",
+            "figures": [
+              {
+                "label": "A",
+                "rows": 4,
+                "columns": 5,
+                "cells": [
+                  [1, 1],
+                  [1, 2],
+                  [1, 3],
+                  [1, 4],
+                  [1, 5],
+                  [2, 1],
+                  [2, 2],
+                  [2, 3],
+                  [2, 4],
+                  [2, 5],
+                  [3, 1],
+                  [3, 2],
+                  [3, 3],
+                  [3, 4],
+                  [3, 5],
+                  [4, 1],
+                  [4, 2],
+                  [4, 3],
+                  [4, 4],
+                  [4, 5]
+                ]
+              }
+            ]
+          },
+          "options": [
+            9,
+            20,
+            16,
+            18
+          ],
+          "correct_answer": 20,
+          "answer_index": 1,
+          "hint": "Al mirar una fila tienes las baldosas de toda esa franja. Usa esa cantidad por cada fila.",
+          "feedback_correct": "¡Son 20 baldosas! 4 filas de 5 baldosas se pueden contar con 4 × 5.",
+          "feedback_incorrect": "Revisa la cantidad de filas y cuántas baldosas hay en cada una. Multiplica esas dos cantidades."
+        }
+      ]
+    },
+    "3": {
+      "exercise_types": [
+        "hallar-area-comun",
+        "elegir-par-de-igual-area"
+      ],
+      "exercises": [
+        {
+          "id": "llenamos-el-mosaico-n3-01",
+          "type": "hallar-area-comun",
+          "prompt": "La tira y el cuadrado tienen bordes distintos. ¿Cuántas baldosas ocupa cada uno?",
+          "visual": {
+            "type": "measurement_grid",
+            "mode": "area",
+            "figures": [
+              {
+                "label": "A",
+                "rows": 1,
+                "columns": 4,
+                "cells": [
+                  [1, 1],
+                  [1, 2],
+                  [1, 3],
+                  [1, 4]
+                ]
+              },
+              {
+                "label": "B",
+                "rows": 2,
+                "columns": 2,
+                "cells": [
+                  [1, 1],
+                  [1, 2],
+                  [2, 1],
+                  [2, 2]
+                ]
+              }
+            ]
+          },
+          "options": [
+            2,
+            8,
+            4,
+            10
+          ],
+          "correct_answer": 4,
+          "answer_index": 2,
+          "hint": "Cuenta las baldosas de cada dibujo por separado. Una misma cantidad se puede acomodar de varias formas.",
+          "feedback_correct": "¡Cada figura ocupa 4 baldosas! Mover las baldosas de una fila a dos cambia el borde y conserva el área.",
+          "feedback_incorrect": "Compara los dos totales sin juntarlos. Cada dibujo ocupa su propia superficie."
+        },
+        {
+          "id": "llenamos-el-mosaico-n3-02",
+          "type": "hallar-area-comun",
+          "prompt": "¿Cuántas unidades cuadradas cubre por separado cada uno de estos mosaicos?",
+          "visual": {
+            "type": "measurement_grid",
+            "mode": "area",
+            "figures": [
+              {
+                "label": "A",
+                "rows": 2,
+                "columns": 3,
+                "cells": [
+                  [1, 1],
+                  [1, 2],
+                  [1, 3],
+                  [2, 1],
+                  [2, 2],
+                  [2, 3]
+                ]
+              },
+              {
+                "label": "B",
+                "rows": 3,
+                "columns": 4,
+                "cells": [
+                  [1, 1],
+                  [1, 2],
+                  [2, 2],
+                  [2, 3],
+                  [3, 3],
+                  [3, 4]
+                ]
+              }
+            ]
+          },
+          "options": [
+            5,
+            6,
+            10,
+            14
+          ],
+          "correct_answer": 6,
+          "answer_index": 1,
+          "hint": "Mira por filas las casillas ocupadas del escalón y compáralas con las del rectángulo.",
+          "feedback_correct": "¡Cada figura ocupa 6 baldosas! El escalón y el rectángulo se arman con la misma cantidad de baldosas aunque sus bordes cambian.",
+          "feedback_incorrect": "Cuenta las casillas ocupadas, también las de los rincones. Luego revisa si los totales son iguales."
+        },
+        {
+          "id": "llenamos-el-mosaico-n3-03",
+          "type": "hallar-area-comun",
+          "prompt": "Si reacomodas las baldosas de A para formar B, ¿cuántas baldosas conserva cada figura?",
+          "visual": {
+            "type": "measurement_grid",
+            "mode": "area",
+            "figures": [
+              {
+                "label": "A",
+                "rows": 2,
+                "columns": 4,
+                "cells": [
+                  [1, 1],
+                  [1, 2],
+                  [1, 3],
+                  [1, 4],
+                  [2, 1],
+                  [2, 2],
+                  [2, 3],
+                  [2, 4]
+                ]
+              },
+              {
+                "label": "B",
+                "rows": 4,
+                "columns": 5,
+                "cells": [
+                  [1, 1],
+                  [1, 2],
+                  [2, 2],
+                  [2, 3],
+                  [3, 3],
+                  [3, 4],
+                  [4, 4],
+                  [4, 5]
+                ]
+              }
+            ]
+          },
+          "options": [
+            8,
+            4,
+            12,
+            16
+          ],
+          "correct_answer": 8,
+          "answer_index": 0,
+          "hint": "Cuenta por filas cada figura. Al mover una baldosa sigue siendo la misma pieza.",
+          "feedback_correct": "¡Cada figura ocupa 8 baldosas! El reacomodo conserva la cantidad de baldosas y cambia la forma del contorno.",
+          "feedback_incorrect": "Cuenta una figura a la vez. Si sumas las dos, obtienes el doble de la superficie que pide la pregunta."
+        },
+        {
+          "id": "llenamos-el-mosaico-n3-04",
+          "type": "elegir-par-de-igual-area",
+          "prompt": "¿Qué par de figuras cubre la misma cantidad de baldosas?",
+          "visual": {
+            "type": "measurement_grid",
+            "mode": "area",
+            "figures": [
+              {
+                "label": "A",
+                "rows": 1,
+                "columns": 5,
+                "cells": [
+                  [1, 1],
+                  [1, 2],
+                  [1, 3],
+                  [1, 4],
+                  [1, 5]
+                ]
+              },
+              {
+                "label": "B",
+                "rows": 2,
+                "columns": 3,
+                "cells": [
+                  [1, 1],
+                  [1, 2],
+                  [1, 3],
+                  [2, 1],
+                  [2, 2],
+                  [2, 3]
+                ]
+              },
+              {
+                "label": "C",
+                "rows": 2,
+                "columns": 3,
+                "cells": [
+                  [1, 1],
+                  [1, 2],
+                  [1, 3],
+                  [2, 1],
+                  [2, 2]
+                ]
+              },
+              {
+                "label": "D",
+                "rows": 2,
+                "columns": 4,
+                "cells": [
+                  [1, 1],
+                  [1, 2],
+                  [1, 3],
+                  [1, 4],
+                  [2, 1],
+                  [2, 2],
+                  [2, 3],
+                  [2, 4]
+                ]
+              }
+            ]
+          },
+          "options": [
+            "A y B",
+            "B y D",
+            "A y C",
+            "C y D"
+          ],
+          "correct_answer": "A y C",
+          "answer_index": 2,
+          "hint": "Cuenta la superficie de una figura a la vez y anota su cantidad. Busca dos resultados iguales.",
+          "feedback_correct": "¡Son A y C! Una figura tiene las piezas en fila y la otra las junta en dos filas. Las dos usan cinco baldosas.",
+          "feedback_incorrect": "Si dos bordes se parecen, revisa cuántas baldosas tienen dentro antes de elegir el par."
+        },
+        {
+          "id": "llenamos-el-mosaico-n3-05",
+          "type": "elegir-par-de-igual-area",
+          "prompt": "¿Qué fichas usan la misma cantidad de baldosas aunque una tenga escalones?",
+          "visual": {
+            "type": "measurement_grid",
+            "mode": "area",
+            "figures": [
+              {
+                "label": "A",
+                "rows": 2,
+                "columns": 2,
+                "cells": [
+                  [1, 1],
+                  [1, 2],
+                  [2, 1],
+                  [2, 2]
+                ]
+              },
+              {
+                "label": "B",
+                "rows": 2,
+                "columns": 4,
+                "cells": [
+                  [1, 1],
+                  [1, 2],
+                  [1, 3],
+                  [1, 4],
+                  [2, 1],
+                  [2, 2],
+                  [2, 3],
+                  [2, 4]
+                ]
+              },
+              {
+                "label": "C",
+                "rows": 3,
+                "columns": 3,
+                "cells": [
+                  [1, 1],
+                  [1, 2],
+                  [1, 3],
+                  [2, 1],
+                  [2, 2],
+                  [2, 3],
+                  [3, 1]
+                ]
+              },
+              {
+                "label": "D",
+                "rows": 4,
+                "columns": 5,
+                "cells": [
+                  [1, 1],
+                  [1, 2],
+                  [2, 2],
+                  [2, 3],
+                  [3, 3],
+                  [3, 4],
+                  [4, 4],
+                  [4, 5]
+                ]
+              }
+            ]
+          },
+          "options": [
+            "B y D",
+            "A y B",
+            "B y C",
+            "C y D"
+          ],
+          "correct_answer": "B y D",
+          "answer_index": 0,
+          "hint": "Anota el total de baldosas coloreadas en cada ficha. Compara lo que ocupa cada una.",
+          "feedback_correct": "¡Son B y D! El rectángulo y la figura escalonada usan ocho baldosas cada uno.",
+          "feedback_incorrect": "Separa las baldosas llenas de las casillas vacías y vuelve a buscar dos totales iguales."
+        },
+        {
+          "id": "llenamos-el-mosaico-n3-06",
+          "type": "elegir-par-de-igual-area",
+          "prompt": "¿Qué dos figuras puedes construir con la misma cantidad de baldosas?",
+          "visual": {
+            "type": "measurement_grid",
+            "mode": "area",
+            "figures": [
+              {
+                "label": "A",
+                "rows": 3,
+                "columns": 3,
+                "cells": [
+                  [1, 1],
+                  [1, 2],
+                  [1, 3],
+                  [2, 1],
+                  [2, 2],
+                  [2, 3],
+                  [3, 1],
+                  [3, 2],
+                  [3, 3]
+                ]
+              },
+              {
+                "label": "B",
+                "rows": 2,
+                "columns": 5,
+                "cells": [
+                  [1, 1],
+                  [1, 2],
+                  [1, 3],
+                  [1, 4],
+                  [1, 5],
+                  [2, 1],
+                  [2, 2],
+                  [2, 3],
+                  [2, 4],
+                  [2, 5]
+                ]
+              },
+              {
+                "label": "C",
+                "rows": 1,
+                "columns": 6,
+                "cells": [
+                  [1, 1],
+                  [1, 2],
+                  [1, 3],
+                  [1, 4],
+                  [1, 5],
+                  [1, 6]
+                ]
+              },
+              {
+                "label": "D",
+                "rows": 5,
+                "columns": 5,
+                "cells": [
+                  [1, 1],
+                  [1, 2],
+                  [2, 2],
+                  [2, 3],
+                  [3, 3],
+                  [3, 4],
+                  [4, 4],
+                  [4, 5],
+                  [5, 5]
+                ]
+              }
+            ]
+          },
+          "options": [
+            "A y B",
+            "B y C",
+            "C y D",
+            "A y D"
+          ],
+          "correct_answer": "A y D",
+          "answer_index": 3,
+          "hint": "Cuenta una fila a la vez en cada figura. La fila corta del escalón también aporta al área.",
+          "feedback_correct": "¡Son A y D! El cuadrado y el escalón usan nueve baldosas aunque tienen contornos diferentes.",
+          "feedback_incorrect": "Escribe el total de cada figura. Compara sus áreas contando las baldosas de adentro."
+        }
+      ]
+    }
+  }
+}

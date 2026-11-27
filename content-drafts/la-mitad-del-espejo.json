@@ -1,0 +1,1136 @@
+{
+  "id": "la-mitad-del-espejo",
+  "course_id": "geometria-patrones",
+  "title": "La mitad del espejo",
+  "position": 3,
+  "base_level": 1,
+  "published": false,
+  "objective": "Reconocer y construir reflejos en una cuadrícula a partir de un eje vertical u horizontal.",
+  "explanation": "La línea del espejo se llama eje de simetría. Imagina que doblas el dibujo por esa línea. Cada ficha de un lado debe caer sobre su pareja del otro lado. Para encontrar la pareja, cuenta las casillas desde la línea. Busca la misma distancia en la otra mitad. Con una línea de pie conserva la fila. Con una línea acostada conserva la columna.",
+  "guided_example": {
+    "mode": "interactive",
+    "explanation": "Completa las alas de la mariposa. Mira cada ficha del ala izquierda y toca la casilla que ocupa al reflejarse al otro lado de la línea.",
+    "visual": {
+      "type": "reflection_grid",
+      "rows": 4,
+      "columns": 6,
+      "axis": {
+        "direction": "vertical",
+        "after": 3
+      },
+      "source_cells": [
+        [1, 2],
+        [2, 1],
+        [2, 2],
+        [3, 3]
+      ],
+      "placed_cells": []
+    },
+    "interaction": {
+      "type": "place_reflection_cells",
+      "instructions": [
+        "Elige una ficha del ala izquierda.",
+        "Cuenta las casillas hasta el eje y coloca su pareja a la misma distancia en la otra mitad.",
+        "Completa todas las parejas para ver las dos alas."
+      ],
+      "feedback_on_complete": "¡Las alas quedaron en espejo! Cada ficha tiene una pareja en la misma fila y a la misma distancia del eje.",
+      "restart_label": "Volver a empezar"
+    }
+  },
+  "levels": {
+    "1": {
+      "exercise_types": [
+        "elegir-reflejo"
+      ],
+      "exercises": [
+        {
+          "id": "la-mitad-del-espejo-n1-01",
+          "type": "elegir-reflejo",
+          "prompt": "¿Qué tarjeta muestra la ficha reflejada al otro lado de la línea?",
+          "visual": {
+            "type": "reflection_grid",
+            "rows": 4,
+            "columns": 6,
+            "axis": {
+              "direction": "vertical",
+              "after": 3
+            },
+            "source_cells": [
+              [2, 3]
+            ],
+            "choices": [
+              {
+                "label": "A",
+                "cells": [
+                  [2, 5]
+                ]
+              },
+              {
+                "label": "B",
+                "cells": [
+                  [2, 4]
+                ]
+              },
+              {
+                "label": "C",
+                "cells": [
+                  [1, 4]
+                ]
+              },
+              {
+                "label": "D",
+                "cells": [
+                  [3, 4]
+                ]
+              }
+            ]
+          },
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ],
+          "correct_answer": "B",
+          "answer_index": 1,
+          "hint": "Empieza en la ficha y camina hacia la línea. Da el mismo número de pasos al otro lado y quédate en la misma fila.",
+          "feedback_correct": "¡Es la tarjeta B! La ficha está pegada al eje. Su reflejo también queda pegado y en la misma fila.",
+          "feedback_incorrect": "Revisa la fila y cuenta cuántas casillas separan cada ficha de la línea."
+        },
+        {
+          "id": "la-mitad-del-espejo-n1-02",
+          "type": "elegir-reflejo",
+          "prompt": "¿Dónde queda el reflejo de la ficha que está lejos de la línea?",
+          "visual": {
+            "type": "reflection_grid",
+            "rows": 5,
+            "columns": 6,
+            "axis": {
+              "direction": "vertical",
+              "after": 3
+            },
+            "source_cells": [
+              [4, 1]
+            ],
+            "choices": [
+              {
+                "label": "A",
+                "cells": [
+                  [4, 4]
+                ]
+              },
+              {
+                "label": "B",
+                "cells": [
+                  [2, 6]
+                ]
+              },
+              {
+                "label": "C",
+                "cells": [
+                  [3, 5]
+                ]
+              },
+              {
+                "label": "D",
+                "cells": [
+                  [4, 6]
+                ]
+              }
+            ]
+          },
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ],
+          "correct_answer": "D",
+          "answer_index": 3,
+          "hint": "Cuenta las casillas desde la línea hacia la ficha. Busca esa misma distancia en la otra mitad.",
+          "feedback_correct": "¡Es la tarjeta D! Al estar lejos de la línea, la ficha se refleja lejos de ella y conserva su fila.",
+          "feedback_incorrect": "Si tu tarjeta acerca la ficha a la línea, cuenta de nuevo la distancia en los dos lados."
+        },
+        {
+          "id": "la-mitad-del-espejo-n1-03",
+          "type": "elegir-reflejo",
+          "prompt": "¿Qué tarjeta refleja las dos fichas que están juntas en la fila de arriba?",
+          "visual": {
+            "type": "reflection_grid",
+            "rows": 4,
+            "columns": 6,
+            "axis": {
+              "direction": "vertical",
+              "after": 3
+            },
+            "source_cells": [
+              [1, 2],
+              [1, 3]
+            ],
+            "choices": [
+              {
+                "label": "A",
+                "cells": [
+                  [1, 5],
+                  [1, 4]
+                ]
+              },
+              {
+                "label": "B",
+                "cells": [
+                  [1, 4],
+                  [1, 6]
+                ]
+              },
+              {
+                "label": "C",
+                "cells": [
+                  [2, 4],
+                  [2, 5]
+                ]
+              },
+              {
+                "label": "D",
+                "cells": [
+                  [1, 5],
+                  [1, 6]
+                ]
+              }
+            ]
+          },
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ],
+          "correct_answer": "A",
+          "answer_index": 0,
+          "hint": "Coloca mentalmente el reflejo de la ficha que toca la línea primero y luego el de su vecina.",
+          "feedback_correct": "¡Es la tarjeta A! Los dos reflejos quedan juntos en la fila de arriba y uno toca la línea.",
+          "feedback_incorrect": "Comprueba una ficha a la vez. Cada reflejo debe conservar la fila y la distancia al eje."
+        },
+        {
+          "id": "la-mitad-del-espejo-n1-04",
+          "type": "elegir-reflejo",
+          "prompt": "¿Cómo se ven estas dos fichas una debajo de otra en el espejo?",
+          "visual": {
+            "type": "reflection_grid",
+            "rows": 5,
+            "columns": 6,
+            "axis": {
+              "direction": "vertical",
+              "after": 3
+            },
+            "source_cells": [
+              [2, 2],
+              [3, 2]
+            ],
+            "choices": [
+              {
+                "label": "A",
+                "cells": [
+                  [2, 4],
+                  [3, 4]
+                ]
+              },
+              {
+                "label": "B",
+                "cells": [
+                  [2, 5],
+                  [4, 5]
+                ]
+              },
+              {
+                "label": "C",
+                "cells": [
+                  [2, 5],
+                  [3, 5]
+                ]
+              },
+              {
+                "label": "D",
+                "cells": [
+                  [3, 6],
+                  [4, 6]
+                ]
+              }
+            ]
+          },
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ],
+          "correct_answer": "C",
+          "answer_index": 2,
+          "hint": "Las filas no cambian. Busca dos fichas que mantengan también su distancia a la línea.",
+          "feedback_correct": "¡Es la tarjeta C! Las dos fichas reflejadas siguen una debajo de otra y a la misma distancia del eje.",
+          "feedback_incorrect": "Busca una tarjeta que mantenga ambas filas. Después revisa en qué columna quedaron."
+        },
+        {
+          "id": "la-mitad-del-espejo-n1-05",
+          "type": "elegir-reflejo",
+          "prompt": "¿Qué tarjeta refleja este par que va en diagonal?",
+          "visual": {
+            "type": "reflection_grid",
+            "rows": 5,
+            "columns": 6,
+            "axis": {
+              "direction": "vertical",
+              "after": 3
+            },
+            "source_cells": [
+              [2, 2],
+              [3, 3]
+            ],
+            "choices": [
+              {
+                "label": "A",
+                "cells": [
+                  [2, 4],
+                  [3, 5]
+                ]
+              },
+              {
+                "label": "B",
+                "cells": [
+                  [2, 5],
+                  [3, 4]
+                ]
+              },
+              {
+                "label": "C",
+                "cells": [
+                  [2, 5],
+                  [3, 6]
+                ]
+              },
+              {
+                "label": "D",
+                "cells": [
+                  [3, 5],
+                  [4, 4]
+                ]
+              }
+            ]
+          },
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ],
+          "correct_answer": "B",
+          "answer_index": 1,
+          "hint": "Sigue cada ficha por su propia fila. Observa cuál está más cerca de la línea.",
+          "feedback_correct": "¡Es la tarjeta B! La ficha cercana al eje sigue estando cerca. Al reflejar ambas, la diagonal cambia de dirección.",
+          "feedback_incorrect": "Una diagonal puede parecerse al dibujo original. Comprueba la posición de cada ficha respecto a la línea."
+        },
+        {
+          "id": "la-mitad-del-espejo-n1-06",
+          "type": "elegir-reflejo",
+          "prompt": "¿Qué tarjeta muestra el reflejo del grupo de tres fichas?",
+          "visual": {
+            "type": "reflection_grid",
+            "rows": 4,
+            "columns": 6,
+            "axis": {
+              "direction": "vertical",
+              "after": 3
+            },
+            "source_cells": [
+              [1, 2],
+              [2, 2],
+              [2, 3]
+            ],
+            "choices": [
+              {
+                "label": "A",
+                "cells": [
+                  [1, 4],
+                  [2, 4],
+                  [2, 5]
+                ]
+              },
+              {
+                "label": "B",
+                "cells": [
+                  [1, 5],
+                  [1, 4],
+                  [2, 5]
+                ]
+              },
+              {
+                "label": "C",
+                "cells": [
+                  [1, 5],
+                  [2, 5],
+                  [2, 4]
+                ]
+              },
+              {
+                "label": "D",
+                "cells": [
+                  [1, 6],
+                  [2, 6],
+                  [2, 5]
+                ]
+              }
+            ]
+          },
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ],
+          "correct_answer": "C",
+          "answer_index": 2,
+          "hint": "Empieza por la ficha que toca la línea y luego revisa las otras dos en sus propias filas.",
+          "feedback_correct": "¡Es la tarjeta C! El grupo se voltea como en un espejo. Cada ficha conserva su fila y su distancia al eje.",
+          "feedback_incorrect": "Comprueba qué ficha toca el eje. Usa esa posición para revisar dónde van las demás."
+        }
+      ]
+    },
+    "2": {
+      "exercise_types": [
+        "completar-reflejo"
+      ],
+      "exercises": [
+        {
+          "id": "la-mitad-del-espejo-n2-01",
+          "type": "completar-reflejo",
+          "prompt": "Al reflejo le falta la ficha que está junto al eje. ¿Qué tarjeta completa el dibujo?",
+          "visual": {
+            "type": "reflection_grid",
+            "rows": 5,
+            "columns": 6,
+            "axis": {
+              "direction": "vertical",
+              "after": 3
+            },
+            "source_cells": [
+              [2, 1],
+              [2, 3],
+              [4, 2]
+            ],
+            "placed_cells": [
+              [2, 6],
+              [4, 5]
+            ],
+            "choices": [
+              {
+                "label": "A",
+                "cells": [
+                  [2, 4]
+                ]
+              },
+              {
+                "label": "B",
+                "cells": [
+                  [2, 5]
+                ]
+              },
+              {
+                "label": "C",
+                "cells": [
+                  [1, 4]
+                ]
+              },
+              {
+                "label": "D",
+                "cells": [
+                  [3, 4]
+                ]
+              }
+            ]
+          },
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ],
+          "correct_answer": "A",
+          "answer_index": 0,
+          "hint": "Busca en la otra mitad la casilla pegada a la línea que queda en esa misma fila.",
+          "feedback_correct": "¡Es la tarjeta A! El reflejo que faltaba queda en la misma fila y toca el eje.",
+          "feedback_incorrect": "Deja las fichas ya colocadas en su lugar. Compara la distancia al eje de la ficha que falta."
+        },
+        {
+          "id": "la-mitad-del-espejo-n2-02",
+          "type": "completar-reflejo",
+          "prompt": "Ya hay dos fichas reflejadas. ¿Qué tarjeta pone la ficha que falta frente a la de la primera fila?",
+          "visual": {
+            "type": "reflection_grid",
+            "rows": 5,
+            "columns": 8,
+            "axis": {
+              "direction": "vertical",
+              "after": 4
+            },
+            "source_cells": [
+              [1, 2],
+              [2, 3],
+              [4, 4]
+            ],
+            "placed_cells": [
+              [2, 6],
+              [4, 5]
+            ],
+            "choices": [
+              {
+                "label": "A",
+                "cells": [
+                  [1, 6]
+                ]
+              },
+              {
+                "label": "B",
+                "cells": [
+                  [2, 7]
+                ]
+              },
+              {
+                "label": "C",
+                "cells": [
+                  [1, 7]
+                ]
+              },
+              {
+                "label": "D",
+                "cells": [
+                  [3, 8]
+                ]
+              }
+            ]
+          },
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ],
+          "correct_answer": "C",
+          "answer_index": 2,
+          "hint": "Camina desde la línea hasta la ficha de arriba. Repite esa distancia en la primera fila de la otra mitad.",
+          "feedback_correct": "¡Es la tarjeta C! La ficha de arriba conserva su fila y queda a la misma distancia del eje.",
+          "feedback_incorrect": "Elige primero la fila de la ficha original y luego compara las distancias en esa fila."
+        },
+        {
+          "id": "la-mitad-del-espejo-n2-03",
+          "type": "completar-reflejo",
+          "prompt": "Hay una ficha sin pareja en la parte baja. ¿Qué tarjeta deja completo el reflejo?",
+          "visual": {
+            "type": "reflection_grid",
+            "rows": 6,
+            "columns": 6,
+            "axis": {
+              "direction": "vertical",
+              "after": 3
+            },
+            "source_cells": [
+              [1, 3],
+              [3, 2],
+              [5, 1],
+              [6, 3]
+            ],
+            "placed_cells": [
+              [1, 4],
+              [3, 5],
+              [6, 4]
+            ],
+            "choices": [
+              {
+                "label": "A",
+                "cells": [
+                  [5, 5]
+                ]
+              },
+              {
+                "label": "B",
+                "cells": [
+                  [4, 6]
+                ]
+              },
+              {
+                "label": "C",
+                "cells": [
+                  [6, 6]
+                ]
+              },
+              {
+                "label": "D",
+                "cells": [
+                  [5, 6]
+                ]
+              }
+            ]
+          },
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ],
+          "correct_answer": "D",
+          "answer_index": 3,
+          "hint": "Empieza por comparar las parejas que ya existen. Luego mide la distancia de la ficha sin pareja.",
+          "feedback_correct": "¡Es la tarjeta D! La ficha más alejada de la línea obtiene una pareja igual de alejada en su propia fila.",
+          "feedback_incorrect": "Identifica la ficha sin pareja por su fila. Comprueba la columna contando desde el eje."
+        },
+        {
+          "id": "la-mitad-del-espejo-n2-04",
+          "type": "completar-reflejo",
+          "prompt": "Ahora el eje está acostado. ¿Qué tarjeta completa el reflejo de la ficha que falta?",
+          "visual": {
+            "type": "reflection_grid",
+            "rows": 6,
+            "columns": 5,
+            "axis": {
+              "direction": "horizontal",
+              "after": 3
+            },
+            "source_cells": [
+              [1, 2],
+              [3, 2],
+              [2, 4]
+            ],
+            "placed_cells": [
+              [6, 2],
+              [4, 2]
+            ],
+            "choices": [
+              {
+                "label": "A",
+                "cells": [
+                  [4, 4]
+                ]
+              },
+              {
+                "label": "B",
+                "cells": [
+                  [5, 4]
+                ]
+              },
+              {
+                "label": "C",
+                "cells": [
+                  [5, 3]
+                ]
+              },
+              {
+                "label": "D",
+                "cells": [
+                  [6, 4]
+                ]
+              }
+            ]
+          },
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ],
+          "correct_answer": "B",
+          "answer_index": 1,
+          "hint": "Mantén la columna y cuenta la distancia hacia abajo desde la línea horizontal.",
+          "feedback_correct": "¡Es la tarjeta B! El reflejo conserva la columna y aparece debajo del eje, a la misma distancia.",
+          "feedback_incorrect": "En este espejo las fichas se reflejan hacia arriba o hacia abajo. Conserva la columna original."
+        },
+        {
+          "id": "la-mitad-del-espejo-n2-05",
+          "type": "completar-reflejo",
+          "prompt": "¿Qué tarjeta completa el reflejo de la ficha que está justo encima de la línea?",
+          "visual": {
+            "type": "reflection_grid",
+            "rows": 6,
+            "columns": 6,
+            "axis": {
+              "direction": "horizontal",
+              "after": 3
+            },
+            "source_cells": [
+              [1, 3],
+              [3, 1],
+              [2, 5]
+            ],
+            "placed_cells": [
+              [6, 3],
+              [5, 5]
+            ],
+            "choices": [
+              {
+                "label": "A",
+                "cells": [
+                  [4, 1]
+                ]
+              },
+              {
+                "label": "B",
+                "cells": [
+                  [4, 2]
+                ]
+              },
+              {
+                "label": "C",
+                "cells": [
+                  [5, 1]
+                ]
+              },
+              {
+                "label": "D",
+                "cells": [
+                  [6, 1]
+                ]
+              }
+            ]
+          },
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ],
+          "correct_answer": "A",
+          "answer_index": 0,
+          "hint": "Busca la casilla pegada a la línea por debajo y conserva su columna.",
+          "feedback_correct": "¡Es la tarjeta A! Las dos fichas quedan pegadas a la línea, una por arriba y otra por abajo.",
+          "feedback_incorrect": "Si bajaste demasiado, vuelve a la línea. La ficha buscada toca la línea, igual que la original."
+        },
+        {
+          "id": "la-mitad-del-espejo-n2-06",
+          "type": "completar-reflejo",
+          "prompt": "Falta una ficha en el dibujo de abajo. ¿Qué tarjeta la coloca frente a la ficha sin pareja?",
+          "visual": {
+            "type": "reflection_grid",
+            "rows": 8,
+            "columns": 5,
+            "axis": {
+              "direction": "horizontal",
+              "after": 4
+            },
+            "source_cells": [
+              [1, 1],
+              [4, 2],
+              [3, 4],
+              [2, 5]
+            ],
+            "placed_cells": [
+              [8, 1],
+              [5, 2],
+              [6, 4]
+            ],
+            "choices": [
+              {
+                "label": "A",
+                "cells": [
+                  [6, 5]
+                ]
+              },
+              {
+                "label": "B",
+                "cells": [
+                  [7, 4]
+                ]
+              },
+              {
+                "label": "C",
+                "cells": [
+                  [7, 5]
+                ]
+              },
+              {
+                "label": "D",
+                "cells": [
+                  [8, 5]
+                ]
+              }
+            ]
+          },
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ],
+          "correct_answer": "C",
+          "answer_index": 2,
+          "hint": "Pasa por cada columna y busca cuál tiene una ficha arriba pero ninguna abajo. Después cuenta la distancia al eje.",
+          "feedback_correct": "¡Es la tarjeta C! La última columna necesitaba una ficha debajo de la línea a la misma distancia que la de arriba.",
+          "feedback_incorrect": "Comprueba desde la línea cuántas filas hay hasta la ficha original. Repite esa distancia hacia abajo."
+        }
+      ]
+    },
+    "3": {
+      "exercise_types": [
+        "identificar-ficha-sin-reflejo"
+      ],
+      "exercises": [
+        {
+          "id": "la-mitad-del-espejo-n3-01",
+          "type": "identificar-ficha-sin-reflejo",
+          "prompt": "¿Qué ficha señalada quitarías para que el dibujo sea simétrico?",
+          "visual": {
+            "type": "reflection_grid",
+            "rows": 4,
+            "columns": 6,
+            "axis": {
+              "direction": "vertical",
+              "after": 3
+            },
+            "filled_cells": [
+              [2, 2],
+              [3, 3],
+              [2, 5],
+              [3, 4],
+              [1, 4]
+            ],
+            "choices": [
+              {
+                "label": "A",
+                "cells": [
+                  [2, 2]
+                ]
+              },
+              {
+                "label": "B",
+                "cells": [
+                  [3, 3]
+                ]
+              },
+              {
+                "label": "C",
+                "cells": [
+                  [1, 4]
+                ]
+              },
+              {
+                "label": "D",
+                "cells": [
+                  [2, 5]
+                ]
+              }
+            ]
+          },
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ],
+          "correct_answer": "C",
+          "answer_index": 2,
+          "hint": "Busca una pareja para cada ficha en su propia fila. Una se quedó sin reflejo.",
+          "feedback_correct": "¡Es la ficha C! Esa ficha está sola en la fila de arriba. Al quitarla, todas tienen pareja.",
+          "feedback_incorrect": "Si quitas una ficha que sí tiene pareja, su reflejo queda solo. Busca una que ya esté sola."
+        },
+        {
+          "id": "la-mitad-del-espejo-n3-02",
+          "type": "identificar-ficha-sin-reflejo",
+          "prompt": "¿Qué ficha señalada sobra para que las dos mitades se reflejen?",
+          "visual": {
+            "type": "reflection_grid",
+            "rows": 5,
+            "columns": 6,
+            "axis": {
+              "direction": "vertical",
+              "after": 3
+            },
+            "filled_cells": [
+              [1, 3],
+              [3, 1],
+              [5, 2],
+              [1, 4],
+              [3, 6],
+              [5, 5],
+              [4, 2]
+            ],
+            "choices": [
+              {
+                "label": "A",
+                "cells": [
+                  [4, 2]
+                ]
+              },
+              {
+                "label": "B",
+                "cells": [
+                  [3, 1]
+                ]
+              },
+              {
+                "label": "C",
+                "cells": [
+                  [5, 2]
+                ]
+              },
+              {
+                "label": "D",
+                "cells": [
+                  [1, 4]
+                ]
+              }
+            ]
+          },
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ],
+          "correct_answer": "A",
+          "answer_index": 0,
+          "hint": "Trabaja de arriba a abajo. En cada fila revisa si las dos fichas quedan igual de lejos de la línea.",
+          "feedback_correct": "¡Es la ficha A! La ficha de la cuarta fila no tiene otra a la misma distancia al lado opuesto.",
+          "feedback_incorrect": "Revisa las filas donde sí encuentras parejas. La ficha que sobra está en una fila sin pareja."
+        },
+        {
+          "id": "la-mitad-del-espejo-n3-03",
+          "type": "identificar-ficha-sin-reflejo",
+          "prompt": "En una fila hay una ficha de más. ¿Cuál quitarías para recuperar el reflejo?",
+          "visual": {
+            "type": "reflection_grid",
+            "rows": 6,
+            "columns": 8,
+            "axis": {
+              "direction": "vertical",
+              "after": 4
+            },
+            "filled_cells": [
+              [1, 1],
+              [2, 4],
+              [4, 3],
+              [5, 2],
+              [1, 8],
+              [2, 5],
+              [4, 6],
+              [5, 7],
+              [2, 7]
+            ],
+            "choices": [
+              {
+                "label": "A",
+                "cells": [
+                  [1, 1]
+                ]
+              },
+              {
+                "label": "B",
+                "cells": [
+                  [2, 4]
+                ]
+              },
+              {
+                "label": "C",
+                "cells": [
+                  [4, 3]
+                ]
+              },
+              {
+                "label": "D",
+                "cells": [
+                  [2, 7]
+                ]
+              }
+            ]
+          },
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ],
+          "correct_answer": "D",
+          "answer_index": 3,
+          "hint": "En una fila puede haber una pareja y otra ficha suelta. Compara distancias antes de quitar una.",
+          "feedback_correct": "¡Es la ficha D! Las fichas pegadas a la línea en esa fila sí son pareja. La que queda más lejos está sola.",
+          "feedback_incorrect": "Busca una ficha con el mismo lugar al otro lado del eje antes de decidir cuál sobra."
+        },
+        {
+          "id": "la-mitad-del-espejo-n3-04",
+          "type": "identificar-ficha-sin-reflejo",
+          "prompt": "La línea ahora es horizontal. ¿Qué ficha señalada rompe el reflejo?",
+          "visual": {
+            "type": "reflection_grid",
+            "rows": 6,
+            "columns": 5,
+            "axis": {
+              "direction": "horizontal",
+              "after": 3
+            },
+            "filled_cells": [
+              [1, 2],
+              [3, 4],
+              [6, 2],
+              [4, 4],
+              [4, 2]
+            ],
+            "choices": [
+              {
+                "label": "A",
+                "cells": [
+                  [3, 4]
+                ]
+              },
+              {
+                "label": "B",
+                "cells": [
+                  [4, 2]
+                ]
+              },
+              {
+                "label": "C",
+                "cells": [
+                  [6, 2]
+                ]
+              },
+              {
+                "label": "D",
+                "cells": [
+                  [4, 4]
+                ]
+              }
+            ]
+          },
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ],
+          "correct_answer": "B",
+          "answer_index": 1,
+          "hint": "Recorre las columnas. Dentro de cada una, busca fichas igual de lejos arriba y abajo del eje.",
+          "feedback_correct": "¡Es la ficha B! Esa ficha está cerca del eje y en su columna no hay una pareja igual de cerca arriba.",
+          "feedback_incorrect": "En una misma columna puede haber fichas a distintas distancias. Revisa la pareja de cada una."
+        },
+        {
+          "id": "la-mitad-del-espejo-n3-05",
+          "type": "identificar-ficha-sin-reflejo",
+          "prompt": "¿Qué ficha quitarías para que el dibujo de arriba coincida con su reflejo de abajo?",
+          "visual": {
+            "type": "reflection_grid",
+            "rows": 6,
+            "columns": 6,
+            "axis": {
+              "direction": "horizontal",
+              "after": 3
+            },
+            "filled_cells": [
+              [1, 2],
+              [2, 2],
+              [3, 5],
+              [6, 2],
+              [5, 2],
+              [4, 5],
+              [1, 5]
+            ],
+            "choices": [
+              {
+                "label": "A",
+                "cells": [
+                  [1, 2]
+                ]
+              },
+              {
+                "label": "B",
+                "cells": [
+                  [2, 2]
+                ]
+              },
+              {
+                "label": "C",
+                "cells": [
+                  [1, 5]
+                ]
+              },
+              {
+                "label": "D",
+                "cells": [
+                  [3, 5]
+                ]
+              }
+            ]
+          },
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ],
+          "correct_answer": "C",
+          "answer_index": 2,
+          "hint": "Empieza por las fichas que tocan la línea, luego revisa las que están más lejos.",
+          "feedback_correct": "¡Es la ficha C! La ficha extra de arriba no tiene una a la misma distancia debajo del eje.",
+          "feedback_incorrect": "Compara las dos fichas de esa columna por separado. Cada una necesita su propio reflejo."
+        },
+        {
+          "id": "la-mitad-del-espejo-n3-06",
+          "type": "identificar-ficha-sin-reflejo",
+          "prompt": "¿Cuál de las fichas señaladas está sin pareja al reflejar el dibujo por la línea horizontal?",
+          "visual": {
+            "type": "reflection_grid",
+            "rows": 8,
+            "columns": 6,
+            "axis": {
+              "direction": "horizontal",
+              "after": 4
+            },
+            "filled_cells": [
+              [1, 3],
+              [2, 5],
+              [3, 2],
+              [4, 4],
+              [8, 3],
+              [7, 5],
+              [6, 2],
+              [5, 4],
+              [6, 6]
+            ],
+            "choices": [
+              {
+                "label": "A",
+                "cells": [
+                  [6, 6]
+                ]
+              },
+              {
+                "label": "B",
+                "cells": [
+                  [2, 5]
+                ]
+              },
+              {
+                "label": "C",
+                "cells": [
+                  [3, 2]
+                ]
+              },
+              {
+                "label": "D",
+                "cells": [
+                  [4, 4]
+                ]
+              }
+            ]
+          },
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ],
+          "correct_answer": "A",
+          "answer_index": 0,
+          "hint": "Revisa si hay una columna con una ficha debajo de la línea y ningún reflejo arriba.",
+          "feedback_correct": "¡Es la ficha A! La ficha de la última columna está sola. Las demás tienen su pareja en la misma columna.",
+          "feedback_incorrect": "Si la columna tiene ficha por arriba y por abajo, compara la distancia de ambas antes de elegir."
+        }
+      ]
+    }
+  }
+}
