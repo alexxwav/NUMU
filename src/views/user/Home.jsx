@@ -104,8 +104,10 @@ export default function Home() {
     navigate(`/jugar/${selectedModule.id}?parada=${level}&desde=inicio`, { state: { from: '/inicio' } });
   };
 
+  // El contenedor exterior es el que hace scroll: su padding inferior reserva el espacio
+  // de la barra fija para que «Tus cursos» no quede cortado al llegar al final.
   return (
-    <div className="min-h-screen bg-soft-lavender font-poppins text-text-dark px-4 py-5 sm:px-6 md:px-10 md:py-8 pb-32">
+    <div className="min-h-screen bg-soft-lavender font-poppins text-text-dark px-4 pt-5 pb-bottom-nav sm:px-6 md:px-10 md:pt-8">
 
       {/* Menú lateral (también tiene «Salir») */}
       {isSidebarOpen && (

@@ -93,3 +93,11 @@
     --button-3d-shadow: var(--button-3d-shadow-success);
     --shadow-solid-color: #0
   }
+
+@layer utilities {
+  /* Espacio para la barra inferior fija (72 px + respiro), incluido el área segura del dispositivo.
+     Se aplica al contenedor que hace de scroll para que el último contenido nunca quede tapado. */
+  .pb-bottom-nav {
+    padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+  }
+}
