@@ -236,7 +236,7 @@ export default function Game() {
     // Guarda el avance en la cuenta; si falla, el progreso sigue en este dispositivo.
     // No se registra si el curso del dispositivo es de otra área que la lección jugada.
     if (progressTargets.recordsCourseProgress) {
-      recordRound({ stars }).then(({ error }) => {
+      recordRound({ stars, moduleId }).then(({ error }) => {
         if (error) console.warn('No se pudo guardar el progreso en la cuenta:', error);
       });
     }

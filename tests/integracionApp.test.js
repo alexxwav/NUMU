@@ -99,3 +99,14 @@ test('el historial del mapa antiguo solo aparece en áreas con rutas por secció
   const withLegacy = catalog.courses.filter((c) => c.lessons.some((l) => l.published !== false && l.module_id)).map((c) => c.id);
   assert.deepEqual(withLegacy, ['aritmetica', 'geometria-patrones']);
 });
+
+test('la ronda registra el progreso por curso del curso de la lección jugada, no del último módulo visitado', async () => {
+  const { courseSlugForModule } = await import('../src/data/subjects.js');
+  const game = read('../src/views/Game.jsx');
+  const auth = read('../src/hooks/useAuth.jsx');
+  assert.match(game, /recordRound\(\{ stars, moduleId \}\)/);
+  assert.match(auth, /const courseSlug = courseSlugForModule\(moduleId \?\? state\.module\);/);
+  // Patrones jugado con el módulo guardado en «aritmetica» (error real del 27-nov): va a geometria-patrones.
+  assert.equal(courseSlugForModule('patrones'), 'geometria-patrones');
+  assert.equal(courseSlugForModule('conteo'), 'aritmetica');
+});

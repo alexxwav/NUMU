@@ -122,11 +122,12 @@ export function AuthProvider({ children }) {
     // Guarda en la cuenta el resultado de una ronda ya aplicado en store.js (nivel, gemas, XP, racha).
     // Gemas: se confirman las recompensas pendientes con su clave (una sola vez). Sin la migración de
     // gemas, se guarda el saldo como antes y se dan por subidas.
-    async recordRound({ stars }) {
+    async recordRound({ stars, moduleId = null }) {
       if (!session) return { error: null };
       const gems = await syncPendingGems({ service: gemsService, store });
       const state = store.get();
-      const courseSlug = courseSlugForModule(state.module);
+      // El curso es el de la lección jugada (su módulo); el módulo guardado puede ser de otra área.
+      const courseSlug = courseSlugForModule(moduleId ?? state.module);
       const xp = reconcileXp({ localXp: state.xp, derivedXp: getTotalXp(state) });
       const [round, totals] = await Promise.all([
         courseSlug
