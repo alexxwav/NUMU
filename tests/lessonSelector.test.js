@@ -63,7 +63,9 @@ test('catálogo oficial: las lecciones actuales se leen en formato v2 con el ban
   const conteo = lessonLevelSpec(lessons['conteo-basico'], 1);
   assert.equal(conteo.format, 'v2');
   assert.equal(conteo.generatorKey, 'conteo');
-  assert.ok(conteo.exercises.every((e) => e.visual.count <= 5), 'nivel 1 sigue usando solo cantidades que caben');
+  // Nivel 1: todas las cantidades caben (≤5), también en los grupos de la ampliación (object_groups).
+  const counts = (v) => [v.count, v.model_count, v.target_count, ...(v.groups ?? []).map((g) => g.count)].filter(Number.isInteger);
+  assert.ok(conteo.exercises.every((e) => counts(e.visual).length > 0 && counts(e.visual).every((n) => n <= 5)), 'nivel 1 sigue usando solo cantidades que caben');
   const figurasN2 = lessonLevelSpec(lessons.figuras, 2);
   assert.ok(figurasN2.exercises.length > 0, 'Figuras N2 ya tiene ejercicios editoriales (ampliación de Viviana)');
   assert.deepEqual(figurasN2.exercises.map((e) => e.id), lessons.figuras.levels[2].exercises.map((e) => e.id));
@@ -72,11 +74,24 @@ test('catálogo oficial: las lecciones actuales se leen en formato v2 con el ban
 
 // Con la evidencia semántica de Viviana para contar objetos (solo la cantidad), Conteo N1 y N2
 // no llegan a 6 cantidades distintas (N1: 2–5 objetos; N2: 2–6). Decisión educativa pendiente.
-test('conteo N1 y N2: cobertura semántica insuficiente (4 y 5 cantidades distintas), se informa', () => {
-  assert.equal(lessonCoverage({ lesson: lessons['conteo-basico'], level: 1 }).distinct, 4);
-  assert.equal(lessonCoverage({ lesson: lessons['conteo-basico'], level: 2 }).distinct, 5);
+test('conteo N1 y N2 con la ampliación de Viviana (44f4061): 6 y 7 preguntas distintas, sin repetir', () => {
+  assert.equal(lessonCoverage({ lesson: lessons['conteo-basico'], level: 1 }).distinct, 6);
+  assert.equal(lessonCoverage({ lesson: lessons['conteo-basico'], level: 2 }).distinct, 7);
   for (const level of [1, 2]) {
-    const result = selectLessonQuestions({ lesson: lessons['conteo-basico'], level });
+    for (let run = 0; run < RUNS; run++) {
+      const result = selectLessonQuestions({ lesson: lessons['conteo-basico'], level });
+      assert.equal(result.playable, true, `conteo N${level}`);
+      assert.equal(new Set(signatures(result.questions)).size, QUESTIONS_PER_ROUND, 'sin repetidas');
+      assert.ok(result.questions.every((q) => q.level === level));
+    }
+  }
+});
+
+test('conteo N1 y N2 sin la ampliación (formato anterior): cobertura insuficiente (4 y 5), se informa', () => {
+  assert.equal(lessonCoverage({ lesson: legacyOf(lessons['conteo-basico']), level: 1 }).distinct, 4);
+  assert.equal(lessonCoverage({ lesson: legacyOf(lessons['conteo-basico']), level: 2 }).distinct, 5);
+  for (const level of [1, 2]) {
+    const result = selectLessonQuestions({ lesson: legacyOf(lessons['conteo-basico']), level });
     assert.equal(result.playable, false);
     assert.equal(new Set(signatures(result.questions)).size, result.questions.length, 'sin repetir para completar');
   }

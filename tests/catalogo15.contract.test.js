@@ -97,16 +97,22 @@ test('siempre · Game.jsx: sin práctica disponible no hay premios ni guardados;
   assert.equal((source.match(/store\.addRewards\(/g) ?? []).length, 1, 'un solo punto que da recompensas');
 });
 
-test('siempre · las combinaciones sin cobertura de Conteo siguen documentadas, sin bancos inventados', () => {
+test('siempre · Conteo N1–N2 cubierto con el banco de Viviana; sin él, repeticiones mínimas (sin bancos inventados)', () => {
   const conteo = allLessons.find((e) => e.lesson.id === 'conteo-basico')?.lesson;
   for (const level of [1, 2]) {
-    assert.equal(lessonCoverage({ lesson: conteo, level }).playable, false, `conteo N${level}`);
-    // Se juega con repeticiones mínimas: todas las cantidades distintas, sin inventar bancos.
-    const plan = planLessonRound({ lesson: conteo, level });
-    const distinct = lessonCoverage({ lesson: conteo, level }).distinct;
-    assert.equal(plan.mode, 'repeticion-minima', `conteo N${level}`);
+    // Con la ampliación de Viviana (44f4061): 6 distintas y selector.
+    assert.equal(lessonCoverage({ lesson: conteo, level }).playable, true, `conteo N${level}`);
+    assert.equal(planLessonRound({ lesson: conteo, level }).mode, 'selector', `conteo N${level}`);
+    // Respaldo si una versión del catálogo no trae ese banco: todas las cantidades distintas y solo
+    // las repeticiones inevitables, sin inventar ejercicios ni cambiar el nivel.
+    const { levels, ...withoutBank } = conteo;
+    const plan = planLessonRound({ lesson: withoutBank, level });
+    const distinct = lessonCoverage({ lesson: withoutBank, level }).distinct;
+    assert.equal(plan.mode, 'repeticion-minima', `conteo N${level} sin banco`);
     assert.equal(plan.questions.length, QUESTIONS_PER_ROUND);
     assert.equal(new Set(plan.questions.map(questionSignature)).size, distinct, 'usa todas las cantidades distintas');
+    const s = plan.questions.map(questionSignature);
+    assert.ok(s.every((sig, i) => i === 0 || sig !== s[i - 1]), 'sin equivalentes seguidas');
     assert.ok(plan.questions.every((q) => q.level === level), 'sin cambiar el nivel');
   }
 });

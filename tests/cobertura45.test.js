@@ -19,8 +19,9 @@ const full = ACTIVE_AREA_IDS.every((area) => JSON.stringify((catalog.courses.fin
   === JSON.stringify([...APPROVED_IDS[area]].sort()));
 const FULL = full ? {} : { skip: 'el catálogo de 15 lecciones aún no está publicado (verificar con NUMU_CATALOG=ruta)' };
 const open = (lesson) => ({ ...lesson, published: true });
-// Cobertura real documentada (no se oculta ni se inventan bancos): Conteo deduplica por cantidad.
-const DOCUMENTED_GAPS = { 'conteo-basico:1': 4, 'conteo-basico:2': 5 };
+// Cobertura real documentada (no se oculta ni se inventan bancos). Conteo N1–N2 quedó cubierto con la
+// ampliación de Viviana (44f4061): hoy no hay combinaciones sin cobertura.
+const DOCUMENTED_GAPS = {};
 
 test('45 combinaciones: cada lessonId en su área, con sus tres niveles', FULL, () => {
   assert.equal(entries.length, 15);
@@ -56,7 +57,7 @@ test('45 combinaciones: 6 preguntas distintas de SU lección y SU nivel (salvo l
     }
   }
   const ok = Object.entries(result).filter(([k]) => DOCUMENTED_GAPS[k] === undefined).length;
-  assert.equal(ok, 43, 'combinaciones con 6 distintas');
+  assert.equal(ok, 45, 'combinaciones con 6 distintas');
 });
 
 test('Figuras combina sus ejercicios antiguos y ampliados en los tres niveles', FULL, () => {

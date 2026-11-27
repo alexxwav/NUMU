@@ -33,23 +33,16 @@ test('regresión: las 4 lecciones actuales se juegan en los niveles 1, 2 y 3 con
     for (const level of [1, 2, 3]) {
       for (let run = 0; run < 25; run++) {
         const plan = planLessonRound({ lesson: lessons[id], level });
-        // Sin repetir preguntas donde hay 6 distintas. Conteo N1–N2 (4 y 5 cantidades distintas):
-        // repeticiones mínimas, siempre con otro objeto. Figuras ya juega con su ampliación.
-        const legacyExpected = id === 'conteo-basico' && level < 3;
-        assert.equal(plan.mode, legacyExpected ? 'repeticion-minima' : 'selector', `${id} N${level}`);
-        if (legacyExpected) {
-          const distinct = new Set(plan.questions.map(questionSignature)).size;
-          assert.equal(distinct, level === 1 ? 4 : 5, `conteo N${level}: todas las cantidades distintas`);
-          const pairs = plan.questions.map((q) => `${questionSignature(q)}|${q.prompt}`);
-          assert.equal(new Set(pairs).size, QUESTIONS_PER_ROUND, 'una cantidad repetida siempre con otro objeto');
-        }
+        // Las 4 lecciones juegan con el selector en los 3 niveles, sin repetir (Conteo N1–N2 cubierto
+        // con la ampliación de Viviana 44f4061; Figuras con la suya).
+        assert.equal(plan.mode, 'selector', `${id} N${level}`);
         assert.equal(plan.questions.length, QUESTIONS_PER_ROUND, `${id} N${level}`);
         assert.ok(plan.questions.every((q) => q.level === level));
-        // N2–N3: el mismo generador (R12–R14); Figuras, el banco editorial de su nivel (sin generador).
+        // N2–N3: su banco editorial del nivel (si lo tiene) y el mismo generador (R12–R14).
         const levelIds = new Set((lessons[id].levels?.[level]?.exercises ?? []).map((e) => e.id));
         if (level > 1 && id === 'figuras') assert.ok(plan.questions.every((q) => q.source === 'catalogo' && levelIds.has(q.id)), 'Figuras N2–N3: su banco');
-        else if (level > 1) assert.ok(plan.questions.every((q) => q.source === 'generador'), 'N2–N3: el mismo generador (R12–R14)');
-        if (!legacyExpected) assert.equal(new Set(plan.questions.map(questionSignature)).size, QUESTIONS_PER_ROUND, `${id} N${level}: sin repetidas`);
+        else if (level > 1) assert.ok(plan.questions.every((q) => q.source === 'generador' || (q.source === 'catalogo' && levelIds.has(q.id))), 'N2–N3: banco del nivel o el mismo generador');
+        assert.equal(new Set(plan.questions.map(questionSignature)).size, QUESTIONS_PER_ROUND, `${id} N${level}: sin repetidas`);
       }
     }
   }
