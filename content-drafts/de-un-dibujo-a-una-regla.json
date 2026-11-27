@@ -1,0 +1,938 @@
+{
+  "id": "de-un-dibujo-a-una-regla",
+  "course_id": "algebra",
+  "title": "De un dibujo a una regla",
+  "position": 5,
+  "base_level": 1,
+  "published": false,
+  "objective": "Representar patrones de dibujos con números y explicar cómo calcular la cantidad de piezas en cualquier paso.",
+  "explanation": "Algunos dibujos crecen siguiendo una regla. Mira qué grupo se añade cuando pasas al siguiente dibujo y qué piezas quedan siempre. El número de paso te dice cuántos grupos hay. Puedes contar sus piezas y después sumar las que se quedan fijas. Así puedes calcular un paso sin dibujarlo entero.",
+  "guided_example": {
+    "mode": "visual",
+    "visual": {
+      "type": "growing_pattern",
+      "repeated_icon": "coral",
+      "fixed_icon": "star",
+      "stages": [
+        {
+          "position": 1,
+          "groups": [
+            2
+          ],
+          "fixed": 1
+        },
+        {
+          "position": 2,
+          "groups": [
+            2,
+            2
+          ],
+          "fixed": 1
+        },
+        {
+          "position": 3,
+          "groups": [
+            2,
+            2,
+            2
+          ],
+          "fixed": 1
+        }
+      ]
+    },
+    "explanation": "En el paso uno hay dos corales. En el dos hay dos grupos de dos. En el tres hay tres grupos de dos. La misma estrella aparece en cada dibujo. La regla es dos corales por paso y una estrella fija."
+  },
+  "levels": {
+    "1": {
+      "exercise_types": [
+        "contar-piezas-de-un-paso"
+      ],
+      "exercises": [
+        {
+          "id": "de-un-dibujo-a-una-regla-n1-01",
+          "type": "contar-piezas-de-un-paso",
+          "prompt": "Mira el dibujo del paso 2. ¿Cuántas piezas hay en total?",
+          "visual": {
+            "type": "growing_pattern",
+            "repeated_icon": "coral",
+            "fixed_icon": "star",
+            "stages": [
+              {
+                "position": 1,
+                "groups": [
+                  2
+                ],
+                "fixed": 1
+              },
+              {
+                "position": 2,
+                "groups": [
+                  2,
+                  2
+                ],
+                "fixed": 1
+              },
+              {
+                "position": 3,
+                "groups": [
+                  2,
+                  2,
+                  2
+                ],
+                "fixed": 1
+              }
+            ],
+            "query_position": 2
+          },
+          "options": [
+            3,
+            5,
+            4,
+            6
+          ],
+          "correct_answer": 5,
+          "answer_index": 1,
+          "hint": "Cuenta los corales de ese paso y añade la estrella que sigue ahí.",
+          "feedback_correct": "¡Son 5 piezas! En ese paso hay 4 corales y 1 estrella.",
+          "feedback_incorrect": "Cuenta las piezas de un solo paso. Revisa también las estrellas."
+        },
+        {
+          "id": "de-un-dibujo-a-una-regla-n1-02",
+          "type": "contar-piezas-de-un-paso",
+          "prompt": "¿Cuántas piezas forman el primer dibujo?",
+          "visual": {
+            "type": "growing_pattern",
+            "repeated_icon": "coral",
+            "fixed_icon": "star",
+            "stages": [
+              {
+                "position": 1,
+                "groups": [
+                  3
+                ],
+                "fixed": 1
+              },
+              {
+                "position": 2,
+                "groups": [
+                  3,
+                  3
+                ],
+                "fixed": 1
+              },
+              {
+                "position": 3,
+                "groups": [
+                  3,
+                  3,
+                  3
+                ],
+                "fixed": 1
+              }
+            ],
+            "query_position": 1
+          },
+          "options": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "correct_answer": 4,
+          "answer_index": 2,
+          "hint": "Busca el dibujo que lleva el número de paso más pequeño.",
+          "feedback_correct": "¡Son 4 piezas! En ese paso hay 3 corales y 1 estrella.",
+          "feedback_incorrect": "Cuenta las piezas de ese dibujo antes de pasar al siguiente."
+        },
+        {
+          "id": "de-un-dibujo-a-una-regla-n1-03",
+          "type": "contar-piezas-de-un-paso",
+          "prompt": "¿Cuántas piezas aparecen en el dibujo del paso 3?",
+          "visual": {
+            "type": "growing_pattern",
+            "repeated_icon": "coral",
+            "fixed_icon": "star",
+            "stages": [
+              {
+                "position": 1,
+                "groups": [
+                  2
+                ],
+                "fixed": 2
+              },
+              {
+                "position": 2,
+                "groups": [
+                  2,
+                  2
+                ],
+                "fixed": 2
+              },
+              {
+                "position": 3,
+                "groups": [
+                  2,
+                  2,
+                  2
+                ],
+                "fixed": 2
+              }
+            ],
+            "query_position": 3
+          },
+          "options": [
+            8,
+            5,
+            6,
+            7
+          ],
+          "correct_answer": 8,
+          "answer_index": 0,
+          "hint": "Recorre cada grupo de corales y deja las estrellas para el final.",
+          "feedback_correct": "¡Son 8 piezas! En ese paso hay 6 corales y 2 estrellas.",
+          "feedback_incorrect": "Suma las estrellas que ya estaban allí además de los grupos nuevos."
+        },
+        {
+          "id": "de-un-dibujo-a-una-regla-n1-04",
+          "type": "contar-piezas-de-un-paso",
+          "prompt": "¿Cuántas piezas necesitas para copiar el paso 2?",
+          "visual": {
+            "type": "growing_pattern",
+            "repeated_icon": "coral",
+            "fixed_icon": "star",
+            "stages": [
+              {
+                "position": 1,
+                "groups": [
+                  1
+                ],
+                "fixed": 2
+              },
+              {
+                "position": 2,
+                "groups": [
+                  1,
+                  1
+                ],
+                "fixed": 2
+              },
+              {
+                "position": 3,
+                "groups": [
+                  1,
+                  1,
+                  1
+                ],
+                "fixed": 2
+              }
+            ],
+            "query_position": 2
+          },
+          "options": [
+            2,
+            3,
+            5,
+            4
+          ],
+          "correct_answer": 4,
+          "answer_index": 3,
+          "hint": "Señala cada pieza del paso elegido una sola vez.",
+          "feedback_correct": "¡Son 4 piezas! En ese paso hay 2 corales y 2 estrellas.",
+          "feedback_incorrect": "Que un grupo tenga un solo coral no cambia cómo cuentas. Incluye todas las piezas del paso."
+        },
+        {
+          "id": "de-un-dibujo-a-una-regla-n1-05",
+          "type": "contar-piezas-de-un-paso",
+          "prompt": "¿Cuántas piezas ves en el tercer dibujo?",
+          "visual": {
+            "type": "growing_pattern",
+            "repeated_icon": "coral",
+            "fixed_icon": "star",
+            "stages": [
+              {
+                "position": 1,
+                "groups": [
+                  3
+                ],
+                "fixed": 2
+              },
+              {
+                "position": 2,
+                "groups": [
+                  3,
+                  3
+                ],
+                "fixed": 2
+              },
+              {
+                "position": 3,
+                "groups": [
+                  3,
+                  3,
+                  3
+                ],
+                "fixed": 2
+              }
+            ],
+            "query_position": 3
+          },
+          "options": [
+            8,
+            9,
+            11,
+            12
+          ],
+          "correct_answer": 11,
+          "answer_index": 2,
+          "hint": "Reconoce primero los grupos de corales e incluye después las estrellas.",
+          "feedback_correct": "¡Son 11 piezas! En ese paso hay 9 corales y 2 estrellas.",
+          "feedback_incorrect": "Comprueba que contaste todos los grupos y las piezas que se quedan fijas."
+        },
+        {
+          "id": "de-un-dibujo-a-una-regla-n1-06",
+          "type": "contar-piezas-de-un-paso",
+          "prompt": "¿Cuál es el total de piezas del paso 3?",
+          "visual": {
+            "type": "growing_pattern",
+            "repeated_icon": "coral",
+            "fixed_icon": "star",
+            "stages": [
+              {
+                "position": 1,
+                "groups": [
+                  4
+                ],
+                "fixed": 1
+              },
+              {
+                "position": 2,
+                "groups": [
+                  4,
+                  4
+                ],
+                "fixed": 1
+              },
+              {
+                "position": 3,
+                "groups": [
+                  4,
+                  4,
+                  4
+                ],
+                "fixed": 1
+              }
+            ],
+            "query_position": 3
+          },
+          "options": [
+            13,
+            10,
+            12,
+            14
+          ],
+          "correct_answer": 13,
+          "answer_index": 0,
+          "hint": "Cuenta de grupo en grupo para reunir los corales. Revisa si falta alguna estrella.",
+          "feedback_correct": "¡Son 13 piezas! En ese paso hay 12 corales y 1 estrella.",
+          "feedback_incorrect": "Junta los corales del dibujo y agrega la pieza fija."
+        }
+      ]
+    },
+    "2": {
+      "exercise_types": [
+        "relacionar-paso-con-cantidad"
+      ],
+      "exercises": [
+        {
+          "id": "de-un-dibujo-a-una-regla-n2-01",
+          "type": "relacionar-paso-con-cantidad",
+          "prompt": "Si el dibujo sigue creciendo igual, ¿cuántas piezas tendrá en el paso 4?",
+          "visual": {
+            "type": "growing_pattern",
+            "repeated_icon": "coral",
+            "fixed_icon": "star",
+            "stages": [
+              {
+                "position": 1,
+                "groups": [
+                  2
+                ],
+                "fixed": 1
+              },
+              {
+                "position": 2,
+                "groups": [
+                  2,
+                  2
+                ],
+                "fixed": 1
+              },
+              {
+                "position": 3,
+                "groups": [
+                  2,
+                  2,
+                  2
+                ],
+                "fixed": 1
+              }
+            ],
+            "query_position": 4
+          },
+          "options": [
+            7,
+            8,
+            9,
+            10
+          ],
+          "correct_answer": 9,
+          "answer_index": 2,
+          "hint": "Añade otro grupo de corales al último dibujo. Conserva las estrellas que ya tiene.",
+          "feedback_correct": "¡En el paso 4 hay 9 piezas! Los grupos aportan 8 corales. Las estrellas completan el total.",
+          "feedback_incorrect": "Solo los corales crecen de un paso a otro. Mantén las estrellas al predecir el total."
+        },
+        {
+          "id": "de-un-dibujo-a-una-regla-n2-02",
+          "type": "relacionar-paso-con-cantidad",
+          "prompt": "¿Cuántas piezas corresponderían al paso 5?",
+          "visual": {
+            "type": "growing_pattern",
+            "repeated_icon": "coral",
+            "fixed_icon": "star",
+            "stages": [
+              {
+                "position": 1,
+                "groups": [
+                  3
+                ],
+                "fixed": 2
+              },
+              {
+                "position": 2,
+                "groups": [
+                  3,
+                  3
+                ],
+                "fixed": 2
+              },
+              {
+                "position": 3,
+                "groups": [
+                  3,
+                  3,
+                  3
+                ],
+                "fixed": 2
+              }
+            ],
+            "query_position": 5
+          },
+          "options": [
+            17,
+            13,
+            15,
+            20
+          ],
+          "correct_answer": 17,
+          "answer_index": 0,
+          "hint": "Cuenta cuántos grupos nuevos de corales se añaden al pasar del último dibujo al paso pedido.",
+          "feedback_correct": "¡En el paso 5 hay 17 piezas! Los grupos aportan 15 corales. Las estrellas completan el total.",
+          "feedback_incorrect": "Dibuja los grupos de corales para esa posición. Agrega las estrellas fijas una sola vez."
+        },
+        {
+          "id": "de-un-dibujo-a-una-regla-n2-03",
+          "type": "relacionar-paso-con-cantidad",
+          "prompt": "Entre dos dibujos se perdió el paso 3. ¿Cuántas piezas tenía?",
+          "visual": {
+            "type": "growing_pattern",
+            "repeated_icon": "coral",
+            "fixed_icon": "star",
+            "stages": [
+              {
+                "position": 1,
+                "groups": [
+                  1
+                ],
+                "fixed": 3
+              },
+              {
+                "position": 2,
+                "groups": [
+                  1,
+                  1
+                ],
+                "fixed": 3
+              },
+              {
+                "position": 4,
+                "groups": [
+                  1,
+                  1,
+                  1,
+                  1
+                ],
+                "fixed": 3
+              }
+            ],
+            "query_position": 3
+          },
+          "options": [
+            4,
+            6,
+            5,
+            7
+          ],
+          "correct_answer": 6,
+          "answer_index": 1,
+          "hint": "Completa el paso intermedio añadiendo un grupo al dibujo anterior.",
+          "feedback_correct": "¡En el paso 3 hay 6 piezas! Los grupos aportan 3 corales. Las estrellas completan el total.",
+          "feedback_incorrect": "Lo que falta queda entre las dos posiciones. Las estrellas se conservan en ambas."
+        },
+        {
+          "id": "de-un-dibujo-a-una-regla-n2-04",
+          "type": "relacionar-paso-con-cantidad",
+          "prompt": "¿Cuántas piezas tendría el paso 5 después del dibujo grande?",
+          "visual": {
+            "type": "growing_pattern",
+            "repeated_icon": "coral",
+            "fixed_icon": "star",
+            "stages": [
+              {
+                "position": 1,
+                "groups": [
+                  4
+                ],
+                "fixed": 1
+              },
+              {
+                "position": 2,
+                "groups": [
+                  4,
+                  4
+                ],
+                "fixed": 1
+              },
+              {
+                "position": 4,
+                "groups": [
+                  4,
+                  4,
+                  4,
+                  4
+                ],
+                "fixed": 1
+              }
+            ],
+            "query_position": 5
+          },
+          "options": [
+            16,
+            20,
+            24,
+            21
+          ],
+          "correct_answer": 21,
+          "answer_index": 3,
+          "hint": "Mira cuántos corales tiene un grupo. Añade un grupo por cada paso que avances.",
+          "feedback_correct": "¡En el paso 5 hay 21 piezas! Los grupos aportan 20 corales. Las estrellas completan el total.",
+          "feedback_incorrect": "Si usaste solo los corales, falta agregar la estrella que aparece en todos los pasos."
+        },
+        {
+          "id": "de-un-dibujo-a-una-regla-n2-05",
+          "type": "relacionar-paso-con-cantidad",
+          "prompt": "¿Cuántas piezas necesita el dibujo del paso 6?",
+          "visual": {
+            "type": "growing_pattern",
+            "repeated_icon": "coral",
+            "fixed_icon": "star",
+            "stages": [
+              {
+                "position": 1,
+                "groups": [
+                  2
+                ],
+                "fixed": 3
+              },
+              {
+                "position": 2,
+                "groups": [
+                  2,
+                  2
+                ],
+                "fixed": 3
+              },
+              {
+                "position": 3,
+                "groups": [
+                  2,
+                  2,
+                  2
+                ],
+                "fixed": 3
+              }
+            ],
+            "query_position": 6
+          },
+          "options": [
+            12,
+            15,
+            13,
+            18
+          ],
+          "correct_answer": 15,
+          "answer_index": 1,
+          "hint": "Usa el número del paso para contar grupos, y las estrellas como parte que se queda igual.",
+          "feedback_correct": "¡En el paso 6 hay 15 piezas! Los grupos aportan 12 corales. Las estrellas completan el total.",
+          "feedback_incorrect": "Cuenta cuántos grupos hacen falta para la posición que te piden antes de sumar las estrellas."
+        },
+        {
+          "id": "de-un-dibujo-a-una-regla-n2-06",
+          "type": "relacionar-paso-con-cantidad",
+          "prompt": "La primera y la tercera posición están dibujadas. ¿Cuántas piezas ocupaba el paso 2?",
+          "visual": {
+            "type": "growing_pattern",
+            "repeated_icon": "coral",
+            "fixed_icon": "star",
+            "stages": [
+              {
+                "position": 1,
+                "groups": [
+                  3
+                ],
+                "fixed": 1
+              },
+              {
+                "position": 3,
+                "groups": [
+                  3,
+                  3,
+                  3
+                ],
+                "fixed": 1
+              },
+              {
+                "position": 4,
+                "groups": [
+                  3,
+                  3,
+                  3,
+                  3
+                ],
+                "fixed": 1
+              }
+            ],
+            "query_position": 2
+          },
+          "options": [
+            4,
+            6,
+            7,
+            8
+          ],
+          "correct_answer": 7,
+          "answer_index": 2,
+          "hint": "Mira cuánto se añade con un grupo de corales. Usa ese cambio desde el primer dibujo.",
+          "feedback_correct": "¡En el paso 2 hay 7 piezas! Los grupos aportan 6 corales. Las estrellas completan el total.",
+          "feedback_incorrect": "El paso que falta conserva las estrellas. Ajusta solo cuántos grupos de corales tiene."
+        }
+      ]
+    },
+    "3": {
+      "exercise_types": [
+        "deducir-regla-del-dibujo"
+      ],
+      "exercises": [
+        {
+          "id": "de-un-dibujo-a-una-regla-n3-01",
+          "type": "deducir-regla-del-dibujo",
+          "prompt": "¿Qué regla de las opciones sirve para construir cualquier paso de este dibujo?",
+          "visual": {
+            "type": "growing_pattern",
+            "repeated_icon": "coral",
+            "fixed_icon": "star",
+            "stages": [
+              {
+                "position": 1,
+                "groups": [
+                  2
+                ],
+                "fixed": 1
+              },
+              {
+                "position": 2,
+                "groups": [
+                  2,
+                  2
+                ],
+                "fixed": 1
+              },
+              {
+                "position": 4,
+                "groups": [
+                  2,
+                  2,
+                  2,
+                  2
+                ],
+                "fixed": 1
+              }
+            ]
+          },
+          "options": [
+            "2 por paso y 1 ficha fija",
+            "1 por paso y 2 fichas fijas",
+            "2 por paso y 2 fichas fijas",
+            "3 por paso y 1 ficha fija"
+          ],
+          "correct_answer": "2 por paso y 1 ficha fija",
+          "answer_index": 0,
+          "hint": "Cuenta cuántos corales trae un grupo nuevo y cuántas estrellas siguen en cada dibujo.",
+          "feedback_correct": "¡Es 2 por paso y 1 ficha fija! Cada paso añade un grupo de 2 corales. La parte fija conserva su cantidad.",
+          "feedback_incorrect": "Prueba tu regla en más de un paso. Debe conservar las estrellas y sumar el grupo correcto de corales."
+        },
+        {
+          "id": "de-un-dibujo-a-una-regla-n3-02",
+          "type": "deducir-regla-del-dibujo",
+          "prompt": "¿Qué regla explica cuántas piezas hay para cualquier número de paso?",
+          "visual": {
+            "type": "growing_pattern",
+            "repeated_icon": "coral",
+            "fixed_icon": "star",
+            "stages": [
+              {
+                "position": 1,
+                "groups": [
+                  3
+                ],
+                "fixed": 2
+              },
+              {
+                "position": 2,
+                "groups": [
+                  3,
+                  3
+                ],
+                "fixed": 2
+              },
+              {
+                "position": 3,
+                "groups": [
+                  3,
+                  3,
+                  3
+                ],
+                "fixed": 2
+              }
+            ]
+          },
+          "options": [
+            "2 por paso y 3 fichas fijas",
+            "3 por paso y 1 ficha fija",
+            "4 por paso y 2 fichas fijas",
+            "3 por paso y 2 fichas fijas"
+          ],
+          "correct_answer": "3 por paso y 2 fichas fijas",
+          "answer_index": 3,
+          "hint": "Separa lo que crece en cada paso de lo que permanece fijo.",
+          "feedback_correct": "¡Es 3 por paso y 2 fichas fijas! Cada paso añade un grupo de 3 corales. La parte fija conserva su cantidad.",
+          "feedback_incorrect": "Calcula lo que daría tu regla en otro dibujo. Si una parte cambia cuando debería quedarse igual, ajusta esa parte."
+        },
+        {
+          "id": "de-un-dibujo-a-una-regla-n3-03",
+          "type": "deducir-regla-del-dibujo",
+          "prompt": "¿Cuál de estas reglas describe el patrón completo, incluso los pasos que no se ven?",
+          "visual": {
+            "type": "growing_pattern",
+            "repeated_icon": "coral",
+            "fixed_icon": "star",
+            "stages": [
+              {
+                "position": 1,
+                "groups": [
+                  1
+                ],
+                "fixed": 3
+              },
+              {
+                "position": 3,
+                "groups": [
+                  1,
+                  1,
+                  1
+                ],
+                "fixed": 3
+              },
+              {
+                "position": 5,
+                "groups": [
+                  1,
+                  1,
+                  1,
+                  1,
+                  1
+                ],
+                "fixed": 3
+              }
+            ]
+          },
+          "options": [
+            "3 por paso y 1 ficha fija",
+            "1 por paso y 2 fichas fijas",
+            "1 por paso y 3 fichas fijas",
+            "2 por paso y 3 fichas fijas"
+          ],
+          "correct_answer": "1 por paso y 3 fichas fijas",
+          "answer_index": 2,
+          "hint": "Busca la cantidad que se repite en cada grupo de coral. Las estrellas se cuentan aparte.",
+          "feedback_correct": "¡Es 1 por paso y 3 fichas fijas! Cada paso añade un grupo de 1 corales. La parte fija conserva su cantidad.",
+          "feedback_incorrect": "Compara tu regla con los dibujos extremos. Debe funcionar en los dos."
+        },
+        {
+          "id": "de-un-dibujo-a-una-regla-n3-04",
+          "type": "deducir-regla-del-dibujo",
+          "prompt": "¿Qué regla le dirías a NUMU para continuar el dibujo sin verlo?",
+          "visual": {
+            "type": "growing_pattern",
+            "repeated_icon": "coral",
+            "fixed_icon": "star",
+            "stages": [
+              {
+                "position": 1,
+                "groups": [
+                  4
+                ],
+                "fixed": 1
+              },
+              {
+                "position": 2,
+                "groups": [
+                  4,
+                  4
+                ],
+                "fixed": 1
+              },
+              {
+                "position": 3,
+                "groups": [
+                  4,
+                  4,
+                  4
+                ],
+                "fixed": 1
+              }
+            ]
+          },
+          "options": [
+            "3 por paso y 1 ficha fija",
+            "4 por paso y 1 ficha fija",
+            "1 por paso y 4 fichas fijas",
+            "4 por paso y 2 fichas fijas"
+          ],
+          "correct_answer": "4 por paso y 1 ficha fija",
+          "answer_index": 1,
+          "hint": "Fíjate en lo que se añade al pasar de una figura a otra y en qué pieza sigue allí.",
+          "feedback_correct": "¡Es 4 por paso y 1 ficha fija! Cada paso añade un grupo de 4 corales. La parte fija conserva su cantidad.",
+          "feedback_incorrect": "Asegúrate de que el número de paso multiplique los corales de un grupo y conserve la parte fija."
+        },
+        {
+          "id": "de-un-dibujo-a-una-regla-n3-05",
+          "type": "deducir-regla-del-dibujo",
+          "prompt": "¿Qué regla produce los totales de las posiciones dibujadas?",
+          "visual": {
+            "type": "growing_pattern",
+            "repeated_icon": "coral",
+            "fixed_icon": "star",
+            "stages": [
+              {
+                "position": 1,
+                "groups": [
+                  2
+                ],
+                "fixed": 3
+              },
+              {
+                "position": 3,
+                "groups": [
+                  2,
+                  2,
+                  2
+                ],
+                "fixed": 3
+              },
+              {
+                "position": 4,
+                "groups": [
+                  2,
+                  2,
+                  2,
+                  2
+                ],
+                "fixed": 3
+              }
+            ]
+          },
+          "options": [
+            "3 por paso y 2 fichas fijas",
+            "2 por paso y 2 fichas fijas",
+            "2 por paso y 3 fichas fijas",
+            "2 por paso y 4 fichas fijas"
+          ],
+          "correct_answer": "2 por paso y 3 fichas fijas",
+          "answer_index": 2,
+          "hint": "Compara dibujos que estén separados por más de un paso. Divide el crecimiento en saltos iguales.",
+          "feedback_correct": "¡Es 2 por paso y 3 fichas fijas! Cada paso añade un grupo de 2 corales. La parte fija conserva su cantidad.",
+          "feedback_incorrect": "Usa el mismo tamaño de grupo en todos los pasos y revisa cuántas piezas fijas hay."
+        },
+        {
+          "id": "de-un-dibujo-a-una-regla-n3-06",
+          "type": "deducir-regla-del-dibujo",
+          "prompt": "¿Qué regla funciona tanto para el primer dibujo como para la posición más lejana?",
+          "visual": {
+            "type": "growing_pattern",
+            "repeated_icon": "coral",
+            "fixed_icon": "star",
+            "stages": [
+              {
+                "position": 1,
+                "groups": [
+                  3
+                ],
+                "fixed": 1
+              },
+              {
+                "position": 2,
+                "groups": [
+                  3,
+                  3
+                ],
+                "fixed": 1
+              },
+              {
+                "position": 5,
+                "groups": [
+                  3,
+                  3,
+                  3,
+                  3,
+                  3
+                ],
+                "fixed": 1
+              }
+            ]
+          },
+          "options": [
+            "1 por paso y 3 fichas fijas",
+            "2 por paso y 1 ficha fija",
+            "3 por paso y 2 fichas fijas",
+            "3 por paso y 1 ficha fija"
+          ],
+          "correct_answer": "3 por paso y 1 ficha fija",
+          "answer_index": 3,
+          "hint": "Mira cuántos corales tiene cada grupo de la última figura y revisa qué queda fuera de esos grupos.",
+          "feedback_correct": "¡Es 3 por paso y 1 ficha fija! Cada paso añade un grupo de 3 corales. La parte fija conserva su cantidad.",
+          "feedback_incorrect": "Una regla puede coincidir en el primer paso. Comprueba también el dibujo más grande."
+        }
+      ]
+    }
+  }
+}
