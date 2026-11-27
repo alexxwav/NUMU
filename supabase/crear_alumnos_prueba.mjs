@@ -76,7 +76,16 @@ async function usuarioId(authId) {
 
 const cuentas = await cuentasExistentes();
 const password = process.env.NUMU_TEST_PASSWORD ?? nuevaContrasena();
-if (password.length < 12) fail('NUMU_TEST_PASSWORD debe tener al menos 12 caracteres.');
+// Mínimo de Supabase Auth (6). Si la política del proyecto la rechaza, createUser falla en la primera
+// cuenta y el script se detiene sin crear nada más. La contraseña nunca se escribe en el repositorio.
+if (password.length < 6) fail('NUMU_TEST_PASSWORD debe tener al menos 6 caracteres (mínimo de Supabase Auth).');
+const destinoCredenciales = process.env.NUMU_CREDENCIALES ?? join(homedir(), 'Documents', 'NUMU_credenciales_prueba.txt');
+if (destinoCredenciales.startsWith(root)) fail('El archivo de credenciales no puede quedar dentro del repositorio.');
+if (CREAR) {
+  // Se escribe y se comprueba ANTES de crear cuentas: si la ruta falla, no se crea nada.
+  writeFileSync(destinoCredenciales, `NUMU · cuentas FICTICIAS de prueba (proyecto numu). PRIVADO.\nContraseña temporal: ${password}\n\n`, { encoding: 'utf8', flag: 'a' });
+  if (!readFileSync(destinoCredenciales, 'utf8').includes(password)) fail('No se pudo escribir el archivo de credenciales.');
+}
 const resumen = [];
 let creadas = 0;
 
@@ -127,14 +136,9 @@ for (const a of ALUMNOS) {
 
 console.table(resumen);
 if (CREAR && creadas > 0) {
-  const destino = process.env.NUMU_CREDENCIALES ?? join(homedir(), 'Documents', 'NUMU_credenciales_prueba.txt');
-  if (destino.startsWith(root)) fail('El archivo de credenciales no puede quedar dentro del repositorio.');
-  writeFileSync(destino, [
-    'NUMU · cuentas FICTICIAS de prueba (proyecto numu). PRIVADO: no subir a Git ni compartir en chats públicos.',
-    `Contraseña temporal (igual para las ${creadas} cuentas creadas en esta ejecución): ${password}`,
-    '', ...resumen.filter((r) => r.cuenta === 'creada').map((r) => `${r.alumno}\t${r.correo}`), '',
-  ].join('\n'), { encoding: 'utf8', flag: 'a' });
-  console.log(`Credenciales guardadas en: ${destino} (no se muestran aquí).`);
+  const lineas = resumen.filter((r) => r.cuenta === 'creada').map((r) => `${r.alumno} · ${r.correo}`);
+  writeFileSync(destinoCredenciales, `${lineas.join('\n')}\n`, { encoding: 'utf8', flag: 'a' });
+  console.log(`Credenciales guardadas en: ${destinoCredenciales} (no se muestran aquí).`);
 }
 if (resumen.some((r) => /ERROR/.test(`${r.cuenta}${r.perfil}${r.progreso}`))) { console.error('Se detuvo en el primer ERROR. Nada se borró.'); process.exit(1); }
 console.log(CREAR ? 'Listo.' : 'Revisión sin cambios. Para crear: --crear');
