@@ -72,7 +72,9 @@ test('conteo, sumas y patrones: 6 preguntas distintas en los niveles 1, 2 y 3', 
 
 test('figuras: cobertura insuficiente en los tres niveles (se informa, no se rellena)', () => {
   // Pendiente de Viviana (contrato v1.1 §4): ampliar Figuras con variaciones reales.
-  const expected = { 1: 5, 2: 4, 3: 4 };
+  // N1: triángulo, cuadrado y pentágono (G05 y G06 solo cambian giro/tamaño: no cuentan aparte).
+  // N2–N3: el generador solo tiene 4 figuras.
+  const expected = { 1: 3, 2: 4, 3: 4 };
   for (const level of LEVELS) {
     const coverage = lessonCoverage({ lesson: lessons.figuras, level });
     assert.equal(coverage.playable, false, `figuras N${level}`);

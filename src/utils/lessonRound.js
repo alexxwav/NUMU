@@ -53,6 +53,10 @@ export function buildLessonRound({ lesson, level, count = QUESTIONS_PER_ROUND, r
  * · Formato v2: lesson.levels["1" | "2" | "3"] = { exercises, generator_key?, exercise_types? }.
  * · Lecciones actuales sin `levels` (capa de compatibilidad): nivel 1 = ejercicios del catálogo
  *   que cumplen fitsLevelOne + generador de su module_id; niveles 2 y 3 = ese generador.
+ * · Lecciones actuales CON ampliación en `levels` (formato combinado, p. ej. Figuras): sus
+ *   ejercicios publicados del nivel + los de la ampliación; generador solo si el nivel lo declara.
+ * · Preguntas iguales: misma semanticKey ([habilidad, evidencia]) o, sin ella, mismo enunciado,
+ *   visual (sin giro ni escala) y respuesta.
  * · Solo se usan generadores registrados. Una clave desconocida NO cae en conteo: no genera nada.
  * · Una ronda necesita 6 preguntas distintas (enunciado, visual y respuesta). Si no alcanzan,
  *   la lección no es jugable en ese nivel; no se inventan ni se repiten preguntas.
@@ -76,26 +80,44 @@ export function isLessonPublished(lesson) {
 }
 
 /**
- * Qué contenido corresponde a una lección en un nivel, en formato v2 o mediante la capa
- * de compatibilidad de las lecciones actuales.
- * @returns {{level: number, format: 'v2'|'legacy', exercises: Object[], generatorKey: string|null}}
+ * Qué contenido corresponde a una lección en un nivel:
+ * · 'v2': lección nueva, solo levels[nivel].
+ * · 'combined': lección existente con ampliación (p. ej. Figuras): sus ejercicios publicados
+ *   del nivel (N1: los que cumplen fitsLevelOne; N2 y N3: todos, el hexágono entra desde N2)
+ *   seguidos de levels[nivel].exercises. Solo usa generador si el nivel lo declara.
+ * · 'legacy': lección actual sin ampliación (capa de compatibilidad, igual que buildLessonRound).
+ * Si un ejercicio de la ampliación repite el id de uno publicado, se conserva el original
+ * y el repetido se informa en ignoredIds.
+ * @returns {{level: number, format: 'v2'|'combined'|'legacy', exercises: Object[],
+ *   generatorKey: string|null, ignoredIds: string[]}}
  */
 export function lessonLevelSpec(lesson, level) {
   const lessonLevel = clampLessonLevel(level);
+  const published = Array.isArray(lesson?.exercises) ? lesson.exercises : [];
+  const publishedForLevel = lessonLevel === 1 ? published.filter(fitsLevelOne) : published;
   const v2 = lesson?.levels?.[String(lessonLevel)];
   if (v2 && typeof v2 === 'object' && !Array.isArray(v2)) {
+    const extension = Array.isArray(v2.exercises) ? v2.exercises : [];
+    const generatorKey = v2.generator_key ?? null;
+    if (published.length === 0) {
+      return { level: lessonLevel, format: 'v2', exercises: extension, generatorKey, ignoredIds: [] };
+    }
+    const ids = new Set(published.map((exercise) => exercise?.id));
+    const ignoredIds = extension.filter((exercise) => ids.has(exercise?.id)).map((exercise) => exercise.id);
     return {
       level: lessonLevel,
-      format: 'v2',
-      exercises: Array.isArray(v2.exercises) ? v2.exercises : [],
-      generatorKey: v2.generator_key ?? null,
+      format: 'combined',
+      exercises: [...publishedForLevel, ...extension.filter((exercise) => !ids.has(exercise?.id))],
+      generatorKey,
+      ignoredIds,
     };
   }
   return {
     level: lessonLevel,
     format: 'legacy',
-    exercises: lessonLevel === 1 ? (lesson?.exercises ?? []).filter(fitsLevelOne) : [],
+    exercises: lessonLevel === 1 ? publishedForLevel : [],
     generatorKey: lesson?.module_id ?? null,
+    ignoredIds: [],
   };
 }
 
@@ -113,25 +135,47 @@ function normalizeText(value) {
     .trim();
 }
 
-// Rasgos con significado del visual HTML (igual si viene del catálogo o de un generador):
-// etiquetas accesibles, texto visible, giro, escala, colores en orden y vértices.
+// Respaldo para preguntas sin semanticKey (catálogo actual y generadores): rasgos con
+// significado del visual HTML, iguales si vienen del catálogo o de un generador:
+// etiquetas accesibles, texto visible, colores en orden y vértices de la figura.
+// El giro y la escala NO cuentan: son decorativos (una figura girada o pequeña es la misma).
 function visualKey(html) {
   const source = String(html ?? '');
   return JSON.stringify({
     labels: [...source.matchAll(/aria-label="([^"]*)"/g)].map((match) => normalizeText(match[1])),
     text: normalizeText(source.replace(/<[^>]*>/g, ' ')),
-    rotate: Number(source.match(/rotate\(\s*(-?[\d.]+)/)?.[1] ?? 0),
-    scale: Number(source.match(/scale\(\s*([\d.]+)/)?.[1] ?? 1),
     colors: [...source.matchAll(/background:\s*(#[0-9a-fA-F]{3,8})/g)].map((match) => match[1].toLowerCase()),
     points: [...source.matchAll(/points="([^"]*)"/g)].map((match) => match[1].trim()),
   });
 }
 
 /**
- * Firma semántica de una pregunta: enunciado + visual + respuesta. El orden de las opciones,
- * los identificadores y los cambios de marcado no la cambian.
+ * Clave semántica válida según el contrato acordado con Viviana:
+ * exerciseSemanticKey(exercise) → JSON.stringify([type, evidencia]), con type texto no vacío.
+ * Devuelve null si no existe o no cumple el formato (entonces se usa el respaldo).
+ */
+export function readSemanticKey(question) {
+  const key = question?.semanticKey;
+  if (typeof key !== 'string' || !key.trim()) return null;
+  try {
+    const parsed = JSON.parse(key);
+    if (!Array.isArray(parsed) || parsed.length !== 2 || typeof parsed[0] !== 'string' || !parsed[0].trim()) return null;
+    return JSON.stringify(parsed); // forma canónica: espacios del JSON original no cuentan
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Firma semántica de una pregunta.
+ * · Con semanticKey ([tipo de habilidad, evidencia matemática]) se usa solo esa clave: el
+ *   enunciado, el giro, la escala, las letras de las tarjetas y el orden de opciones no cuentan.
+ * · Sin semanticKey: enunciado normalizado + rasgos del visual (sin giro ni escala) + respuesta.
+ *   El orden de las opciones, los identificadores y los cambios de marcado no la cambian.
  */
 export function questionSignature(question) {
+  const semantic = readSemanticKey(question);
+  if (semantic) return JSON.stringify(['semantica', semantic]);
   const answer = question?.options?.[question?.answerIndex];
   return JSON.stringify([
     normalizeText(question?.prompt),
@@ -163,7 +207,7 @@ function adaptEditorial(exercises, random, level, reasons) {
  */
 export function lessonCoverage({ lesson, level, needed = QUESTIONS_PER_ROUND, samples = COVERAGE_SAMPLES, random = Math.random } = {}) {
   const spec = lessonLevelSpec(lesson, level);
-  const reasons = [];
+  const reasons = spec.ignoredIds.map((id) => `Ejercicio ${id} de la ampliación repite un id publicado: se conserva el original.`);
   const published = isLessonPublished(lesson);
   if (!published) reasons.push('La lección no está publicada.');
 
@@ -206,7 +250,7 @@ export function lessonCoverage({ lesson, level, needed = QUESTIONS_PER_ROUND, sa
  */
 export function selectLessonQuestions({ lesson, level, count = QUESTIONS_PER_ROUND, random = Math.random } = {}) {
   const spec = lessonLevelSpec(lesson, level);
-  const reasons = [];
+  const reasons = spec.ignoredIds.map((id) => `Ejercicio ${id} de la ampliación repite un id publicado: se conserva el original.`);
   const result = (questions) => {
     const sources = new Set(questions.map((question) => question.source));
     const playable = isLessonPublished(lesson) && questions.length >= count;
