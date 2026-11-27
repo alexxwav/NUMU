@@ -4,8 +4,8 @@ import confetti from 'canvas-confetti';
 import { Home, Lightbulb, X, Volume2 } from 'lucide-react';
 import { store, getTotalXp } from '../state/store.js';
 import { generateQuestions, buildQuestionHint } from '../state/questions.js';
-import { lessonForModule, lessonLevelFromState, levelAfterRound, MAX_LESSON_LEVEL } from '../utils/lessonLevel.js';
-import { planLessonRound, isLessonPublished, QUESTIONS_PER_ROUND } from '../utils/lessonRound.js';
+import { lessonForModule, lessonLevelFromState, adaptiveLevelAfterRound, MAX_LESSON_LEVEL } from '../utils/lessonLevel.js';
+import { planLessonRound, isLessonPublished, QUESTIONS_PER_ROUND, questionSignature, semanticTypeOf, weakTypesFrom } from '../utils/lessonRound.js';
 import { sfx, speak } from '../utils/audio.js';
 import { useAuth } from '../hooks/useAuth.jsx';
 import { useLessonProgress } from '../hooks/useLessonProgress.js';
@@ -62,7 +62,12 @@ export default function Game() {
   // selector v2 o «no disponible»). Nunca usa conteo como respaldo ni abre lecciones no publicadas.
   // Una ruta /lecciones/:id/jugar con un id inexistente tampoco se juega.
   const [roundPlan] = useState(() => {
-    if (lessonEntry) return planLessonRound({ lesson: lessonEntry.lesson, level: lessonLevel });
+    if (lessonEntry) {
+      // Motor adaptativo: evita las preguntas de la ronda anterior y refuerza los tipos más fallados.
+      const memory = store.get().lessonRounds?.[lessonEntry.lesson.id] ?? {};
+      return planLessonRound({ lesson: lessonEntry.lesson, level: lessonLevel,
+        avoidSignatures: memory.lastSignatures ?? [], preferTypes: memory.weakTypes ?? [] });
+    }
     if (lessonId) return { mode: 'unavailable', questions: [], reasons: ['La lección no existe en el catálogo.'] };
     return { mode: 'legacy', questions: generateQuestions(moduleId, 1, QUESTIONS_PER_ROUND), reasons: [] };
   });
@@ -94,6 +99,7 @@ export default function Game() {
   const [levelResult, setLevelResult] = useState(null);
   const [xpEarned, setXpEarned] = useState(0);
   const roundClosedRef = useRef(false); // la ronda ya se cerró (recompensas concedidas)
+  const mistakesByTypeRef = useRef({}); // errores por tipo de ejercicio (refuerzo en la próxima ronda)
   
   const currentQ = questions[index];
   const maxLives = store.get().maxLives;
@@ -159,6 +165,8 @@ export default function Game() {
       });
     } else {
       sfx.wrong();
+      const failedType = semanticTypeOf(currentQ);
+      if (failedType) mistakesByTypeRef.current[failedType] = (mistakesByTypeRef.current[failedType] ?? 0) + 1;
       setMistakes((m) => m + 1);
       const nextMistakes = questionMistakes + 1;
       setQuestionMistakes(nextMistakes);
@@ -235,12 +243,19 @@ export default function Game() {
     // Progreso de la lección: mejor y última puntuación, y su nivel académico (R7–R10).
     const finishedLessonId = lessonEntry?.lesson?.id;
     if (finishedLessonId) {
-      const result = levelAfterRound({ level: lessonLevel, stars, livesDepleted });
+      // R7–R10 sin cambios + R11: dos rondas seguidas con ≤1 estrella bajan un nivel (mínimo 1).
+      const memory = store.get().lessonRounds?.[finishedLessonId] ?? {};
+      const result = adaptiveLevelAfterRound({ level: lessonLevel, stars, livesDepleted, lowStreak: memory.lowStreak ?? 0 });
       setLevelResult(result);
       // Estrellas académicas: 0 si se agotaron las vidas en la ronda (aunque se recargaran).
       // Las recompensas de arriba siguen usando `stars`; la mejor marca guardada no baja.
       const academicStars = academicStarsFor({ roundStars: stars, livesDepleted });
-      saveLessonResult({ lessonId: finishedLessonId, stars: academicStars, level: result.level }).then(({ error }) => {
+      const adaptive = {
+        lowStreak: result.lowStreak,
+        lastSignatures: questions.map(questionSignature),
+        weakTypes: weakTypesFrom(mistakesByTypeRef.current),
+      };
+      saveLessonResult({ lessonId: finishedLessonId, stars: academicStars, level: result.level, adaptive }).then(({ error }) => {
         if (error) console.warn('No se pudo guardar el progreso de la lección:', error);
       });
     }
@@ -314,6 +329,8 @@ export default function Game() {
           <p className="relative z-10 -mt-4 mb-8 font-fredoka font-bold text-xl" role="status">
             {levelResult.advanced
               ? `¡Subiste al nivel ${levelResult.level} de ${lessonEntry.lesson.title}!`
+              : levelResult.lowered
+                ? `Vamos a practicar con calma: ${lessonEntry.lesson.title} vuelve al nivel ${levelResult.level} de ${MAX_LESSON_LEVEL}.`
               : levelResult.rule === 'R10'
                 ? `Se acabaron las vidas: sigues en el nivel ${levelResult.level} de ${MAX_LESSON_LEVEL}.`
                 : `${lessonEntry.lesson.title}: nivel ${levelResult.level} de ${MAX_LESSON_LEVEL}`}

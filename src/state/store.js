@@ -357,14 +357,22 @@ export const store = {
   /**
    * Registra en el dispositivo una ronda terminada de una lección: la mejor puntuación no baja,
    * la última ronda y el nivel académico se reemplazan (con su fecha para combinar con Supabase).
-   * @param {{lessonId: string, stars: number, level: number, at?: string}} round
+   * `adaptive` es la memoria del motor para la próxima ronda (solo en el dispositivo):
+   * { lowStreak, lastSignatures, weakTypes } (R11, no repetir la ronda anterior, refuerzo).
+   * @param {{lessonId: string, stars: number, level: number, at?: string, adaptive?: Object}} round
    */
-  recordLessonRound({ lessonId, stars, level, at = new Date().toISOString() } = {}) {
+  recordLessonRound({ lessonId, stars, level, at = new Date().toISOString(), adaptive = null } = {}) {
     if (!lessonId) return state;
     const earned = Math.max(0, Math.min(3, Math.round(Number(stars) || 0)));
+    const previous = state.lessonRounds?.[lessonId] ?? {};
+    const memory = adaptive ? {
+      lowStreak: Math.max(0, Math.floor(Number(adaptive.lowStreak) || 0)),
+      lastSignatures: Array.isArray(adaptive.lastSignatures) ? adaptive.lastSignatures.slice(0, 12) : [],
+      weakTypes: Array.isArray(adaptive.weakTypes) ? adaptive.weakTypes.slice(0, 2) : [],
+    } : {};
     return store.set({
       lessonStars: { ...state.lessonStars, [lessonId]: Math.max(state.lessonStars[lessonId] ?? 0, earned) },
-      lessonRounds: { ...state.lessonRounds, [lessonId]: { latestStars: earned, level: clampLessonLevel(level), at } },
+      lessonRounds: { ...state.lessonRounds, [lessonId]: { ...previous, ...memory, latestStars: earned, level: clampLessonLevel(level), at } },
     });
   },
 

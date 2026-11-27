@@ -47,7 +47,8 @@ test('se conserva la mejor puntuación académica anterior; la última ronda que
 test('Game.jsx guarda las estrellas académicas y deja las recompensas con `stars`', () => {
   const source = readFileSync(new URL('../src/views/Game.jsx', import.meta.url), 'utf8');
   assert.match(source, /academicStarsFor\(\{ roundStars: stars, livesDepleted \}\)/);
-  assert.match(source, /saveLessonResult\(\{ lessonId: finishedLessonId, stars: academicStars, level: result\.level \}\)/);
+  assert.match(source, /saveLessonResult\(\{ lessonId: finishedLessonId, stars: academicStars, level: result\.level, adaptive \}\)/);
   assert.match(source, /store\.addRewards\(\{ gems: stars \* 5, stars, xp: stars \* 50, levelStars: stars \}\)/, 'recompensas intactas');
-  assert.match(source, /levelAfterRound\(\{ level: lessonLevel, stars, livesDepleted \}\)/, 'R7–R10 reciben lo mismo que antes');
+  // R7–R10 reciben lo mismo que antes (adaptiveLevelAfterRound los delega en levelAfterRound) + R11.
+  assert.match(source, /adaptiveLevelAfterRound\(\{ level: lessonLevel, stars, livesDepleted, lowStreak: memory\.lowStreak \?\? 0 \}\)/);
 });

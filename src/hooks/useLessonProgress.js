@@ -69,9 +69,9 @@ export function useLessonProgress() {
    * Guarda una ronda terminada: primero en el dispositivo (para que nada la pise) y, con sesión,
    * en Supabase. La mejor puntuación nunca baja; la última ronda y el nivel se reemplazan.
    */
-  const saveLessonResult = useCallback(async ({ lessonId, stars, level } = {}) => {
+  const saveLessonResult = useCallback(async ({ lessonId, stars, level, adaptive = null } = {}) => {
     if (!lessonId) return { stars: 0, error: null };
-    store.recordLessonRound({ lessonId, stars, level });
+    store.recordLessonRound({ lessonId, stars, level, adaptive });
     if (!configured || !session) return { stars: store.get().lessonStars[lessonId] ?? 0, error: null, local: true };
     const result = await lessonProgressService.saveLessonResult({ lessonId, stars, level });
     if (!result.error) {

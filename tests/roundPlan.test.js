@@ -172,7 +172,7 @@ test('la mejor puntuación y T2 se respetan: una ronda peor no hace recomendar u
 
 test('Game.jsx: plan de ronda, salida segura y recomendaciones con el resultado académico', () => {
   const source = readFileSync(new URL('../src/views/Game.jsx', import.meta.url), 'utf8');
-  assert.match(source, /planLessonRound\(\{ lesson: lessonEntry\.lesson, level: lessonLevel \}\)/);
+  assert.match(source, /planLessonRound\(\{ lesson: lessonEntry\.lesson, level: lessonLevel,\s*avoidSignatures: memory\.lastSignatures \?\? \[\], preferTypes: memory\.weakTypes \?\? \[\] \}\)/);
   assert.doesNotMatch(source, /buildLessonRound/);
   assert.doesNotMatch(source, /needsReinforcement|showReinforcement/);
   assert.match(source, /Práctica no disponible/);

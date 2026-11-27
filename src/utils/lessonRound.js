@@ -334,8 +334,11 @@ export function lessonCoverage({ lesson, level, needed = QUESTIONS_PER_ROUND, sa
  *   distinct: number, needed: number, source: 'catalogo'|'generador'|'catalogo+generador'|'ninguno',
  *   reasons: string[]}}
  */
-export function selectLessonQuestions({ lesson, level, count = QUESTIONS_PER_ROUND, random = Math.random } = {}) {
+export function selectLessonQuestions({ lesson, level, count = QUESTIONS_PER_ROUND, random = Math.random, avoidSignatures = [], preferTypes = [] } = {}) {
   const spec = lessonLevelSpec(lesson, level);
+  // Motor adaptativo: firmas de la ronda anterior (evitarlas si hay alternativas) y tipos a reforzar.
+  const avoid = new Set(avoidSignatures ?? []);
+  const prefer = new Set(preferTypes ?? []);
   const reasons = spec.ignoredIds.map((id) => `Ejercicio ${id} de la ampliación repite un id publicado: se conserva el original.`);
   const result = (questions) => {
     const sources = new Set(questions.map((question) => question.source));
@@ -367,25 +370,78 @@ export function selectLessonQuestions({ lesson, level, count = QUESTIONS_PER_ROU
     return true;
   };
 
-  for (const question of adaptEditorial(spec.exercises, random, spec.level, reasons)) {
-    if (chosen.length >= count) break;
-    take(question);
-  }
-
-  if (chosen.length < count && spec.generatorKey !== null && spec.generatorKey !== undefined) {
-    if (!isKnownGenerator(spec.generatorKey)) {
-      reasons.push(`Generador desconocido «${spec.generatorKey}»: no se usa ningún respaldo.`);
-    } else {
-      let attempts = (count - chosen.length) * GENERATOR_ATTEMPTS_PER_SLOT;
-      while (chosen.length < count && attempts-- > 0) {
-        const [question] = generateQuestions(spec.generatorKey, spec.level, 1);
-        if (question && !representabilityProblem(question)) {
-          take({ ...withKey(question, semanticKeyForGenerated(spec.generatorKey, question)), source: 'generador', level: spec.level });
-        }
+  const editorial = adaptEditorial(spec.exercises, random, spec.level, reasons);
+  // Generador registrado del nivel (si lo hay): se pide bajo demanda y se reutiliza lo ya generado.
+  const hasGenerator = spec.generatorKey !== null && spec.generatorKey !== undefined;
+  const canGenerate = hasGenerator && isKnownGenerator(spec.generatorKey);
+  const generated = [];
+  let budget = canGenerate ? count * GENERATOR_ATTEMPTS_PER_SLOT * (avoid.size || prefer.size ? 2 : 1) : 0;
+  const generateOne = () => {
+    while (budget-- > 0) {
+      const [question] = generateQuestions(spec.generatorKey, spec.level, 1);
+      if (question && !representabilityProblem(question)) {
+        const item = { ...withKey(question, semanticKeyForGenerated(spec.generatorKey, question)), source: 'generador', level: spec.level };
+        generated.push(item);
+        return item;
       }
     }
+    return null;
+  };
+  const fresh = (question) => !avoid.has(questionSignature(question));
+  const fill = (accept) => {
+    for (const question of [...editorial, ...generated]) { if (chosen.length >= count) return; if (accept(question)) take(question); }
+    while (chosen.length < count) { const question = generateOne(); if (!question) return; if (accept(question)) take(question); }
+  };
+
+  // 1. Refuerzo: hasta MAX_REINFORCED preguntas de los tipos que el alumno más falló (no toda la ronda).
+  if (prefer.size) {
+    let reinforced = 0;
+    const tryReinforce = (question) => {
+      if (reinforced >= MAX_REINFORCED || chosen.length >= count) return;
+      if (prefer.has(semanticTypeOf(question)) && take(question)) reinforced++;
+    };
+    for (const question of [...editorial.filter(fresh), ...editorial.filter((q) => !fresh(q))]) tryReinforce(question);
+    let tries = count * GENERATOR_ATTEMPTS_PER_SLOT;
+    while (reinforced < MAX_REINFORCED && canGenerate && tries-- > 0) {
+      const question = generateOne();
+      if (!question) break;
+      if (fresh(question)) tryReinforce(question);
+    }
+  }
+  // 2. Preguntas que NO salieron en la ronda anterior (catálogo primero, luego generador).
+  fill(fresh);
+  // 3. Solo si no alcanza: el mínimo de preguntas de la ronda anterior (nunca se bloquea la práctica).
+  fill(() => true);
+  if (hasGenerator && !canGenerate && editorial.length < count) {
+    reasons.push(`Generador desconocido «${spec.generatorKey}»: no se usa ningún respaldo.`);
   }
   return result(chosen);
+}
+
+/** Máximo de preguntas de refuerzo (tipos fallados) por ronda: el resto sigue siendo variado. */
+export const MAX_REINFORCED = 2;
+
+/** Tipo de ejercicio de una pregunta (primer elemento de su clave semántica), o null. */
+export function semanticTypeOf(question) {
+  try {
+    const key = JSON.parse(readSemanticKey(question));
+    return Array.isArray(key) ? String(key[0]) : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Tipos que más falló el alumno en una ronda (para reforzarlos en la siguiente de la misma lección).
+ * @param {Record<string, number>} mistakesByType - { tipo: errores }.
+ * @returns {string[]} Hasta 2 tipos con más errores (en empate, el primero que falló).
+ */
+export function weakTypesFrom(mistakesByType = {}) {
+  return Object.entries(mistakesByType)
+    .filter(([type, n]) => type && n > 0)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, MAX_REINFORCED)
+    .map(([type]) => type);
 }
 
 /** ¿Es una de las lecciones actuales que el juego ya sabe armar (generador registrado)? */
@@ -415,14 +471,15 @@ export function isLessonPlayable(lesson, level) {
  *   de Viviana): se conserva temporalmente para no romper el juego actual.
  * @returns {{mode: 'legacy'|'selector'|'unavailable', questions: Object[], reasons: string[]}}
  */
-export function planLessonRound({ lesson, level, count = QUESTIONS_PER_ROUND, random = Math.random } = {}) {
+export function planLessonRound({ lesson, level, count = QUESTIONS_PER_ROUND, random = Math.random, avoidSignatures = [], preferTypes = [] } = {}) {
+  const adaptive = { avoidSignatures, preferTypes };
   if (!lesson) return { mode: 'unavailable', questions: [], reasons: ['La lección no existe en el catálogo.'] };
   if (!isLessonPublished(lesson)) return { mode: 'unavailable', questions: [], reasons: ['La lección no está publicada.'] };
 
   const legacy = () => ({ mode: 'legacy', questions: buildLessonRound({ lesson, level, count, random }), reasons: [] });
   const hasLevels = Boolean(lesson.levels) && typeof lesson.levels === 'object' && Object.keys(lesson.levels).length > 0;
   if (hasLevels) {
-    const selection = selectLessonQuestions({ lesson, level, count, random });
+    const selection = selectLessonQuestions({ lesson, level, count, random, ...adaptive });
     if (selection.playable) return { mode: 'selector', questions: selection.questions, reasons: selection.reasons };
     if (hasLegacyRound(lesson)) return { ...legacy(), reasons: selection.reasons };
     return { mode: 'unavailable', questions: [], reasons: selection.reasons };
@@ -431,7 +488,7 @@ export function planLessonRound({ lesson, level, count = QUESTIONS_PER_ROUND, ra
     // Mismas fuentes que buildLessonRound (catálogo en N1 y el mismo generador con R12–R14), pero
     // sin repetir preguntas (contrato v1.1 §4). Si no llega a 6 distintas (Figuras, hasta integrar
     // la ampliación de Viviana), se conserva temporalmente el flujo legacy.
-    const selection = selectLessonQuestions({ lesson, level, count, random });
+    const selection = selectLessonQuestions({ lesson, level, count, random, ...adaptive });
     if (selection.playable) return { mode: 'selector', questions: selection.questions, reasons: [] };
     return { ...legacy(), reasons: selection.reasons };
   }

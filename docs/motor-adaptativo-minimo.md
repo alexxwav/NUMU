@@ -17,20 +17,23 @@ Sin sistemas nuevos, exámenes ni pantallas: solo reglas sobre `lessonLevel.js`,
 | Conservar el mejor resultado | T2 = mejor de 3; `greatest` en BD; fusión por fecha | `store`, RPC | `lessonProgress20`, `progreso-20` |
 | Siguiente lección coherente | C12 (siguiente del área), C10, C13 (otra área), C14, C16 (solo publicadas) | recomendador, `resolveContinueRoute` | `continuarAventura`, `recorridoIntegral` |
 
-## Lo mínimo que falta (propuesta, no implementado)
+## Implementado en este bloque (`tests/motorAdaptativo.test.js`, 8 pruebas)
 
-1. **Bajar dificultad (R11).** Hoy un alumno que falla siempre se queda en su nivel. Regla mínima:
-   si la ronda anterior y la actual de la misma lección y nivel tienen ≤1★ (R9/R10), el nivel baja uno
-   (mínimo N1). Datos ya disponibles: `lessonRounds[id].latestStars` y `level`. Cambio: un parámetro
-   `previousStars` en `levelAfterRound` + guardarlo en `recordLessonRound`. Sin cambios de BD.
-2. **No repetir entre rondas seguidas.** El selector evita repetidas dentro de una ronda, pero la
-   siguiente puede traer las mismas. Cambio: guardar las firmas de la última ronda en
-   `lessonRounds[id].lastSignatures` y que `selectLessonQuestions` prefiera las no vistas (si alcanza
-   para 6; si no, completa con las vistas). Solo local.
-3. **Reforzar el tipo de ejercicio fallado.** Hoy el refuerzo es por lección completa. Cambio: guardar
-   los tipos (`semanticKey[0]`) con error de la última ronda y que el selector incluya hasta 2 de esos
-   tipos primero, sin romper la regla de 6 distintas. Solo local.
-4. **Cobertura de Conteo N1–N2** (4 y 5 cantidades distintas): decidir con Viviana la evidencia o
-   ampliar el banco; hoy usan el flujo anterior y pueden repetir.
+1. **R11 · Dificultad descendente** (`adaptiveLevelAfterRound`): dos rondas seguidas de la misma
+   lección con ≤1★ (o vidas agotadas) bajan un nivel, nunca de 1. Una ronda con 2★ o 3★ rompe la racha.
+   R7–R10 no cambian (se delegan en `levelAfterRound`). La mejor estrella (T2) no baja y no hay
+   recompensas por bajar. El nivel bajado se guarda en la cuenta con `p_nivel`.
+2. **No repetir entre rondas** (`selectLessonQuestions({ avoidSignatures })`): la ronda siguiente evita
+   las firmas semánticas de la anterior; si no hay alternativas (Figuras N1 y Patrones N1: 6 distintas;
+   Figuras N2–N3: 10) repite solo el mínimo inevitable y nunca bloquea la práctica.
+3. **Refuerzo por errores** (`preferTypes`, `weakTypesFrom`): Game cuenta los errores por tipo de
+   ejercicio (`semanticKey[0]`); la siguiente ronda de la misma lección pone primero hasta 2 preguntas
+   de los tipos más fallados (`MAX_REINFORCED`), dentro del nivel, sin repetir y sin llenar la ronda.
+   Las pistas no cambian.
 
-Orden sugerido: 1 → 2 → 3 (cada uno con su prueba en `tests/`), 4 depende de contenidos.
+La memoria (`lowStreak`, `lastSignatures`, `weakTypes`) vive en `store.lessonRounds` del dispositivo
+y se conserva al combinar con la cuenta. Limitación: no viaja entre dispositivos (sin cambios de BD).
+
+## Pendiente
+
+- **Cobertura de Conteo N1–N2** (4 y 5 cantidades distintas): ver la corrección de contenidos.

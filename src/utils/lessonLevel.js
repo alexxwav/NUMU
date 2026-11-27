@@ -11,6 +11,8 @@
 //   R9  1 estrella (4 o más errores) → conserva el nivel (el recomendador sugiere refuerzo).
 //   R10 si en la ronda se acabaron las vidas → no hay avance académico, aunque se recarguen
 //       las vidas y se termine la ronda (las recompensas de la ronda no cambian).
+//   R11 dos rondas seguidas de la misma lección con ≤1 estrella (o vidas agotadas) → baja un nivel
+//       (mínimo 1). Una ronda con 2 o 3 estrellas rompe la racha (adaptiveLevelAfterRound).
 
 import { normalizeModuleId } from '../data/subjects.js';
 
@@ -65,6 +67,32 @@ export function levelAfterRound({ level, stars, livesDepleted = false }) {
   return { level: current, advanced: false, rule: 'R9' };
 }
 
+/** Rondas seguidas con bajo desempeño (≤1 estrella o vidas agotadas) que hacen bajar un nivel. */
+export const LOW_ROUNDS_TO_LOWER = 2;
+
+/**
+ * R7–R10 + R11 (dificultad descendente). La subida (R7) y R8–R10 no cambian.
+ * R11: tras dos rondas SEGUIDAS de la misma lección con 1 estrella o menos (o vidas agotadas), la
+ * lección baja un nivel (nunca de 1). Una ronda con 2 o 3 estrellas rompe la racha. Bajar de nivel no
+ * toca la mejor estrella guardada ni da recompensas.
+ * @param {Object} round
+ * @param {number} round.level
+ * @param {number} round.stars - Estrellas de la ronda (0 a 3).
+ * @param {boolean} [round.livesDepleted]
+ * @param {number} [round.lowStreak] - Rondas seguidas con bajo desempeño ANTES de esta.
+ * @returns {{level: number, advanced: boolean, lowered: boolean, rule: string, lowStreak: number}}
+ */
+export function adaptiveLevelAfterRound({ level, stars, livesDepleted = false, lowStreak = 0 }) {
+  const base = levelAfterRound({ level, stars, livesDepleted });
+  const low = livesDepleted || stars <= 1;
+  const streak = low ? Math.max(0, Math.floor(Number(lowStreak) || 0)) + 1 : 0;
+  const current = clampLessonLevel(level);
+  if (streak >= LOW_ROUNDS_TO_LOWER && current > MIN_LESSON_LEVEL) {
+    return { level: current - 1, advanced: false, lowered: true, rule: 'R11', lowStreak: 0 };
+  }
+  return { ...base, lowered: false, lowStreak: streak };
+}
+
 /** Lección del catálogo que corresponde a un módulo (conteo → conteo-basico, sumas → sumas-basicas…). */
 export function lessonForModule(catalog, moduleId) {
   const id = normalizeModuleId(moduleId);
@@ -101,6 +129,8 @@ export function mergeLessonProgress(local = {}, remote = {}) {
     if ((round.latestStars === null || round.latestStars === undefined) && (round.level === null || round.level === undefined)) continue;
     if (!mine || timeOf(round.at) >= timeOf(mine.at)) {
       rounds[lessonId] = {
+        // Memoria adaptativa del dispositivo (racha baja, firmas y tipos fallados): no está en la BD.
+        ...(mine ?? {}),
         latestStars: round.latestStars ?? mine?.latestStars ?? null,
         level: round.level ?? mine?.level ?? null,
         at: round.at ?? mine?.at ?? null,
