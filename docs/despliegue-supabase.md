@@ -17,35 +17,21 @@ Estado: **preparado, NO ejecutado**. Ensayo completo en `node tests/db/despliegu
 Compatibilidad comprobada: los tres triggers de `perfil_usuario` conviven; la app publicada sigue
 guardando lecciones (RPC de 2 parámetros) y perfil; ninguna migración cambia datos existentes.
 
-## 2. Secuencia de despliegue
+## 2. Secuencia de despliegue (corta)
 
-1. **App primero.** Publicar la rama de integración (funciona sin las migraciones: detecta
-   PGRST202 y usa el guardado anterior, sin devolver gemas gastadas).
-2. **Verificación previa (solo lectura, SQL Editor):**
-   ```sql
-   select table_name, column_name, data_type from information_schema.columns
-   where table_schema = 'public' and table_name in ('perfil_usuario', 'progreso_leccion', 'user_module_progress')
-   order by table_name, ordinal_position;
-   select proname, pg_get_function_identity_arguments(oid) from pg_proc
-   where proname in ('usuario_actual', 'registrar_resultado_leccion', 'comprar_articulo', 'registrar_gemas_ronda');
-   select tgname, tgrelid::regclass from pg_trigger where not tgisinternal and tgrelid::regclass::text like 'public.%';
-   select tablename, policyname, cmd from pg_policies where schemaname = 'public' order by 1, 3;
-   select count(*), sum(gemas), sum(xp) from public.perfil_usuario;
-   ```
-   Esperado: `perfil_usuario.gemas` y `xp` enteros; `usuario_actual()` y
-   `registrar_resultado_leccion(text, integer)` existen; `user_module_progress` existe (si no, aplicar
-   antes `supabase_progreso_modulos.sql`). Si algo difiere, **detenerse**.
-3. **Respaldo:** exportar a CSV (Table Editor) `usuarios`, `perfil_usuario`, `progreso`,
-   `progreso_leccion`, `user_module_progress`, `resultados_examen_diagnostico`; o en SQL:
-   `create table respaldo_perfil_usuario_YYYYMMDD as table public.perfil_usuario;` (una por tabla).
-   Anotar los totales del paso 2.
-4. **Aplicar** 1 → 2 → 3, cada archivo completo en una ejecución (todos usan `begin … commit`).
-5. **Verificación posterior:** repetir las consultas del paso 2. Esperado: mismos `count`, `sum(gemas)`
-   y `sum(xp)`; `registrar_resultado_leccion(text, integer, integer)`; RPC de gemas creados;
-   `select count(*) from movimiento_gemas where tipo = 'saldo_inicial'` = número de perfiles.
-6. **Prueba con la cuenta ficticia** (sección 4).
-7. **Recuperación**, solo si algo falla: ejecutar `reversion_propuestas.sql` (no borra datos) y, si
-   hiciera falta, restaurar desde el respaldo del paso 3.
+1. **Confirmar esquema:** ejecutar `supabase/diagnostico_numu.sql` (solo lectura). Seguir solo si no hay
+   ninguna fila `FALTA`; si `user_module_progress` falta, aplicar antes `supabase_progreso_modulos.sql`.
+   Guardar la fila `totales · perfil_usuario` (perfiles, suma de gemas y XP).
+2. **Respaldar:** Table Editor → exportar CSV de `usuarios`, `perfil_usuario`, `progreso`,
+   `progreso_leccion`, `user_module_progress`, `resultados_examen_diagnostico`.
+3. **Aplicar** (cada archivo completo, en este orden): `propuesta_xp_monotona.sql` →
+   `propuesta_ultima_ronda_transaccional.sql` → `propuesta_gemas_transaccional.sql`.
+4. **Verificar:** repetir `diagnostico_numu.sql`: las 3 migraciones `APLICADA`, mismos totales, RPC de
+   gemas ejecutables por `authenticated` y no por `anon`.
+5. **Cuenta ficticia:** sección 4 con la app publicada (`.env.local` con URL y clave pública de numu).
+6. **Persistencia:** después de cada paso, `supabase/verificar_cuenta_ficticia.sql` (solo lectura).
+7. **Recuperar si falla:** `supabase/reversion_propuestas.sql` (no borra datos); si hiciera falta,
+   restaurar los CSV del paso 2.
 
 ## 3. Qué falta para conectar Supabase real
 

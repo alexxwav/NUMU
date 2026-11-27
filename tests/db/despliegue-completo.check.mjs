@@ -160,6 +160,11 @@ const [l1] = await q(`select estrellas, nivel, ultimas_estrellas from public.reg
 ok('lección con nivel (RPC de 3 parámetros)', l1.estrellas === 3 && l1.nivel === 2 && l1.ultimas_estrellas === 3);
 const [l2] = await q(`select estrellas, ultimas_estrellas from public.registrar_resultado_leccion('figuras', 1)`);
 ok('la app publicada (RPC de 2 parámetros) sigue funcionando y la mejor no baja', l2.estrellas === 3 && l2.ultimas_estrellas === 1);
+// Motor adaptativo (R11): la app envía un nivel MENOR tras dos rondas malas; la base lo guarda.
+const [bajada] = await q(`select estrellas, nivel, ultimas_estrellas from public.registrar_resultado_leccion('figuras', 0, 1)`);
+ok('R11: el nivel bajado (2 → 1) se guarda y la mejor estrella sigue en 3', bajada.nivel === 1 && bajada.estrellas === 3 && bajada.ultimas_estrellas === 0);
+const [leido] = await q(`select estrellas, nivel from public.progreso_leccion where leccion_id = 'figuras'`);
+ok('al iniciar sesión se lee el nivel bajado', leido.nivel === 1 && leido.estrellas === 3);
 const r = (await q(`select * from public.registrar_gemas_ronda(15, 'ronda-ceci-00000001')`))[0];
 ok('recompensa de ronda: 0 → 15', r.gemas === 15 && r.aplicada === true);
 const c = (await q(`select * from public.comprar_articulo('frame-gold', 'compra-ceci-0000001')`))[0];
