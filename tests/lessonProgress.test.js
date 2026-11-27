@@ -107,7 +107,7 @@ test('saveLessonResult usa el RPC y devuelve las estrellas guardadas', async () 
   assert.deepEqual(client.calls.find((c) => c[0] === 'rpc'), ['rpc', 'registrar_resultado_leccion', { p_leccion_id: 'conteo-basico', p_estrellas: 2 }]);
 });
 
-test('saveLessonResult cae al upsert y conserva la mejor puntuación si el RPC no existe', async () => {
+test('saveLessonResult sin RPC: cuenta el intento y solo sube la mejor con un update condicional', async () => {
   const client = fakeClient({
     rpc: { data: null, error: { message: 'Could not find the function public.registrar_resultado_leccion in the schema cache' } },
     tables: { progreso_leccion: { data: { estrellas: 3, intentos: 1 }, error: null } },
@@ -115,9 +115,12 @@ test('saveLessonResult cae al upsert y conserva la mejor puntuación si el RPC n
   const res = await createLessonProgressService(() => client, profiles)
     .saveLessonResult({ lessonId: 'conteo-basico', stars: 1 });
   assert.equal(res.error, null);
-  assert.equal(res.stars, 3);
-  const upsert = client.calls.find((c) => c[0] === 'upsert');
-  assert.deepEqual(upsert, ['upsert', { usuario_id: 7, leccion_id: 'conteo-basico', estrellas: 3, intentos: 2 }, { onConflict: 'usuario_id,leccion_id' }]);
+  assert.equal(res.stars, 3, 'devuelve la mejor guardada');
+  assert.equal(client.calls.some((c) => c[0] === 'upsert'), false, 'la fila ya existía: no se reescribe');
+  assert.ok(client.calls.some((c) => c[0] === 'update' && c[1].intentos === 2), 'cuenta el intento');
+  assert.ok(client.calls.some((c) => c[0] === 'update' && c[1].estrellas === 1), 'intenta subir la mejor…');
+  assert.deepEqual(client.calls.find((c) => c[0] === 'lt'), ['lt', 'estrellas', 1], '…solo donde la guardada es menor');
+  assert.equal(client.calls.some((c) => c[0] === 'update' && c[1].estrellas === 3), false, 'nunca escribe un máximo calculado en el cliente');
 });
 
 test('saveLessonResult propaga otros errores del RPC', async () => {

@@ -12,6 +12,7 @@
 import { clampStars } from './stars.js';
 import { lessonLevelFor } from './lessonLevel.js';
 import { isLessonPublished } from './lessonRound.js';
+import { normalizeModuleId, courseSlugForModule } from '../data/subjects.js';
 
 /** Lecciones que forman un área completa (decisión aprobada: 4 áreas × 5 lecciones). */
 export const LESSONS_PER_AREA = 5;
@@ -65,6 +66,38 @@ export function isAreaCompleted({ catalog, areaId, starsByLesson = {} } = {}) {
 export function nextLessonInArea({ catalog, areaId, starsByLesson = {} } = {}) {
   return areaLessons(catalog, areaId)
     .find((lesson) => isLessonPublished(lesson) && !isLessonCompleted(starsByLesson?.[lesson.id])) ?? null;
+}
+
+/**
+ * Dónde se registra una ronda terminada (Game.jsx). La identidad académica es SIEMPRE lessonId.
+ * · Lección con module_id propio (las 4 actuales): se registran también el mapa por sección y
+ *   el progreso del curso, igual que antes.
+ * · Lección sin module_id (las 16 nuevas): solo el progreso académico por lessonId. No se usa el
+ *   módulo guardado en el dispositivo (store.module) como respaldo, porque pertenece a otra
+ *   lección: una ronda de Álgebra nunca puede contar como Aritmética o Geometría.
+ *   El progreso del curso (recordRound, que usa store.module) solo se registra si ese módulo
+ *   pertenece a la MISMA área de la lección o no pertenece a ninguna.
+ * · Sin lección del catálogo (/jugar/:modulo sin lección): el módulo de la ruta, como antes.
+ * @param {{lesson?: Object|null, areaId?: string|null, routeModuleId?: string|null, storeModuleId?: string|null}} input
+ * @returns {{lessonId: string|null, moduleId: string|null, recordsModuleProgress: boolean, recordsCourseProgress: boolean}}
+ */
+export function roundProgressTargets({ lesson = null, areaId = null, routeModuleId = null, storeModuleId = null } = {}) {
+  if (!lesson) {
+    const moduleId = normalizeModuleId(routeModuleId) ?? 'conteo';
+    return { lessonId: null, moduleId, recordsModuleProgress: true, recordsCourseProgress: true };
+  }
+  const ownModule = normalizeModuleId(lesson.module_id);
+  if (ownModule) {
+    return { lessonId: lesson.id ?? null, moduleId: ownModule, recordsModuleProgress: true, recordsCourseProgress: true };
+  }
+  const lessonArea = areaId ?? lesson.course_id ?? null;
+  const storeArea = courseSlugForModule(storeModuleId);
+  return {
+    lessonId: lesson.id ?? null,
+    moduleId: null,
+    recordsModuleProgress: false,
+    recordsCourseProgress: storeArea === null || storeArea === lessonArea,
+  };
 }
 
 /**

@@ -2,11 +2,15 @@ import { requireSupabase } from '../lib/supabase.js';
 import { profileService } from './profileService.js';
 import { clampStars, sumStars } from '../utils/stars.js';
 import { clampLessonLevel, MIN_LESSON_LEVEL, MAX_LESSON_LEVEL } from '../utils/lessonLevel.js';
+import { isLessonCompleted } from '../utils/areaProgress.js';
 
-// Progreso por lección del proyecto "numu":
+// Progreso ACADÉMICO por lección del proyecto "numu" (las 20 lecciones de las 4 áreas):
 //   progreso_leccion(usuario_id, leccion_id, estrellas, intentos, created_at, updated_at)
-// con una fila por usuario y lección. El RPC registrar_resultado_leccion conserva
-// la mejor puntuación (greatest) al repetir una lección.
+// con una fila por usuario y lección. leccion_id es el id estable del catálogo (texto libre que
+// cumple ^[a-z0-9-]+$): las 16 lecciones nuevas no necesitan filas en otras tablas ni module_id.
+// El RPC registrar_resultado_leccion conserva la mejor puntuación (greatest) al repetir.
+// estrellas = mejor puntuación académica → T2 (lección terminada con 3, utils/areaProgress.js).
+// No guarda XP, gemas ni progreso del mapa: eso sigue en sus servicios, sin cambios.
 // Con supabase/propuesta_ultima_ronda.sql (preparada, aún NO aplicada) la fila guarda además
 // ultimas_estrellas, ultimo_intento y nivel (nivel académico de la lección, 1 a 3), y el RPC
 // recibe p_nivel. Mientras no se aplique, el servicio usa las columnas y la firma de siempre.
@@ -29,7 +33,8 @@ function isMissingFunction(message = '') {
 
 export function createLessonProgressService(getClient = requireSupabase, profiles = profileService) {
   const empty = (error) => ({
-    starsByLesson: {}, latestStarsByLesson: {}, levelByLesson: {}, attemptsByLesson: {}, rounds: {}, totalStars: 0, error,
+    starsByLesson: {}, latestStarsByLesson: {}, levelByLesson: {}, attemptsByLesson: {}, rounds: {}, totalStars: 0,
+    completedLessonIds: [], error,
   });
 
   return {
@@ -68,6 +73,7 @@ export function createLessonProgressService(getClient = requireSupabase, profile
         }
       }
       result.totalStars = sumStars(result.starsByLesson);
+      result.completedLessonIds = Object.keys(result.starsByLesson).filter((id) => isLessonCompleted(result.starsByLesson[id]));
       return result;
     },
 
@@ -106,32 +112,38 @@ export function createLessonProgressService(getClient = requireSupabase, profile
       if (!error) return done(data, stars);
       if (!isMissingFunction(error.message)) return fail(error.message);
 
-      // Respaldo cuando el RPC no está desplegado: lectura + upsert con el máximo.
+      // Respaldo cuando el RPC no está desplegado. La mejor puntuación NUNCA baja, ni con dos
+      // guardados a la vez: no se escribe un máximo calculado en el cliente (lectura + escritura
+      // podría pisar un 3 guardado entre medias), sino que se sube con un update condicional
+      // «where estrellas < nuevas», atómico por fila. Sin RPC tampoco está la migración de nivel:
+      // se guarda solo lo de siempre (mejor e intentos) y el nivel queda en el dispositivo.
       const { usuarioId, error: idError } = await profiles.currentUsuarioId();
       if (idError) return fail(idError);
+      const row = (query) => query.eq('usuario_id', usuarioId).eq('leccion_id', lessonId);
 
-      const { data: current, error: readError } = await client
-        .from(TABLE)
-        .select('estrellas, intentos')
-        .eq('usuario_id', usuarioId)
-        .eq('leccion_id', lessonId)
-        .maybeSingle();
+      const { data: current, error: readError } = await row(client.from(TABLE).select('estrellas, intentos')).maybeSingle();
       if (readError) return fail(readError.message);
 
-      const best = Math.max(clampStars(current?.estrellas), stars);
-      // Sin RPC tampoco está la migración de nivel: se guarda solo lo de siempre (mejor e intentos).
-      const { data: saved, error: writeError } = await client
-        .from(TABLE)
-        .upsert({
-          usuario_id: usuarioId,
-          leccion_id: lessonId,
-          estrellas: best,
-          intentos: (current?.intentos ?? 0) + 1,
-        }, { onConflict: 'usuario_id,leccion_id' })
-        .select()
-        .single();
-      if (writeError) return fail(writeError.message);
-      return { ...done(saved, best), level: null }; // el nivel queda solo en el dispositivo
+      // 1. Asegura la fila sin pisar una existente (si otro guardado la creó antes, se ignora)
+      //    o cuenta el intento. El contador de intentos puede perder uno en una carrera; la mejor no.
+      const { error: ensureError } = current
+        ? await row(client.from(TABLE).update({ intentos: (current.intentos ?? 0) + 1 }))
+        : await client.from(TABLE).upsert(
+          { usuario_id: usuarioId, leccion_id: lessonId, estrellas: stars, intentos: 1 },
+          { onConflict: 'usuario_id,leccion_id', ignoreDuplicates: true },
+        );
+      if (ensureError) return fail(ensureError.message);
+
+      // 2. Sube la mejor solo si la nueva es mayor (nunca la reduce).
+      if (stars > 0) {
+        const { error: raiseError } = await row(client.from(TABLE).update({ estrellas: stars })).lt('estrellas', stars);
+        if (raiseError) return fail(raiseError.message);
+      }
+
+      // 3. Devuelve lo que quedó guardado.
+      const { data: saved, error: savedError } = await row(client.from(TABLE).select('estrellas, intentos')).maybeSingle();
+      if (savedError) return fail(savedError.message);
+      return { ...done(saved, stars), level: null }; // el nivel queda solo en el dispositivo
     },
   };
 }

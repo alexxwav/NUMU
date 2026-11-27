@@ -10,8 +10,9 @@ import { sfx, speak } from '../utils/audio.js';
 import { useAuth } from '../hooks/useAuth.jsx';
 import { useLessonProgress } from '../hooks/useLessonProgress.js';
 import { academicStarsFor, needsReinforcement, starsForRound } from '../utils/stars.js';
+import { roundProgressTargets } from '../utils/areaProgress.js';
 import { ROUTES } from '../services/startRoute.js';
-import { normalizeModuleId, courseSlugForModule } from '../data/subjects.js';
+import { courseSlugForModule } from '../data/subjects.js';
 import lessonCatalog from '../data/lessonContent.json';
 import { getLessonById } from '../utils/lessonContent.js';
 import mascotUrl from '../assets/brand/mascot/numu-morado.png';
@@ -32,7 +33,15 @@ export default function Game() {
   const [lessonEntry] = useState(() => (lessonId
     ? getLessonById(lessonCatalog, lessonId)
     : lessonForModule(lessonCatalog, nivel ?? store.get().module)));
-  const moduleId = lessonEntry?.lesson.module_id ?? normalizeModuleId(nivel ?? store.get().module) ?? 'conteo';
+  // Dónde se registra la ronda: la identidad académica es lessonId. Una lección sin module_id
+  // propio (las nuevas) ya no hereda store.module, que podría ser de otra área.
+  const [progressTargets] = useState(() => roundProgressTargets({
+    lesson: lessonEntry?.lesson ?? null,
+    areaId: lessonEntry?.course?.id ?? null,
+    routeModuleId: nivel ?? store.get().module,
+    storeModuleId: store.get().module,
+  }));
+  const moduleId = progressTargets.moduleId;
   // Parada del mapa que se está jugando; si viene de una lección, se usa la parada actual del módulo.
   const fromMap = Number(searchParams.get('parada'));
   const playedLevel = Math.max(1, Math.floor(fromMap || store.get().levelByModule?.[moduleId] || 1));
@@ -175,17 +184,23 @@ export default function Game() {
     const xpBefore = getTotalXp(store.get());
     store.addRewards({ gems: stars * 5, stars, xp: stars * 50, levelStars: stars });
     // Avance de esta sección: parada siguiente y estrellas de la parada terminada.
-    store.recordModuleRound({ moduleId, stars, level: completedLevel });
+    // Solo para lecciones con module_id propio: una lección nueva no avanza el mapa de otra área.
+    if (progressTargets.recordsModuleProgress) store.recordModuleRound({ moduleId, stars, level: completedLevel });
     // Repetir una parada con las mismas estrellas no añade XP; mejorar sí suma 50 por estrella.
     setXpEarned(getTotalXp(store.get()) - xpBefore);
     store.completeLevel();
-    recordModuleRound({ moduleId, stars, level: completedLevel }).then(({ error }) => {
-      if (error) console.warn('No se pudo guardar el progreso de la sección en la cuenta:', error);
-    });
+    if (progressTargets.recordsModuleProgress) {
+      recordModuleRound({ moduleId, stars, level: completedLevel }).then(({ error }) => {
+        if (error) console.warn('No se pudo guardar el progreso de la sección en la cuenta:', error);
+      });
+    }
     // Guarda el avance en la cuenta; si falla, el progreso sigue en este dispositivo.
-    recordRound({ stars }).then(({ error }) => {
-      if (error) console.warn('No se pudo guardar el progreso en la cuenta:', error);
-    });
+    // No se registra si el curso del dispositivo es de otra área que la lección jugada.
+    if (progressTargets.recordsCourseProgress) {
+      recordRound({ stars }).then(({ error }) => {
+        if (error) console.warn('No se pudo guardar el progreso en la cuenta:', error);
+      });
+    }
     // Progreso de la lección: mejor y última puntuación, y su nivel académico (R7–R10).
     const finishedLessonId = lessonEntry?.lesson?.id;
     if (finishedLessonId) {

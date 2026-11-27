@@ -2,10 +2,16 @@ import { useCallback, useEffect, useState } from 'react';
 import { store } from '../state/store.js';
 import { lessonProgressService } from '../services/lessonProgressService.js';
 import { sumStars } from '../utils/stars.js';
+import { isLessonCompleted } from '../utils/areaProgress.js';
 import { useAuth } from './useAuth.jsx';
 
-/** Vista del progreso por lección a partir del store (fuente única de verdad de las vistas). */
-function fromStore(state) {
+/**
+ * Vista del progreso por lección a partir del store (fuente única de verdad de las vistas).
+ * completedLessonIds: lecciones con T2 (mejor puntuación académica de 3 estrellas). Como la mejor
+ * puntuación se combina con Supabase tomando siempre la mayor, una lección terminada en otro
+ * dispositivo no vuelve a aparecer incompleta.
+ */
+export function lessonProgressFromState(state = {}) {
   const starsByLesson = state.lessonStars ?? {};
   const latestStarsByLesson = {};
   const levelByLesson = {};
@@ -13,8 +19,10 @@ function fromStore(state) {
     if (round?.latestStars !== null && round?.latestStars !== undefined) latestStarsByLesson[lessonId] = round.latestStars;
     if (round?.level !== null && round?.level !== undefined) levelByLesson[lessonId] = round.level;
   }
-  return { starsByLesson, latestStarsByLesson, levelByLesson };
+  const completedLessonIds = Object.keys(starsByLesson).filter((id) => isLessonCompleted(starsByLesson[id]));
+  return { starsByLesson, latestStarsByLesson, levelByLesson, completedLessonIds };
 }
+const fromStore = lessonProgressFromState;
 
 /**
  * Progreso por lección del estudiante: mejor puntuación, última ronda y nivel académico.
