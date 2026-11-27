@@ -98,3 +98,21 @@ Con la URL y la clave pública de `.env.local` (no se imprimieron):
 - `perfil_usuario`, `progreso_leccion`, `user_module_progress` y `cursos` **existen** en numu y sin sesión
   responden «permission denied» (RLS/permisos correctos para `anon`).
 - Funciones RPC, columnas y políticas: no se pueden ver sin sesión ni clave secreta → `diagnostico_numu.sql`.
+
+## 7. Identidad del proyecto y copia fuera de la base (antes del paso 1)
+
+**Identidad:** la app apunta al proyecto cuyo identificador empieza en `khjj` y termina en `sbfb`
+(20 caracteres; NO es el CRM). En el panel de Supabase, el identificador aparece en la URL
+(`supabase.com/dashboard/project/<id>`) y en Project Settings → General. Ejecutar solo si coinciden.
+
+**Copia recuperable fuera de `respaldo_numu`** (la hace quien tiene la contraseña de la base; no se comparte):
+1. Panel → **Connect** → copiar la cadena «Session pooler» (o «Direct»).
+2. En una terminal con Node:
+   ```bash
+   npx supabase db dump --db-url "<cadena>" -f numu_esquema_20261127.sql
+   npx supabase db dump --db-url "<cadena>" --data-only -f numu_datos_20261127.sql
+   npx supabase db dump --db-url "<cadena>" --data-only --schema auth -f numu_auth_20261127.sql
+   ```
+3. Comprobar que los tres archivos tienen contenido (en el de datos deben aparecer `perfil_usuario`,
+   `progreso_leccion` y `user_module_progress`) y guardarlos fuera del repositorio (contienen datos personales).
+   Si el plan del proyecto tiene copias automáticas (Database → Backups), anotar también la más reciente.
