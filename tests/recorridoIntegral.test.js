@@ -99,3 +99,40 @@ test(`14 · no se abren lecciones no publicadas ni se premian prácticas no disp
   const stops = getMapModel({ catalog: realFlags }).areas.flatMap((a) => a.stops);
   for (const l of hidden) assert.equal(stops.find((s) => s.lessonId === l.id).playPath, null, l.id);
 });
+
+test(`pasos 1, 6 y 9 · inicio, resultados y recomendaciones C10–C16 a lo largo del recorrido (${LABEL})`, async () => {
+  const { buildRecommendations } = await import('../src/services/recommendationService.js');
+  // 1. Inicio: alumno nuevo con interés en Álgebra → mapa de 3 áreas y recomendación de empezar.
+  const home = buildRecommendations({ catalog: open, interests: ['algebra'], diagnosticScore: 2 });
+  assert.equal(home.recommendations[0].type, 'INICIAR');
+  assert.equal(home.recommendations[0].lessonId, APPROVED_IDS.algebra[0]);
+  assert.equal(getMapModel({ catalog: open }).areas.length, 3);
+
+  const db = supabaseSimulado();
+  const eva = alumno({ catalog: open, db, usuarioId: 7, diagnosticScore: 2 }); // mismo diagnóstico que el inicio
+  const seen = new Set();
+  const note = (r) => r.recommendations.forEach((rec) => rec.rules.forEach((rule) => seen.add(rule)));
+
+  // 6. Resultados: estrellas, nivel (R7–R10) y explicación (C15) de cada sugerencia.
+  const r3 = await eva.play(APPROVED_IDS.algebra[0], { mistakes: 0 });
+  assert.deepEqual([r3.academic, r3.result.rule, r3.result.level], [3, 'R7', 3], 'diagnóstico 2 → nivel 2 → sube a 3');
+  assert.ok(r3.recommendations.every((rec) => rec.message && rec.reason), 'cada sugerencia explica su motivo');
+  assert.match(r3.recommendations[0].reason, /Llevas 1 de 5 lecciones terminadas en/);
+  note(r3);
+  // C10 aparece cuando la lección sube de nivel sin llegar al máximo.
+  const c10 = await eva.play(APPROVED_IDS.algebra[1], { mistakes: 0 });
+  note(c10);
+  // C11: refuerzo con otra lección de la misma área pendiente.
+  await eva.play(APPROVED_IDS.algebra[2], { mistakes: 4 });
+  note(await eva.play(APPROVED_IDS.algebra[3], { mistakes: 5 }));
+  // C13–C14: completar el área → otra área, como máximo 1 sugerencia de otra área.
+  let last;
+  for (const id of APPROVED_IDS.algebra) last = await eva.play(id, { mistakes: 0 });
+  note(last);
+  assert.ok(last.recommendations.filter((rec) => rec.courseId !== 'algebra').length <= 1, 'C14');
+  for (const rule of ['C10', 'C11', 'C12', 'C13']) assert.ok(seen.has(rule), `se aplicó ${rule}`);
+  // C16: nunca se recomienda una lección no publicada del catálogo real.
+  const hidden = new Set(realFlags.courses.flatMap((c) => c.lessons).filter((l) => l.published === false).map((l) => l.id));
+  const realRecs = buildRecommendations({ catalog: realFlags, interests: ['algebra'], limit: 3 }).recommendations;
+  assert.ok(realRecs.every((rec) => !hidden.has(rec.lessonId)), 'C16');
+});
