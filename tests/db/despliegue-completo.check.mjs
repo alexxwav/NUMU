@@ -125,8 +125,16 @@ ok('la app publicada guarda perfil, progreso, lecciones y mapa', antes.perfil.ge
 // --- 2. Respaldo -----------------------------------------------------------------------------------
 console.log('Respaldo');
 await as(null);
-for (const t of tablasAlumno) await db.exec(`create table respaldo_${t} as table public.${t}`);
-ok('respaldo de las 6 tablas con datos de alumnos', (await q(`select count(*)::int n from pg_tables where tablename like 'respaldo_%'`))[0].n === 6);
+const respaldo = await db.exec(file('supabase', 'respaldo_previo.sql'));
+const conteos = respaldo.at(-1).rows;
+ok('respaldo_previo.sql copia las 6 tablas con datos de alumnos', conteos.length === 6 && conteos.every((r) => Number(r.originales) === Number(r.respaldadas)),
+  JSON.stringify(conteos));
+ok('el respaldo está en un esquema aparte', (await q(`select count(*)::int n from pg_tables where schemaname = 'respaldo_numu'`))[0].n === 6);
+await db.exec(file('supabase', 'respaldo_previo.sql'));
+ok('volver a ejecutarlo no duplica ni sobrescribe', (await q(`select count(*)::int n from respaldo_numu.perfil_usuario_20261127`))[0].n === Number(conteos[1].originales));
+await as(ana);
+ok('los alumnos (authenticated) no pueden leer el respaldo', await fails(() => q(`select * from respaldo_numu.perfil_usuario_20261127`)));
+await as(null);
 const datosAntes = await snapshot();
 
 // --- 3. Las tres propuestas, en orden ----------------------------------------------------------------

@@ -22,8 +22,8 @@ guardando lecciones (RPC de 2 parámetros) y perfil; ninguna migración cambia d
 1. **Confirmar esquema:** ejecutar `supabase/diagnostico_numu.sql` (solo lectura). Seguir solo si no hay
    ninguna fila `FALTA`; si `user_module_progress` falta, aplicar antes `supabase_progreso_modulos.sql`.
    Guardar la fila `totales · perfil_usuario` (perfiles, suma de gemas y XP).
-2. **Respaldar:** Table Editor → exportar CSV de `usuarios`, `perfil_usuario`, `progreso`,
-   `progreso_leccion`, `user_module_progress`, `resultados_examen_diagnostico`.
+2. **Respaldar:** ejecutar `supabase/respaldo_previo.sql` (copia las 6 tablas al esquema
+   `respaldo_numu`, no expuesto por la API; al final, originales = respaldadas). Opcional: CSV.
 3. **Aplicar** (cada archivo completo, en este orden): `propuesta_xp_monotona.sql` →
    `propuesta_ultima_ronda_transaccional.sql` → `propuesta_gemas_transaccional.sql`.
 4. **Verificar:** repetir `diagnostico_numu.sql`: las 3 migraciones `APLICADA`, mismos totales, RPC de
@@ -76,3 +76,12 @@ guardando lecciones (RPC de 2 parámetros) y perfil; ninguna migración cambia d
 **Bloqueo:** la verificación previa (sección 2, paso 2) y la prueba con cuenta ficticia (sección 4) deben
 ejecutarse en el proyecto `numu` por quien tenga acceso (SQL Editor o conector con ese proyecto).
 Nada de lo anterior demuestra que Supabase real funcione: solo la base simulada.
+
+### Conexión real comprobada (27-nov-2026, solo lectura, sin sesión ni escrituras)
+
+Con la URL y la clave pública de `.env.local` (no se imprimieron):
+- Auth responde (200), el registro por correo está habilitado y **pide confirmar el correo**
+  (`mailer_autoconfirm = false`): la cuenta ficticia necesita un buzón accesible.
+- `perfil_usuario`, `progreso_leccion`, `user_module_progress` y `cursos` **existen** en numu y sin sesión
+  responden «permission denied» (RLS/permisos correctos para `anon`).
+- Funciones RPC, columnas y políticas: no se pueden ver sin sesión ni clave secreta → `diagnostico_numu.sql`.
