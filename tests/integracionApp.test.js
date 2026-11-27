@@ -110,3 +110,17 @@ test('la ronda registra el progreso por curso del curso de la lección jugada, n
   assert.equal(courseSlugForModule('patrones'), 'geometria-patrones');
   assert.equal(courseSlugForModule('conteo'), 'aritmetica');
 });
+
+test('cada práctica publicada (Conteo, Sumas, Figuras, Patrones) registra su ronda en el curso de su lección', async () => {
+  const { courseSlugForModule } = await import('../src/data/subjects.js');
+  const { roundProgressTargets } = await import('../src/utils/areaProgress.js');
+  const esperado = { 'conteo-basico': 'aritmetica', 'sumas-basicas': 'aritmetica', figuras: 'geometria-patrones', patrones: 'geometria-patrones' };
+  for (const [lessonId, curso] of Object.entries(esperado)) {
+    const { lesson, course } = all.find((e) => e.lesson.id === lessonId);
+    // Aunque el módulo guardado en el dispositivo sea de otra área (p. ej. «aritmetica» al jugar Patrones).
+    const otroModulo = curso === 'aritmetica' ? 'patrones' : 'aritmetica';
+    const targets = roundProgressTargets({ lesson, areaId: course.id, storeModuleId: otroModulo, routeModuleId: otroModulo });
+    assert.equal(targets.recordsCourseProgress, true, lessonId);
+    assert.equal(courseSlugForModule(targets.moduleId ?? otroModulo), curso, `${lessonId}: se registra en ${curso}`);
+  }
+});
