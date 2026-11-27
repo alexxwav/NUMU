@@ -9,13 +9,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { planLessonRound, questionSignature, QUESTIONS_PER_ROUND } from '../src/utils/lessonRound.js';
-import { getLearningPath, getAreaRoute, isLessonCompleted, roundProgressTargets, ACTIVE_AREA_IDS } from '../src/utils/areaProgress.js';
+import { getLearningPath, getAreaRoute, isLessonCompleted, ACTIVE_AREA_IDS } from '../src/utils/areaProgress.js';
 import { buildRecommendations } from '../src/services/recommendationService.js';
-import { createLessonProgressService } from '../src/services/lessonProgressService.js';
 import { resolveContinueRoute } from '../src/services/startRoute.js';
-import { starsForRound, academicStarsFor } from '../src/utils/stars.js';
-import { levelAfterRound, lessonLevelFor } from '../src/utils/lessonLevel.js';
 import { getLessonById } from '../src/utils/lessonContent.js';
+import { supabaseSimulado, alumno, APPROVED_IDS } from './helpers/numuSimulado.js';
 
 const real = JSON.parse(readFileSync(new URL('../src/data/lessonContent.json', import.meta.url), 'utf8'));
 const realLesson = (id) => real.courses.flatMap((c) => c.lessons).find((l) => l.id === id);
@@ -64,75 +62,7 @@ function catalogo15(extra = {}) {
     ],
   };
 }
-const IDS = {
-  aritmetica: ['conteo-basico', 'sumas-basicas', 'cuantos-quedan', 'grupos-iguales', 'repartimos-por-igual'],
-  'geometria-patrones': ['figuras', 'patrones', 'la-mitad-del-espejo', 'una-vuelta-al-contorno', 'llenamos-el-mosaico'],
-  algebra: ['escaleras-de-numeros', 'la-balanza-de-numu', 'el-numero-escondido', 'la-maquina-de-reglas', 'de-un-dibujo-a-una-regla'],
-};
-
-// ---------- Supabase simulado (progreso_leccion con nivel y última ronda) ----------
-function supabaseSimulado() {
-  const rows = new Map();
-  let user = null;
-  const client = {
-    from: () => ({
-      select: () => {
-        const filters = [];
-        const builder = {
-          eq(col, val) { filters.push((r) => r[col] === val); return builder; },
-          then(resolve) {
-            resolve({ data: [...rows.values()].filter((r) => r.usuario_id === user && filters.every((f) => f(r))).map((r) => ({ ...r })), error: null });
-          },
-        };
-        return builder;
-      },
-    }),
-    async rpc(_fn, { p_leccion_id: id, p_estrellas: stars, p_nivel: nivel = null }) {
-      const key = `${user}|${id}`;
-      const prev = rows.get(key);
-      const row = {
-        usuario_id: user, leccion_id: id, estrellas: Math.max(prev?.estrellas ?? 0, stars), intentos: (prev?.intentos ?? 0) + 1,
-        ultimas_estrellas: stars, ultimo_intento: new Date(Date.now() + rows.size).toISOString(), nivel: nivel ?? prev?.nivel ?? null,
-      };
-      rows.set(key, row);
-      return { data: { ...row }, error: null };
-    },
-  };
-  const profiles = { currentUsuarioId: async () => ({ usuarioId: user, error: user ? null : 'Sin sesión' }) };
-  return { rows, as(id) { user = id; return createLessonProgressService(() => client, profiles); } };
-}
-
-// ---------- Un alumno jugando, con las mismas decisiones que Game.jsx ----------
-function alumno({ catalog, db, usuarioId, diagnosticScore = 0, storeModuleId = 'conteo' }) {
-  const service = db.as(usuarioId);
-  const me = { rewards: { gems: 0, xp: 0 }, moduleWrites: [], courseWrites: [] };
-  me.progress = async () => service.getLessonProgress();
-  me.play = async (lessonId, { mistakes = 0, livesDepleted = false } = {}) => {
-    db.as(usuarioId);
-    const entry = getLessonById(catalog, lessonId);
-    const saved = await service.getLessonProgress();
-    const level = lessonLevelFor({ lessonId, levelByLesson: saved.levelByLesson, diagnosticScore });
-    const plan = planLessonRound({ lesson: entry?.lesson ?? null, level });
-    if (plan.mode === 'unavailable') return { plan, saved: false, recommendations: [] };
-    const roundStars = starsForRound({ total: plan.questions.length, mistakes, approved: true }); // vidas recargadas si se agotaron
-    me.rewards.gems += roundStars * 5; // recompensas como hoy (sin cambios)
-    me.rewards.xp += roundStars * 50;
-    const targets = roundProgressTargets({ lesson: entry.lesson, areaId: entry.course.id, storeModuleId, routeModuleId: storeModuleId });
-    if (targets.recordsModuleProgress) me.moduleWrites.push(targets.moduleId);
-    if (targets.recordsCourseProgress) me.courseWrites.push(entry.course.id);
-    const result = levelAfterRound({ level, stars: roundStars, livesDepleted });
-    const academic = academicStarsFor({ roundStars, livesDepleted });
-    await service.saveLessonResult({ lessonId, stars: academic, level: result.level });
-    const after = await service.getLessonProgress();
-    const { recommendations } = buildRecommendations({
-      catalog, diagnosticScore, starsByLesson: after.starsByLesson, latestStarsByLesson: after.latestStarsByLesson,
-      levelByLesson: after.levelByLesson, limit: 2,
-      lastRound: { lessonId, stars: academic, approved: !livesDepleted, levelBefore: level, levelAfter: result.level },
-    });
-    return { plan, saved: true, academic, roundStars, level, result, recommendations };
-  };
-  return me;
-}
+const IDS = APPROVED_IDS;
 
 test('1–2 · alumno nuevo: tres áreas de cinco lecciones, sin Trigonometría, empieza por la primera', async () => {
   const catalog = catalogo15();

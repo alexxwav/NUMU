@@ -196,6 +196,8 @@ export default function Game() {
   };
 
   const finishRound = () => {
+    // Salvaguarda: sin práctica disponible no hay ronda que cerrar, premios ni guardados.
+    if (isUnavailable || questions.length === 0) return;
     setIsFinished(true);
     const stars = roundStars;
     const completedLevel = playedLevel; // parada de esta sección que se acaba de terminar

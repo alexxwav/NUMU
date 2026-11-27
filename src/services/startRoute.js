@@ -1,4 +1,5 @@
 import { isActiveArea } from '../data/subjects.js';
+import { isLessonPlayable } from '../utils/lessonRound.js';
 
 // Separa el login real del cuestionario inicial.
 // Rutas PROVISIONALES: '/conocerte' está por acordarse con César y Citlalli
@@ -24,32 +25,48 @@ export function resolveStartRoute({ session, profile }) {
 /**
  * Destino de «¡Continuar Aventura!» en el inicio:
  *   1. la lección jugada más recientemente (la ronda con la fecha más nueva en lessonRounds),
- *      directo a su práctica, con el nivel que ya tiene esa lección;
+ *      directo a su práctica, con el nivel que ya tiene esa lección. Si se pasa starsByLesson y esa
+ *      lección ya cumple T2 (mejor = 3), no se repite: se va a la siguiente lección no terminada
+ *      y jugable de su área (R17); si el área está completa, a la primera recomendación distinta;
  *   2. si todavía no hay rondas, la primera recomendación;
  *   3. si tampoco hay recomendaciones, el juego del módulo elegido (comportamiento anterior).
- * Solo se consideran lecciones que existen en el catálogo publicado.
- * @returns {{route: string, lessonId: string|null, reason: 'ultima-leccion'|'recomendacion'|'modulo'}}
+ * Solo se consideran lecciones publicadas y jugables de las áreas activas: nunca lleva a una
+ * práctica bloqueada ni a una lección no publicada.
+ * @returns {{route: string, lessonId: string|null,
+ *   reason: 'ultima-leccion'|'siguiente-leccion'|'recomendacion'|'modulo'}}
  */
-export function resolveContinueRoute({ lessonRounds = {}, catalog, recommendations = [], moduleId = 'conteo' } = {}) {
-  // Solo lecciones publicadas de las áreas activas: «Continuar» nunca lleva a una práctica bloqueada.
-  const lessonIds = new Set((catalog?.courses ?? [])
+export function resolveContinueRoute({ lessonRounds = {}, catalog, recommendations = [], moduleId = 'conteo', starsByLesson = null } = {}) {
+  const entries = (catalog?.courses ?? [])
     .filter((course) => isActiveArea(course.id))
-    .flatMap((course) => course.lessons.filter((lesson) => lesson.published !== false).map((lesson) => lesson.id)));
+    .flatMap((course) => [...course.lessons].sort((a, b) => a.position - b.position).map((lesson) => ({ lesson, course })));
+  const levelOf = (lessonId) => lessonRounds?.[lessonId]?.level ?? 1;
+  const playable = new Set(entries.filter(({ lesson }) => isLessonPlayable(lesson, levelOf(lesson.id))).map(({ lesson }) => lesson.id));
+  const completed = (lessonId) => starsByLesson !== null && Number(starsByLesson?.[lessonId]) >= 3;
   const timeOf = (round) => {
     const time = Date.parse(round?.at ?? '');
     return Number.isFinite(time) ? time : -Infinity;
   };
   let last = null;
   for (const [lessonId, round] of Object.entries(lessonRounds ?? {})) {
-    if (!lessonIds.has(lessonId) || timeOf(round) === -Infinity) continue;
+    if (!playable.has(lessonId) || timeOf(round) === -Infinity) continue;
     if (!last || timeOf(round) > timeOf(last.round)) last = { lessonId, round };
   }
-  if (last) return { route: lessonPlayPath(last.lessonId), lessonId: last.lessonId, reason: 'ultima-leccion' };
+  const firstRecommendation = (except = null) => (recommendations ?? [])
+    .find((rec) => rec?.route && playable.has(rec.lessonId) && rec.lessonId !== except);
 
-  const [first] = recommendations ?? [];
-  if (first?.route && lessonIds.has(first.lessonId)) {
-    return { route: first.route, lessonId: first.lessonId, reason: 'recomendacion' };
+  if (last) {
+    if (!completed(last.lessonId)) return { route: lessonPlayPath(last.lessonId), lessonId: last.lessonId, reason: 'ultima-leccion' };
+    const area = entries.find((e) => e.lesson.id === last.lessonId).course.id;
+    const next = entries.find((e) => e.course.id === area && e.lesson.id !== last.lessonId
+      && playable.has(e.lesson.id) && !completed(e.lesson.id));
+    if (next) return { route: lessonPlayPath(next.lesson.id), lessonId: next.lesson.id, reason: 'siguiente-leccion' };
+    const rec = firstRecommendation(last.lessonId);
+    if (rec) return { route: rec.route, lessonId: rec.lessonId, reason: 'recomendacion' };
+    return { route: lessonPlayPath(last.lessonId), lessonId: last.lessonId, reason: 'ultima-leccion' };
   }
+
+  const first = firstRecommendation();
+  if (first) return { route: first.route, lessonId: first.lessonId, reason: 'recomendacion' };
   return { route: `/jugar/${moduleId}`, lessonId: null, reason: 'modulo' };
 }
 

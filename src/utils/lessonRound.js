@@ -243,6 +243,20 @@ export function semanticKeyForGenerated(generatorKey, question) {
 
 const withKey = (question, key) => (question.semanticKey || !key ? question : { ...question, semanticKey: key });
 
+/**
+ * ¿Game.jsx puede mostrar la pregunta? Enunciado, visual HTML, al menos 2 opciones con texto
+ * distinto y una respuesta correcta dentro de las opciones. Devuelve el motivo si no.
+ */
+export function representabilityProblem(question) {
+  if (!question || typeof question !== 'object') return 'pregunta vacía';
+  if (typeof question.prompt !== 'string' || !question.prompt.trim()) return 'sin enunciado';
+  if (typeof question.visual !== 'string' || !question.visual.trim()) return 'sin representación visual';
+  const labels = Array.isArray(question.options) ? question.options.map((o) => (typeof o?.label === 'string' ? o.label.trim() : '')) : [];
+  if (labels.length < 2 || labels.some((l) => !l) || new Set(labels).size !== labels.length) return 'opciones vacías o repetidas';
+  if (!Number.isInteger(question.answerIndex) || question.answerIndex < 0 || question.answerIndex >= labels.length) return 'respuesta fuera de las opciones';
+  return null;
+}
+
 // Ejercicios editoriales convertidos al formato del juego; los que no se pueden adaptar
 // (tipo de visual aún no admitido, datos incompletos) se informan y se omiten.
 function adaptEditorial(exercises, random, level, reasons) {
@@ -250,6 +264,11 @@ function adaptEditorial(exercises, random, level, reasons) {
   for (const exercise of exercises) {
     try {
       const question = adaptExerciseToGame(shuffleExerciseOptions(exercise, random));
+      const problem = representabilityProblem(question);
+      if (problem) {
+        reasons.push(`Ejercicio ${exercise?.id ?? '?'} no se puede mostrar: ${problem}.`);
+        continue;
+      }
       adapted.push({ ...withKey(question, semanticKeyForExercise(exercise)), source: 'catalogo', level });
     } catch (error) {
       reasons.push(`Ejercicio ${exercise?.id ?? '?'} no se puede usar: ${error.message}`);
@@ -353,7 +372,9 @@ export function selectLessonQuestions({ lesson, level, count = QUESTIONS_PER_ROU
       let attempts = (count - chosen.length) * GENERATOR_ATTEMPTS_PER_SLOT;
       while (chosen.length < count && attempts-- > 0) {
         const [question] = generateQuestions(spec.generatorKey, spec.level, 1);
-        if (question) take({ ...withKey(question, semanticKeyForGenerated(spec.generatorKey, question)), source: 'generador', level: spec.level });
+        if (question && !representabilityProblem(question)) {
+          take({ ...withKey(question, semanticKeyForGenerated(spec.generatorKey, question)), source: 'generador', level: spec.level });
+        }
       }
     }
   }
@@ -363,6 +384,17 @@ export function selectLessonQuestions({ lesson, level, count = QUESTIONS_PER_ROU
 /** ¿Es una de las lecciones actuales que el juego ya sabe armar (generador registrado)? */
 export function hasLegacyRound(lesson) {
   return isKnownGenerator(lesson?.module_id);
+}
+
+/**
+ * ¿Se puede practicar la lección en este nivel? Publicada y, además, una de las 4 actuales
+ * (su flujo de juego existe) o con 6 preguntas distintas en ese nivel (selector v2).
+ * Misma condición que usan el juego (planLessonRound), el recomendador (C16) y «Continuar».
+ */
+export function isLessonPlayable(lesson, level) {
+  if (!isLessonPublished(lesson)) return false;
+  if (hasLegacyRound(lesson)) return true;
+  return lessonCoverage({ lesson, level, samples: 60 }).playable;
 }
 
 /**

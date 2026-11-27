@@ -11,22 +11,12 @@
 
 import { clampStars } from './stars.js';
 import { lessonLevelFor } from './lessonLevel.js';
-import { isLessonPublished, hasLegacyRound, lessonCoverage } from './lessonRound.js';
+import { isLessonPublished, isLessonPlayable } from './lessonRound.js';
 import { normalizeModuleId, courseSlugForModule, ACTIVE_AREA_IDS, isActiveArea } from '../data/subjects.js';
 import { lessonTheoryPath, lessonPlayPath } from '../services/startRoute.js';
 
-export { ACTIVE_AREA_IDS, isActiveArea };
-
-/**
- * ¿Se puede practicar la lección en este nivel? Publicada y, además, una de las 4 actuales
- * (su flujo de juego existe) o con 6 preguntas distintas en ese nivel (selector v2).
- * Es la misma condición que usan el juego (planLessonRound) y el recomendador (C16).
- */
-export function isLessonPlayable(lesson, level) {
-  if (!isLessonPublished(lesson)) return false;
-  if (hasLegacyRound(lesson)) return true;
-  return lessonCoverage({ lesson, level, samples: 60 }).playable;
-}
+// isLessonPlayable vive en lessonRound.js (una sola definición para juego, recomendador y rutas).
+export { ACTIVE_AREA_IDS, isActiveArea, isLessonPlayable };
 
 /** Lecciones que forman un área completa (decisión aprobada: 4 áreas × 5 lecciones). */
 export const LESSONS_PER_AREA = 5;
