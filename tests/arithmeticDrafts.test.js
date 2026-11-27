@@ -97,7 +97,7 @@ function sharingEvidence(exercise, level) {
 }
 
 test('Los dos borradores 2A conservan la secuencia de Aritmética y tienen IDs únicos', () => {
-  const publishedLessons = published.courses.flatMap(({ lessons }) => lessons);
+  const publishedLessons = published.courses.flatMap(({ lessons }) => lessons).filter(lesson => lesson.published);
   const existingItems = [...published.courses, ...publishedLessons, ...publishedLessons.flatMap(({ exercises }) => exercises)];
   const draftLessons = [...existingDrafts.filter(draft => draft.id), groups, sharing];
   const draftExercises = [...existingDrafts, groups, sharing].flatMap(exercisesOf);

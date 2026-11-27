@@ -5,12 +5,11 @@ import { execFileSync } from 'node:child_process';
 import { getCourseById, getLessonById, getLessonsForCourse, getExerciseFeedback, shuffleExerciseOptions, validateLessonCatalog } from '../src/utils/lessonContent.js';
 
 const catalog = JSON.parse(readFileSync(new URL('../src/data/lessonContent.json', import.meta.url), 'utf8'));
-const lessons = catalog.courses.flatMap(course => course.lessons);
+const lessons = catalog.courses.flatMap(course => course.lessons).filter(lesson => lesson.published);
 const exercises = lessons.flatMap(lesson => lesson.exercises);
 const clone = () => structuredClone(catalog);
 
-test('Dos cursos, cuatro lecciones, seis ejercicios por lección y 24 en total', () => {
-  assert.equal(catalog.courses.length, 2);
+test('Se conservan las cuatro lecciones publicadas y sus 24 ejercicios originales', () => {
   assert.equal(lessons.length, 4);
   for (const lesson of lessons) assert.equal(lesson.exercises.length, 6);
   assert.equal(exercises.length, 24);
@@ -23,7 +22,7 @@ test('IDs, relaciones, módulos, niveles y posiciones coinciden con el seed de L
   // Lee la referencia disponible sin cambiar de rama ni requerir red.
   const sql = execFileSync('git', ['show', 'origin/laura/backend-mvp:supabase/seed.sql'], { cwd: new URL('../', import.meta.url), encoding: 'utf8' });
   const courseRows = [...sql.split('insert into public.lessons')[0].matchAll(/\('([^']+)',\s*'([^']+)',\s*'([^']+)',\s*(\d+)\)/g)];
-  assert.deepEqual(catalog.courses.map(c => [c.id, c.position]), courseRows.map(row => [row[1], Number(row[4])]));
+  assert.deepEqual(catalog.courses.filter(c => c.lessons.some(l => l.published)).map(c => [c.id, c.position]), courseRows.map(row => [row[1], Number(row[4])]));
   const rows = [...sql.matchAll(/\('([^']+)',\s*'([^']+)',\s*'([^']+)',\s*(?:null|'[^']*'),\s*(\d+),\s*'([^']+)',\s*(\d+)\)/g)];
   assert.equal(rows.length, 4);
   assert.deepEqual(lessons.map(l => [l.id, l.course_id, l.position, l.module_id, l.base_level]), rows.map(r => [r[1], r[2], Number(r[4]), r[5], Number(r[6])]));
@@ -46,7 +45,9 @@ test('Búsquedas, valores ausentes y orden sin mutación', () => {
   assert.deepEqual(getLessonsForCourse(catalog, 'ausente'), []);
   const copy = clone(); copy.courses[0].lessons.reverse();
   assert.deepEqual(getLessonsForCourse(copy, 'aritmetica').map(l => l.position), [1, 2]);
-  assert.equal(copy.courses[0].lessons[0].position, 2);
+  assert.deepEqual(getLessonsForCourse(copy, 'aritmetica', { includeUnpublished: true }).map(l => l.position), [1, 2, 3, 4, 5]);
+  assert.deepEqual(getLessonsForCourse(copy, 'algebra'), []);
+  assert.equal(copy.courses[0].lessons[0].position, 5);
 });
 test('Evaluación correcta e incorrecta para todos los ejercicios', () => {
   for (const exercise of exercises) for (let index = 0; index < 4; index++) {
@@ -118,6 +119,10 @@ test('Validador rechaza catálogos incompletos y campos inconsistentes', () => {
     c => { c.courses[1].id = 'aritmetica'; },
     c => { c.courses[0].position = 0; },
     c => { c.courses[0].lessons.pop(); },
+    c => { c.courses[0].lessons[2].published = true; },
+    c => { delete c.courses[2].lessons[0].levels['2']; },
+    c => { c.courses[2].lessons[0].levels['1'].generator_key = 'conteo'; },
+    c => { c.courses[2].lessons[0].levels['1'].exercises[0].id = 'C01'; },
     c => { c.courses[0].lessons[0].module_id = 'otro'; },
     c => { c.courses[0].lessons[0].course_id = 'otro'; },
     c => { c.courses[0].lessons[0].position = 2; },

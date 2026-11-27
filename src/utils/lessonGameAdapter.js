@@ -847,3 +847,52 @@ const DRAFT_VISUALS = {
   rectangular_array: { evidence: arrayEvidence, render: renderArray, module: 'aritmetica' },
   equal_sharing: { evidence: sharingEvidence, render: renderSharing, module: 'aritmetica' },
 };
+
+/** Dibuja ejemplos explicados, que no tienen opciones ni una respuesta que calificar. */
+export function renderGuidedExample(visual) {
+  switch (visual?.type) {
+    case 'expression': {
+      const { operator, operands } = visual;
+      if (!['+', '-'].includes(operator) || !allNumeric(operands) || operands.length !== 2) invalid('operación de ejemplo inválida');
+      const [a, b] = operands;
+      const operation = operator === '+' ? `${a} + ${b} = ${a + b}` : `${a} − ${b} = ${a - b}`;
+      return visualFrame(operation, `<span class="text-2xl">${operation}</span>`);
+    }
+    case 'shape':
+      validateShape(visual);
+      return renderVisual(visual);
+    case 'color_sequence': {
+      if (!Array.isArray(visual.sequence) || visual.sequence.length === 0
+        || !visual.sequence.every(color => typeof color === 'string' && own(COLORS, color))) invalid('colores de ejemplo inválidos');
+      const cards = visual.sequence.map(color => `<span class="inline-flex flex-col items-center gap-1"><span class="h-8 w-8 rounded-full border-2 border-white shadow-sm" style="background:${COLORS[color]}"></span><span class="text-sm">${color}</span></span>`);
+      return visualFrame(visual.sequence.join(', '), `<div class="flex flex-wrap justify-center gap-3">${cards.join('')}</div>`);
+    }
+    case 'measurement_grid': {
+      const [figure] = visual.figures ?? [];
+      if (visual.mode !== 'perimeter' || visual.figures?.length !== 1 || !/^[A-Z]$/.test(figure?.label)) invalid('contorno de ejemplo inválido');
+      validGrid(figure);
+      validCells(figure.cells, figure);
+      return renderMeasurement(visual);
+    }
+    case 'equal_groups':
+      if (!sizeIsSafe(visual.group_count) || !sizeIsSafe(visual.items_per_group)
+        || !validDraftIcon(visual.icon) || !validContainer(visual.container)) invalid('grupos de ejemplo inválidos');
+      return renderGrouping(visual);
+    case 'number_staircase':
+      if (!allNumeric(visual.steps) || !sizeIsSafe(visual.query_position)) invalid('escalera de ejemplo inválida');
+      return renderStaircase(visual);
+    case 'unknown_number':
+      if (!['+', '-'].includes(visual.operator) || visual.operands?.length !== 2
+        || visual.operands.filter(value => value === null).length !== 1
+        || !visual.operands.every(value => value === null || nonnegativeInteger(value))
+        || !nonnegativeInteger(visual.result)) invalid('incógnita de ejemplo inválida');
+      return renderHiddenNumber(visual);
+    case 'growing_pattern':
+      if (!validDraftIcon(visual.repeated_icon) || !validDraftIcon(visual.fixed_icon)
+        || !Array.isArray(visual.stages) || !visual.stages.every(stage => sizeIsSafe(stage?.position)
+          && Array.isArray(stage.groups) && stage.groups.every(sizeIsSafe) && (stage.fixed === 0 || sizeIsSafe(stage.fixed)))) invalid('crecimiento de ejemplo inválido');
+      return renderGrowth({ ...visual, query_position: undefined });
+    default:
+      invalid('tipo de visual de ejemplo no admitido');
+  }
+}

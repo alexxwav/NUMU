@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
@@ -11,7 +11,7 @@ const figuras = readJson('../content-drafts/figuras-ampliacion.json');
 const restas = readJson('../content-drafts/cuantos-quedan.json');
 const { visuals, interactions } = readJson('../content-drafts/visual-types.json');
 const published = readJson('../src/data/lessonContent.json');
-const publishedLessons = published.courses.flatMap(({ lessons }) => lessons);
+const publishedLessons = published.courses.flatMap(({ lessons }) => lessons).filter(lesson => lesson.published);
 const publishedExercises = publishedLessons.flatMap(({ exercises }) => exercises);
 const sides = visuals.shape.polygons;
 const shapeNames = { triangle: 'Triángulo', square: 'Cuadrado', pentagon: 'Pentágono', hexagon: 'Hexágono' };
@@ -221,17 +221,31 @@ test('El ejemplo guiado especifica la interacción de quitar dos de siete peces'
   assert.match(interaction.feedback_on_complete, /7 − 2 = 5/);
 });
 
-test('Las cuatro lecciones publicadas conservan el contenido de la base del bloque', () => {
-  // Huellas del contenido JSON en 339d181. Los espacios y saltos de línea no intervienen.
-  const baseline = {
-    'conteo-basico': 'fc44ce553379d20fd8dd946210b02f707cc1d590c6b42ba80bb8f2a77e4ed6ce',
-    'sumas-basicas': 'bff366e29ab219751cf5b79383d72af11699b850538adba298308560b913cc15',
-    figuras: '68942a15c459734a6f42b3043c2479f4a7551117e346cfc046ba4ab0ed93ac5a',
-    patrones: 'd67878603be25df55abf803368745e793214414b91319efe9ee5407c8f82e236',
-  };
-  assert.deepEqual(publishedLessons.map(({ id }) => id), Object.keys(baseline));
-  for (const lesson of publishedLessons) {
-    const hash = createHash('sha256').update(JSON.stringify(lesson)).digest('hex');
-    assert.equal(hash, baseline[lesson.id], lesson.id);
+test('El catálogo conserva los datos históricos y las preguntas publicadas', () => {
+  const baseline = JSON.parse(execFileSync('git', ['show', '339d181:src/data/lessonContent.json'], {
+    cwd: new URL('../', import.meta.url), encoding: 'utf8',
+  }));
+  const previous = baseline.courses.flatMap(({ lessons }) => lessons);
+  assert.deepEqual(publishedLessons.map(({ id }) => id), previous.map(({ id }) => id));
+  for (const [index, lesson] of publishedLessons.entries()) {
+    const { levels, published, exercises, guided_example, ...rest } = lesson;
+    const prior = previous[index];
+    assert.equal(published, true);
+    const { explanation, ...core } = rest;
+    const { exercises: priorExercises, explanation: priorExplanation, guided_example: priorExample, ...priorCore } = prior;
+    assert.deepEqual(core, priorCore, lesson.id);
+    if (lesson.id === 'sumas-basicas') assert.ok(explanation.startsWith(priorExplanation));
+    else assert.equal(explanation, priorExplanation);
+    const { additional_examples, ...originalExample } = guided_example;
+    assert.deepEqual(originalExample, priorExample);
+    assert.deepEqual(exercises.map(({ hint, ...exercise }) => exercise),
+      priorExercises.map(({ hint, ...exercise }) => exercise));
+    for (const exercise of exercises) {
+      const answer = String(exercise.correct_answer);
+      const directAnswer = Number.isInteger(exercise.correct_answer)
+        ? new RegExp('\\b' + answer + '\\b')
+        : new RegExp(answer, 'i');
+      assert.doesNotMatch(exercise.hint, directAnswer, exercise.id);
+    }
   }
 });

@@ -203,7 +203,7 @@ function measurementEvidence(exercise, level, mode) {
 
 test('Los borradores de Geometría preservan el curso técnico y aportan 54 IDs de ejercicio únicos', () => {
   const catalog = readJson(new URL('../src/data/lessonContent.json', import.meta.url));
-  const published = catalog.courses.flatMap(course => course.lessons);
+  const published = catalog.courses.flatMap(course => course.lessons).filter(lesson => lesson.published);
   const documents = readdirSync(directory).filter(name => name.endsWith('.json'))
     .map(name => readJson(new URL(name, directory))).filter(document => document.levels);
   const items = [

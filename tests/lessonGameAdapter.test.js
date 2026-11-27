@@ -6,7 +6,7 @@ import { shuffleExerciseOptions } from '../src/utils/lessonContent.js';
 import { generateQuestions } from '../src/state/questions.js';
 
 const catalog = JSON.parse(readFileSync(new URL('../src/data/lessonContent.json', import.meta.url), 'utf8'));
-const lessons = catalog.courses.flatMap(course => course.lessons);
+const lessons = catalog.courses.flatMap(course => course.lessons).filter(lesson => lesson.published);
 const exercises = lessons.flatMap(lesson => lesson.exercises);
 const copy = id => structuredClone(exercises.find(exercise => exercise.id === id));
 const colors = { Morado: '#5124EE', Amarillo: '#FFC700', Verde: '#00D282', Coral: '#FF5A5F', Cian: '#00B4D8' };
@@ -23,7 +23,7 @@ test('Los 24 ejercicios cumplen el contrato del generador consumido por Game.jsx
   assert.equal(exercises.length, 24);
   for (const lesson of lessons) {
     const reference = generateQuestions(lesson.module_id, 1, 1)[0];
-    for (const exercise of lesson.exercises) {
+    for (const exercise of lesson.exercises ?? []) {
       const question = adaptExerciseToGame(exercise);
       for (const key of Object.keys(reference)) assert.equal(typeof question[key], typeof reference[key], `${exercise.id}: ${key}`);
       assert.equal(question.prompt, exercise.prompt);
@@ -98,7 +98,7 @@ test('La conversión funciona después de mezclar cualquiera de los 24 ejercicio
 test('No modifica ni comparte objetos con el catálogo original', () => {
   const original = structuredClone(catalog);
   const frozen = freeze(structuredClone(catalog));
-  for (const course of frozen.courses) for (const lesson of course.lessons) for (const exercise of lesson.exercises) {
+  for (const course of frozen.courses) for (const lesson of course.lessons) for (const exercise of lesson.exercises ?? []) {
     const question = adaptExerciseToGame(exercise);
     question.options[0].label = 'Cambio';
     question.hint = 'Cambio';

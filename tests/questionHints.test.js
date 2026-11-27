@@ -5,7 +5,10 @@ import { buildQuestionHint, generateQuestions, ROUND_TIPS } from '../src/state/q
 import { adaptExerciseToGame } from '../src/utils/lessonGameAdapter.js';
 
 const catalog = JSON.parse(readFileSync(new URL('../src/data/lessonContent.json', import.meta.url), 'utf8'));
-const exercises = catalog.courses.flatMap((course) => course.lessons).flatMap((lesson) => lesson.exercises);
+const exercises = catalog.courses.flatMap(course => course.lessons).flatMap(lesson => [
+  ...(lesson.exercises ?? []),
+  ...Object.values(lesson.levels).flatMap(bank => bank.exercises),
+]);
 const modules = ['conteo', 'aritmetica', 'geometria', 'patrones'];
 
 test('toda pregunta generada y todo ejercicio del catálogo tiene pista no vacía', () => {

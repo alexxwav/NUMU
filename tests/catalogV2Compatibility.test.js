@@ -7,22 +7,22 @@ import { shuffleExerciseOptions } from '../src/utils/lessonContent.js';
 import { adaptExerciseToGame, exerciseSemanticKey } from '../src/utils/lessonGameAdapter.js';
 
 const read = path => JSON.parse(readFileSync(new URL(path, import.meta.url), 'utf8'));
-const published = read('../src/data/lessonContent.json');
 const added = draftIds.map(id => read('../content-drafts/' + id + '.json'));
 const expansion = read('../content-drafts/figuras-ampliacion.json');
 const orderedAreas = ['aritmetica', 'geometria-patrones', 'algebra'];
-const originals = published.courses.flatMap(course => course.lessons);
-const exercisesOf = draft => Object.values(draft.levels).flatMap(bank => bank.exercises);
-const areaExercises = new Map(orderedAreas.map(area => [area, [
-  ...originals.filter(lesson => lesson.course_id === area).flatMap(lesson => lesson.exercises),
-  ...added.filter(lesson => lesson.course_id === area).flatMap(exercisesOf),
-  ...(area === 'geometria-patrones' ? exercisesOf(expansion) : []),
-]]));
-const byId = id => structuredClone([...areaExercises.values()].flat().find(exercise => exercise.id === id));
 const catalog = loadCatalogV2();
 const lessons = catalog.courses.flatMap(course => course.lessons);
-
-test('El fixture v2 reúne 15 lecciones en tres áreas con IDs únicos y estado de publicación intacto', () => {
+const originals = lessons.filter(lesson => lesson.published);
+const exercisesOf = draft => Object.values(draft.levels).flatMap(bank => bank.exercises);
+const areaExercises = new Map(catalog.courses.map(course => {
+  const unique = new Map();
+  for (const lesson of course.lessons) {
+    for (const exercise of [...(lesson.exercises ?? []), ...exercisesOf(lesson)]) unique.set(exercise.id, exercise);
+  }
+  return [course.id, [...unique.values()]];
+}));
+const byId = id => structuredClone([...areaExercises.values()].flat().find(exercise => exercise.id === id));
+test('El catálogo de la aplicación reúne 15 lecciones en tres áreas con IDs únicos y estado de publicación intacto', () => {
   const originalIds = ['conteo-basico', 'sumas-basicas', 'figuras', 'patrones'];
   assert.deepEqual(originals.map(lesson => lesson.id), originalIds);
   assert.deepEqual(catalog.courses.map(course => course.id), orderedAreas);
@@ -32,12 +32,16 @@ test('El fixture v2 reúne 15 lecciones en tres áreas con IDs únicos y estado 
     assert.ok(course.lessons.every(lesson => lesson.course_id === course.id));
   }
   assert.equal(lessons.length, 15);
-  for (const original of originals) {
-    const { levels, ...rest } = lessons.find(lesson => lesson.id === original.id);
-    assert.deepEqual(rest, original);
-    assert.deepEqual(Object.keys(levels), ['1', '2', '3']);
+  for (const original of originals) assert.deepEqual(Object.keys(original.levels), ['1', '2', '3']);
+  for (const draft of added) {
+    assert.equal(draft.published, false);
+    assert.deepEqual(lessons.find(lesson => lesson.id === draft.id), draft);
   }
-  for (const draft of added) assert.equal(draft.published, false);
+  const figures = originals.find(lesson => lesson.id === expansion.lesson_id);
+  for (const [level, bank] of Object.entries(expansion.levels)) {
+    const expansionIds = new Set(bank.exercises.map(exercise => exercise.id));
+    assert.deepEqual(figures.levels[level].exercises.filter(exercise => expansionIds.has(exercise.id)), bank.exercises);
+  }
   assert.equal(expansion.lesson_id, 'figuras');
   assert.equal(expansion.published, false);
   const uniqueIds = [...orderedAreas, ...lessons.map(lesson => lesson.id),
@@ -95,7 +99,7 @@ function generatedKeys(module, level) {
   }
 }
 
-test('El fixture distingue cobertura editorial, capacidad del generador legado y faltantes reales', () => {
+test('El catálogo distingue cobertura editorial, capacidad del generador legado y faltantes reales', () => {
   const missing = [];
   let checked = 0;
   for (const lesson of lessons) {

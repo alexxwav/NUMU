@@ -193,7 +193,7 @@ const drafts = [
 
 test('Álgebra conserva los cinco IDs aprobados y aporta 90 ejercicios de borrador con IDs únicos', () => {
   const catalog = readJson(new URL('../src/data/lessonContent.json', import.meta.url));
-  const published = catalog.courses.flatMap(({ lessons }) => lessons);
+  const published = catalog.courses.flatMap(({ lessons }) => lessons).filter(lesson => lesson.published);
   assert.deepEqual(published.map(({ id }) => id), ['conteo-basico', 'sumas-basicas', 'figuras', 'patrones']);
   const documents = readdirSync(directory).filter(name => name.endsWith('.json'))
     .map(name => readJson(new URL(name, directory))).filter(document => document.levels);
