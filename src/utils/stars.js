@@ -57,3 +57,18 @@ export function needsReinforcement({ mistakes = 0, stars = 3 } = {}) {
   const failed = Math.max(0, Number(mistakes) || 0);
   return failed >= 2 || clampStars(stars) <= 1;
 }
+
+export const STARS_TO_UNLOCK = 2;
+export const MAX_MODULE_LEVEL = 10;
+
+/** Parada máxima alcanzable: solo se abre la N+1 si la N tiene al menos 2 estrellas. */
+export function unlockedLevelFor(starsByLevel = {}, desiredLevel = 1) {
+  const target = Number.isFinite(Number(desiredLevel)) ? Math.max(1, Math.floor(Number(desiredLevel))) : 1;
+  let unlocked = 1;
+  for (let level = 1; level < target; level += 1) {
+    const earned = clampStars(starsByLevel?.[level] ?? starsByLevel?.[String(level)] ?? 0);
+    if (earned < STARS_TO_UNLOCK) break;
+    unlocked = level + 1;
+  }
+  return Math.min(MAX_MODULE_LEVEL, unlocked);
+}

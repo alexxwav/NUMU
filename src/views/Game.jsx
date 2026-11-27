@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import confetti from 'canvas-confetti';
-import { Home, Lightbulb, X, Volume2 } from 'lucide-react';
+import { Home, Lightbulb, X, Volume2, VolumeX } from 'lucide-react';
 import { store, getTotalXp } from '../state/store.js';
 import { generateQuestions, buildQuestionHint } from '../state/questions.js';
 import { lessonForModule, lessonLevelFromState, levelAfterRound, MAX_LESSON_LEVEL } from '../utils/lessonLevel.js';
 import { buildLessonRound, QUESTIONS_PER_ROUND } from '../utils/lessonRound.js';
-import { sfx, speak } from '../utils/audio.js';
+import { isVoiceMuted, sfx, speak, stopSpeech } from '../utils/audio.js';
 import { useAuth } from '../hooks/useAuth.jsx';
 import { useLessonProgress } from '../hooks/useLessonProgress.js';
-import { needsReinforcement, starsForRound } from '../utils/stars.js';
+import { MAX_MODULE_LEVEL, needsReinforcement, STARS_TO_UNLOCK, starsForRound } from '../utils/stars.js';
 import { ROUTES } from '../services/startRoute.js';
 import { normalizeModuleId, courseSlugForModule } from '../data/subjects.js';
 import lessonCatalog from '../data/lessonContent.json';
@@ -22,8 +22,10 @@ function burst({ particleCount = 60, spread = 70 } = {}) {
   confetti({ particleCount, spread, origin: { y: 0.7 }, colors: ['#5124EE', '#FFC700', '#00D282', '#00B4D8', '#FF8800'] });
 }
 
-export default function Game() {
+function GameRound({ onRestart }) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const roundKey = `${location.pathname}${location.search}`;
   const { recordRound, recordModuleRound } = useAuth();
   const { saveLessonResult } = useLessonProgress();
   const { nivel, lessonId } = useParams(); // módulo ('conteo', 'sumas', …) o lección del catálogo
@@ -65,26 +67,56 @@ export default function Game() {
   const [selectedOption, setSelectedOption] = useState(null);
   const [sheet, setSheet] = useState(null); // Controla el mensaje emergente de abajo
   const [isFinished, setIsFinished] = useState(false);
-  const [lives, setLives] = useState(() => store.get().lives);
+  const [lives, setLives] = useState(() => store.get().maxLives);
   // R10: si en esta ronda las vidas llegaron a 0, no hay avance académico aunque se recarguen.
   const [livesDepleted, setLivesDepleted] = useState(false);
   const [levelResult, setLevelResult] = useState(null);
+  const [unlockedNextLevel, setUnlockedNextLevel] = useState(null);
   const [xpEarned, setXpEarned] = useState(0);
-  
+  const [voiceMuted, setVoiceMuted] = useState(() => isVoiceMuted());
+
+  useEffect(() => store.subscribe((next) => setVoiceMuted(Boolean(next.settings?.voiceMuted))), []);
+
+  useEffect(() => {
+    store.restoreLives();
+    setLives(store.get().maxLives);
+    setLivesDepleted(false);
+  }, [roundKey]);
+
   const currentQ = questions[index];
   const maxLives = store.get().maxLives;
   const progressPercent = (index / questions.length) * 100;
   // Estrellas de la ronda: 0 si se acabaron las vidas, de 1 a 3 según los errores.
   const roundStars = starsForRound({ total: questions.length, mistakes, approved: lives > 0 });
+  const isLevelLocked = roundStars < STARS_TO_UNLOCK;
   // El resultado solo ofrece refuerzo tras una ronda con errores; con 3 estrellas no hay mensajes.
-  const showReinforcement = Boolean(lessonEntry) && needsReinforcement({ mistakes, stars: roundStars });
+  const showReinforcement = !isLevelLocked && Boolean(lessonEntry) && needsReinforcement({ mistakes, stars: roundStars });
 
-  // Escuchar la instrucción al cargar la pregunta
+  // Escuchar la instrucción al cargar la pregunta (y al reactivar la voz).
   useEffect(() => {
-    if (currentQ && !isFinished) {
+    if (currentQ && !isFinished && !voiceMuted) {
       speak(currentQ.speakText);
     }
-  }, [index, currentQ, isFinished]);
+  }, [index, currentQ, isFinished, voiceMuted]);
+
+  const toggleVoice = () => {
+    const next = !voiceMuted;
+    store.setVoiceMuted(next);
+    sfx.tap();
+    if (next) stopSpeech();
+  };
+
+  const repeatSpeech = () => {
+    if (voiceMuted) return;
+    sfx.tap();
+    speak(currentQ?.speakText);
+  };
+
+  const practiceAgain = () => {
+    sfx.tap();
+    if (typeof onRestart === 'function') onRestart();
+    else navigate(`/jugar/${moduleId}?parada=${playedLevel}`);
+  };
 
   // Solo se llama al cambiar de ejercicio (o al salir): recargar vidas no toca estos estados.
   const resetHintStates = () => {
@@ -174,8 +206,11 @@ export default function Game() {
     const completedLevel = playedLevel; // parada de esta sección que se acaba de terminar
     const xpBefore = getTotalXp(store.get());
     store.addRewards({ gems: stars * 5, stars, xp: stars * 50, levelStars: stars });
-    // Avance de esta sección: parada siguiente y estrellas de la parada terminada.
+    // Avance de esta sección: solo se abre la parada siguiente con 2 estrellas o más.
+    const beforeLevel = store.get().levelByModule?.[moduleId] ?? 1;
     store.recordModuleRound({ moduleId, stars, level: completedLevel });
+    const afterLevel = store.get().levelByModule?.[moduleId] ?? 1;
+    setUnlockedNextLevel(afterLevel > beforeLevel ? afterLevel : null);
     // Repetir una parada con las mismas estrellas no añade XP; mejorar sí suma 50 por estrella.
     setXpEarned(getTotalXp(store.get()) - xpBefore);
     store.completeLevel();
@@ -219,7 +254,9 @@ export default function Game() {
         <div className="absolute -top-20 -right-20 w-72 h-72 rounded-full bg-white/5" aria-hidden="true"></div>
         <div className="absolute -bottom-24 -left-16 w-80 h-80 rounded-full bg-white/5" aria-hidden="true"></div>
 
-        <p className="font-fredoka font-bold text-4xl sm:text-5xl mb-6 relative z-10">¡LO LOGRASTE!</p>
+        <p className="font-fredoka font-bold text-4xl sm:text-5xl mb-6 relative z-10">
+          {isLevelLocked ? '¡Casi lo logras! Nivel aún bloqueado' : '¡LO LOGRASTE!'}
+        </p>
 
         <div className="flex gap-4 mb-7 relative z-10">
           {[0, 1, 2].map((i) => (
@@ -235,6 +272,21 @@ export default function Game() {
         <div className="bg-white text-text-dark rounded-card px-8 py-5 mb-8 font-fredoka font-bold text-2xl shadow-lg relative z-10">
           {questions.length} respuestas · +{xpEarned} XP · +{stars * 5} gemas
         </div>
+
+        {isLevelLocked && (
+          <div className="relative z-10 w-full max-w-md mb-8 rounded-card border-2 border-sunshine-yellow bg-white px-6 py-5 text-left text-text-dark shadow-lg">
+            <p className="font-fredoka font-bold text-xl text-numu-purple mb-2">Te falta un poquito más</p>
+            <p className="font-poppins text-base">
+              Conseguiste {stars} {stars === 1 ? 'estrella' : 'estrellas'} en esta ronda. Necesitas mínimo {STARS_TO_UNLOCK} estrellas para pasar al siguiente nivel. ¡Inténtalo de nuevo para desbloquearlo!
+            </p>
+          </div>
+        )}
+
+        {!isLevelLocked && unlockedNextLevel && unlockedNextLevel <= MAX_MODULE_LEVEL && (
+          <p className="relative z-10 -mt-4 mb-8 font-fredoka font-bold text-xl text-sunshine-yellow" role="status">
+            ¡Nivel desbloqueado! Ya puedes jugar la parada {unlockedNextLevel} de esta ruta.
+          </p>
+        )}
 
         {lessonEntry && levelResult && (
           <p className="relative z-10 -mt-4 mb-8 font-fredoka font-bold text-xl" role="status">
@@ -254,7 +306,7 @@ export default function Game() {
             </p>
             <button
               type="button"
-              onClick={() => { sfx.tap(); navigate(`/lecciones/${lessonEntry.lesson.id}/jugar`); }}
+              onClick={practiceAgain}
               className="mt-4 min-h-[64px] w-full rounded-btn bg-orange-energy text-white font-fredoka font-bold text-lg shadow-3d-orange active:translate-y-1 active:shadow-none transition-all"
             >
               Reforzar ahora
@@ -262,14 +314,25 @@ export default function Game() {
           </div>
         )}
 
-        <div className="flex flex-col sm:flex-row gap-4 relative z-10 w-full max-w-md">
-          <button onClick={() => { sfx.tap(); navigate(exitTo); }} className="flex-1 bg-mint-success text-white font-fredoka font-bold text-xl py-4 rounded-btn shadow-3d-primary hover:translate-y-1 hover:shadow-none transition-all">
-            CONTINUAR
-          </button>
-          <button onClick={() => { sfx.tap(); window.location.reload(); }} className="flex-1 bg-cyan-ocean text-white font-fredoka font-bold text-xl py-4 rounded-btn shadow-3d-primary hover:translate-y-1 hover:shadow-none transition-all">
-            REPETIR
-          </button>
-        </div>
+        {isLevelLocked ? (
+          <div className="flex flex-col sm:flex-row gap-4 relative z-10 w-full max-w-md">
+            <button type="button" onClick={practiceAgain} className="flex-1 min-h-[64px] bg-orange-energy text-white font-fredoka font-bold text-xl rounded-btn shadow-3d-orange active:translate-y-1 active:shadow-none transition-all">
+              Volver a intentar
+            </button>
+            <button type="button" onClick={() => { sfx.tap(); navigate(exitTo); }} className="flex-1 min-h-[64px] bg-cyan-ocean text-white font-fredoka font-bold text-xl rounded-btn shadow-3d-cyan active:translate-y-1 active:shadow-none transition-all">
+              Volver al mapa
+            </button>
+          </div>
+        ) : (
+          <div className="flex flex-col sm:flex-row gap-4 relative z-10 w-full max-w-md">
+            <button onClick={() => { sfx.tap(); navigate(exitTo); }} className="flex-1 bg-mint-success text-white font-fredoka font-bold text-xl py-4 rounded-btn shadow-3d-primary hover:translate-y-1 hover:shadow-none transition-all">
+              CONTINUAR
+            </button>
+            <button onClick={() => { sfx.tap(); window.location.reload(); }} className="flex-1 bg-cyan-ocean text-white font-fredoka font-bold text-xl py-4 rounded-btn shadow-3d-primary hover:translate-y-1 hover:shadow-none transition-all">
+              REPETIR
+            </button>
+          </div>
+        )}
 
         {/* El progreso ya se guardó en finishRound; este botón solo navega. */}
         <button onClick={() => { sfx.tap(); navigate(ROUTES.home); }} className="relative z-10 mt-4 w-full max-w-md min-h-[64px] bg-white text-numu-purple font-fredoka font-bold text-xl py-4 rounded-btn shadow-3d-white hover:translate-y-1 hover:shadow-none transition-all inline-flex items-center justify-center gap-2">
@@ -299,7 +362,19 @@ export default function Game() {
           <div className="flex-1 bg-gray-100 rounded-full h-4 overflow-hidden border border-gray-200">
             <div className="bg-numu-purple h-full rounded-full transition-all duration-300" style={{ width: `${progressPercent}%` }}></div>
           </div>
-          
+
+          {/* Voz: preferencia persistente durante toda la lección */}
+          <button
+            type="button"
+            onClick={toggleVoice}
+            aria-pressed={!voiceMuted}
+            aria-label={voiceMuted ? 'Activar voz' : 'Silenciar voz'}
+            title={voiceMuted ? 'Voz silenciada' : 'Voz activa'}
+            className={`w-12 h-12 shrink-0 grid place-items-center rounded-full active:translate-y-1 transition-all focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-numu-purple ${voiceMuted ? 'bg-gray-200 text-gray-500 shadow-3d-neutral' : 'bg-numu-purple text-white shadow-3d-primary'}`}
+          >
+            {voiceMuted ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />}
+          </button>
+
           {/* Corazones (Vidas) */}
           <div className="flex items-center gap-1">
             {Array.from({ length: maxLives }).map((_, i) => (
@@ -319,9 +394,18 @@ export default function Game() {
         <section className="space-y-6">
           <div className="flex items-start justify-center gap-3">
             <h1 className="font-fredoka font-bold text-3xl md:text-4xl text-text-dark text-center flex-1">{currentQ?.prompt}</h1>
-            <button onClick={() => { sfx.tap(); speak(currentQ?.speakText); }} className="w-14 h-14 shrink-0 grid place-items-center rounded-full bg-numu-purple text-white shadow-3d-primary active:translate-y-1 transition-transform">
-              <Volume2 className="w-7 h-7" />
-            </button>
+            {!voiceMuted && (
+              <button
+                type="button"
+                onClick={repeatSpeech}
+                aria-label="Repetir dictado"
+                title="Repetir dictado"
+                className="min-h-[56px] h-14 shrink-0 flex items-center justify-center gap-2 rounded-full bg-numu-purple px-4 text-white shadow-3d-primary active:translate-y-1 transition-transform focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-numu-purple"
+              >
+                <Volume2 className="w-7 h-7" />
+                <span className="hidden font-fredoka font-bold text-lg sm:inline">Repetir</span>
+              </button>
+            )}
           </div>
           
           {/* Imagen o visual de la pregunta */}
@@ -445,5 +529,17 @@ export default function Game() {
       )}
 
     </div>
+  );
+}
+
+export default function Game() {
+  const location = useLocation();
+  const [retryKey, setRetryKey] = useState(0);
+
+  return (
+    <GameRound
+      key={`${location.pathname}${location.search}:${retryKey}`}
+      onRestart={() => setRetryKey((key) => key + 1)}
+    />
   );
 }

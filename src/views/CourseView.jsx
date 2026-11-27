@@ -90,7 +90,7 @@ export default function CourseView() {
               Tu ruta: {activeLesson?.title ?? course.title}
             </h2>
             <p className="mt-1 text-base text-gray-600">
-              Cada vez que terminas una ronda, avanzas una parada. Toca la parada de NUMU para jugar.
+              Cada vez que terminas una ronda con al menos 2 estrellas, avanzas una parada. Toca la parada de NUMU para jugar.
             </p>
           </div>
 
@@ -141,7 +141,7 @@ export default function CourseView() {
             </li>
             <li className="inline-flex items-center gap-2">
               <span className="w-6 h-6 rounded-full bg-gray-200 border-2 border-white shadow-sm grid place-items-center text-gray-400" aria-hidden="true"><Lock className="w-3.5 h-3.5" /></span>
-              Bloqueada: termina la parada anterior
+              Bloqueada: consigue 2 estrellas en la parada anterior
             </li>
           </ul>
 

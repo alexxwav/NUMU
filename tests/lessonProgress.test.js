@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createLessonProgressService } from '../src/services/lessonProgressService.js';
-import { starsForRound, sumStars, clampStars, needsReinforcement } from '../src/utils/stars.js';
+import { starsForRound, sumStars, clampStars, needsReinforcement, unlockedLevelFor } from '../src/utils/stars.js';
 import { store } from '../src/state/store.js';
 
 // Simula el query builder encadenable de supabase-js y registra cada llamada.
@@ -43,6 +43,13 @@ test('starsForRound da 0 estrellas si la ronda no se aprobó', () => {
   assert.equal(starsForRound(), 0);
 });
 
+test('unlockedLevelFor solo abre la parada siguiente con 2 estrellas', () => {
+  assert.equal(unlockedLevelFor({}, 5), 1);
+  assert.equal(unlockedLevelFor({ 1: 1 }, 5), 1);
+  assert.equal(unlockedLevelFor({ 1: 2 }, 5), 2);
+  assert.equal(unlockedLevelFor({ 1: 3, 2: 2, 3: 1 }, 10), 3);
+});
+
 test('needsReinforcement solo aparece con errores o pocas estrellas', () => {
   assert.equal(needsReinforcement({ mistakes: 0, stars: 3 }), false);
   assert.equal(needsReinforcement({ mistakes: 1, stars: 3 }), false);
@@ -59,6 +66,15 @@ test('sumStars y clampStars respetan el rango de 0 a 3', () => {
   assert.equal(clampStars(7), 3);
   assert.equal(clampStars(-2), 0);
   assert.equal(clampStars('2'), 2);
+});
+
+test('restoreLives devuelve los corazones al máximo al empezar una ronda', () => {
+  store.startSession('lives-test');
+  store.loseLife();
+  store.loseLife();
+  assert.equal(store.get().lives, 3);
+  store.restoreLives();
+  assert.equal(store.get().lives, store.get().maxLives);
 });
 
 test('el store conserva la mejor puntuación de cada lección', () => {
