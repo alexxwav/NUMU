@@ -46,7 +46,9 @@ test('Conteo representa la cantidad exacta mediante iconos locales', () => {
     const question = adaptExerciseToGame(exercise);
     const objectIcons = question.visual.match(/<svg\b|<img\b/g) ?? [];
     assert.equal(objectIcons.length, exercise.visual.count);
-    assert.ok(question.visual.includes(`aria-label="${exercise.visual.count} `));
+    const description = question.visual.match(/aria-label="([^"]+)"/)[1];
+    assert.equal(description.split('. ').length, exercise.visual.count);
+    assert.doesNotMatch(description, /\d/);
     assert.equal(question.options[question.answerIndex].label, String(exercise.visual.count));
   }
 });
