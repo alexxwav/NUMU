@@ -84,14 +84,25 @@ test('saveProfile sin campos válidos no llama a Supabase', async () => {
   assert.equal(client.calls.length, 0);
 });
 
-test('saveProfile usa el id de usuarios de la sesión y hace upsert por usuario_id', async () => {
-  const client = fakeClient({ data: { nombre: 'Luis', apodo: 'LuisPro', edad: 8, intereses: [] }, error: null },
-    { usuarios: { data: { id: 7 }, error: null } });
-  const res = await createProfileService(() => client).saveProfile({ name: 'Luis', nickname: 'LuisPro', age: 8 });
-  assert.equal(res.error, null);
-  assert.equal(res.profile.onboarding_completed, true);
+test('saveProfile sin perfil todavía (cuestionario inicial): lo crea con upsert por usuario_id', async () => {
+  // El update no encuentra fila (data: null) y entonces se crea el perfil completo.
+  const client = fakeClient({ data: null, error: null }, { usuarios: { data: { id: 7 }, error: null } });
+  await createProfileService(() => client).saveProfile({ name: 'Luis', nickname: 'LuisPro', age: 8 });
+  assert.deepEqual(client.calls.find((c) => c[0] === 'update'), ['update', { nombre: 'Luis', apodo: 'LuisPro', edad: 8 }]);
   const upsert = client.calls.find((c) => c[0] === 'upsert');
   assert.deepEqual(upsert, ['upsert', { usuario_id: 7, nombre: 'Luis', apodo: 'LuisPro', edad: 8 }, { onConflict: 'usuario_id' }]);
+});
+
+test('saveProfile con perfil existente: actualiza solo los campos enviados, sin upsert (NOT NULL de numu)', async () => {
+  const client = fakeClient({ data: { nombre: 'Luis', apodo: 'LuisPro', edad: 8, xp: 450, intereses: [] }, error: null },
+    { usuarios: { data: { id: 7 }, error: null } });
+  const res = await createProfileService(() => client).saveProfile({ xp: 450 });
+  assert.equal(res.error, null);
+  assert.equal(res.profile.xp, 450);
+  assert.equal(res.profile.onboarding_completed, true);
+  assert.deepEqual(client.calls.find((c) => c[0] === 'update'), ['update', { xp: 450 }]);
+  assert.deepEqual(client.calls.find((c) => c[0] === 'eq' && c[1] === 'usuario_id'), ['eq', 'usuario_id', 7]);
+  assert.equal(client.calls.some((c) => c[0] === 'upsert'), false, 'un upsert parcial fallaría por nombre/edad/pais NOT NULL');
 });
 
 test('getProfile sin fila de perfil devuelve null (cuestionario pendiente)', async () => {

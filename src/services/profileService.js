@@ -86,6 +86,18 @@ export function createProfileService(getClient = requireSupabase) {
       if (Object.keys(fields).length === 0) return { profile: null, error: 'No hay campos para guardar.' };
       const { usuarioId, error: idError } = await currentUsuarioId();
       if (idError) return { profile: null, error: idError };
+      // Perfil existente: se actualizan SOLO los campos enviados (p. ej. { xp } al terminar una ronda).
+      // Un upsert parcial falla en numu: Postgres exige las columnas NOT NULL (nombre, edad, pais,
+      // intereses) aunque la fila ya exista, y la XP nunca llegaba a la cuenta.
+      const updated = await getClient()
+        .from('perfil_usuario')
+        .update(fields)
+        .eq('usuario_id', usuarioId)
+        .select()
+        .maybeSingle();
+      if (updated.error) return { profile: null, error: updated.error.message };
+      if (updated.data) return { profile: fromProfileRow(updated.data), error: null };
+      // Aún no hay perfil (cuestionario inicial, con todos sus campos): se crea.
       const { data, error } = await getClient()
         .from('perfil_usuario')
         .upsert({ usuario_id: usuarioId, ...fields }, { onConflict: 'usuario_id' })

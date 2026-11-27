@@ -37,7 +37,7 @@ await db.exec(`
   -- (27-nov-2026): seis columnas character varying en lugar de text y puntuacion numeric.
   create table public.usuarios (id serial primary key, correo text, contrasena text not null, fecha_registro date);
   create table public.perfil_usuario (id serial primary key, usuario_id integer references public.usuarios (id),
-    nombre varchar(100), apodo varchar(50), edad integer, pais varchar(60), grado_escolar varchar(40), avatar integer default 0,
+    nombre varchar(50) not null, apodo varchar(50), edad integer not null, pais varchar(50) not null, grado_escolar varchar(50), avatar integer default 0,
     gemas integer not null default 0, xp integer not null default 0);
   create table public.resultados_examen_diagnostico (id serial primary key, usuario_id integer references public.usuarios (id),
     num_aciertos integer, puntuacion numeric, autoevaluacion varchar(30), respuestas json);
@@ -61,17 +61,24 @@ async function onboarding(sub, apodo) { // onboardingService.save
   await as(sub);
   const id = await usuarioId();
   await q(`insert into public.resultados_examen_diagnostico (usuario_id, num_aciertos, puntuacion, autoevaluacion, respuestas) values ($1, 3, 60, 'Sé un poco', '[]')`, [id]);
-  await q(`insert into public.perfil_usuario (usuario_id, nombre, apodo, edad, intereses) values ($1, 'Ficticio', $2, 9, '{aritmetica}')
-    on conflict (usuario_id) do update set nombre = excluded.nombre, apodo = excluded.apodo, edad = excluded.edad, intereses = excluded.intereses`, [id, apodo]);
+  await q(`insert into public.perfil_usuario (usuario_id, nombre, apodo, edad, pais, intereses) values ($1, 'Ficticio', $2, 9, 'México', '{aritmetica}')
+    on conflict (usuario_id) do update set nombre = excluded.nombre, apodo = excluded.apodo, edad = excluded.edad, pais = excluded.pais, intereses = excluded.intereses`, [id, apodo]);
   return id;
 }
-async function guardarPerfil(sub, fields) { // profileService.saveProfile (upsert absoluto)
+async function guardarPerfil(sub, fields) { // profileService.saveProfile: update de los campos enviados (perfil existente)
   await as(sub);
   const id = await usuarioId();
   const cols = Object.keys(fields);
-  const [row] = await q(`insert into public.perfil_usuario (usuario_id, ${cols.join(', ')}) values ($1, ${cols.map((_, i) => `$${i + 2}`).join(', ')})
-    on conflict (usuario_id) do update set ${cols.map((c) => `${c} = excluded.${c}`).join(', ')} returning gemas, xp`, [id, ...Object.values(fields)]);
+  const [row] = await q(`update public.perfil_usuario set ${cols.map((c, i) => `${c} = $${i + 2}`).join(', ')} where usuario_id = $1 returning gemas, xp`,
+    [id, ...Object.values(fields)]);
   return row;
+}
+async function upsertParcial(sub, fields) { // versión anterior de saveProfile (falla con NOT NULL)
+  await as(sub);
+  const id = await usuarioId();
+  const cols = Object.keys(fields);
+  return q(`insert into public.perfil_usuario (usuario_id, ${cols.join(', ')}) values ($1, ${cols.map((_, i) => `$${i + 2}`).join(', ')})
+    on conflict (usuario_id) do update set ${cols.map((c) => `${c} = excluded.${c}`).join(', ')} returning gemas, xp`, [id, ...Object.values(fields)]);
 }
 async function rondaCurso(sub, slug) { // progressService.recordRound
   await as(sub);
@@ -103,6 +110,10 @@ const anaId = await onboarding(ana, 'Ana');
 await onboarding(beto, 'Beto');
 await guardarPerfil(ana, { gemas: 100, xp: 1200 });
 await guardarPerfil(beto, { gemas: 25, xp: 300 });
+// Error reproducido de producción (27-nov): el upsert parcial de la versión anterior falla por NOT NULL.
+ok('el upsert parcial { xp } falla con las columnas NOT NULL reales (error de producción reproducido)',
+  await fails(() => upsertParcial(ana, { xp: 1300 })));
+ok('la actualización de los campos enviados sí guarda la XP', (await guardarPerfil(ana, { xp: 1200 })).xp === 1200);
 await rondaCurso(ana, 'aritmetica');
 await as(ana);
 await q(`select public.registrar_resultado_leccion('conteo-basico', 3)`);
