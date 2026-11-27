@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import confetti from 'canvas-confetti';
 import { Home, Lightbulb, X, Volume2 } from 'lucide-react';
@@ -86,6 +86,7 @@ export default function Game() {
   const [livesDepleted, setLivesDepleted] = useState(false);
   const [levelResult, setLevelResult] = useState(null);
   const [xpEarned, setXpEarned] = useState(0);
+  const roundClosedRef = useRef(false); // la ronda ya se cerró (recompensas concedidas)
   
   const currentQ = questions[index];
   const maxLives = store.get().maxLives;
@@ -197,7 +198,9 @@ export default function Game() {
 
   const finishRound = () => {
     // Salvaguarda: sin práctica disponible no hay ronda que cerrar, premios ni guardados.
-    if (isUnavailable || questions.length === 0) return;
+    // Y una ronda se cierra UNA sola vez: un doble clic no duplica recompensas ni guardados.
+    if (isUnavailable || questions.length === 0 || roundClosedRef.current) return;
+    roundClosedRef.current = true;
     setIsFinished(true);
     const stars = roundStars;
     const completedLevel = playedLevel; // parada de esta sección que se acaba de terminar

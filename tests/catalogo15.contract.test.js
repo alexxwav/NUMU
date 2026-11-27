@@ -90,7 +90,7 @@ test('siempre · published:false bloquea la práctica, también por URL directa'
 
 test('siempre · Game.jsx: sin práctica disponible no hay premios ni guardados; recompensas sin cambios', () => {
   const source = readFileSync(new URL('../src/views/Game.jsx', import.meta.url), 'utf8');
-  assert.match(source, /const finishRound = \(\) => \{\s*\/\/[^\n]*\n\s*if \(isUnavailable \|\| questions\.length === 0\) return;/);
+  assert.match(source, /if \(isUnavailable \|\| questions\.length === 0 \|\| roundClosedRef\.current\) return;\s*roundClosedRef\.current = true;/);
   assert.match(source, /if \(isUnavailable\) \{\s*return/);
   assert.match(source, /store\.addRewards\(\{ gems: stars \* 5, stars, xp: stars \* 50, levelStars: stars \}\)/);
   assert.equal((source.match(/store\.addRewards\(/g) ?? []).length, 1, 'un solo punto que da recompensas');

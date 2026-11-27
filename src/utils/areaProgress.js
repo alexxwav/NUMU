@@ -13,7 +13,8 @@ import { clampStars } from './stars.js';
 import { lessonLevelFor } from './lessonLevel.js';
 import { isLessonPublished, isLessonPlayable } from './lessonRound.js';
 import { normalizeModuleId, courseSlugForModule, ACTIVE_AREA_IDS, isActiveArea } from '../data/subjects.js';
-import { lessonTheoryPath, lessonPlayPath } from '../services/startRoute.js';
+import { lessonTheoryPath, lessonPlayPath, resolveContinueRoute } from '../services/startRoute.js';
+import { legacyMapHistory } from './xpProtection.js';
 
 // isLessonPlayable vive en lessonRound.js (una sola definición para juego, recomendador y rutas).
 export { ACTIVE_AREA_IDS, isActiveArea, isLessonPlayable };
@@ -136,12 +137,17 @@ export function getAreaRoute({ catalog, areaId, starsByLesson = {}, levelByLesso
     if (!published) status = 'no-publicada';
     else if (completed) status = 'terminada';
     else if (isNext) status = 'siguiente';
+    // Disponibilidad: publicada y con práctica, solo teoría (práctica aún no disponible) o no publicada.
+    let availability = 'disponible';
+    if (!published) availability = 'no-publicada';
+    else if (!playable) availability = 'practica-no-disponible';
     return {
       lessonId: lesson.id,
       position: lesson.position,
       title: lesson.title,
       published,
       playable,
+      availability,
       completed,
       isNext,
       status,
@@ -177,4 +183,26 @@ export function getLearningPath({ catalog, starsByLesson = {}, levelByLesson = {
     completedAreas: areas.filter((area) => area.isCompleted).map((area) => area.areaId),
     nextLessonId: firstNext?.nextLessonId ?? null,
   };
+}
+
+/**
+ * Modelo completo para la vista del mapa de 15 lecciones (lo dibuja OceanMap.jsx de Viviana).
+ * Solo lectura y calculado desde el progreso académico por lección:
+ * · areas: 3 áreas × 5 paradas (getLearningPath), con teoría, práctica y disponibilidad por lessonId.
+ * · continueTarget: destino de «Continuar» (siguiente lección pendiente; no repite una terminada).
+ * · legacyHistory: el mapa antiguo de 10 paradas por sección, intacto y congelado (no se migra).
+ * @param {{catalog: Object, state?: Object, starsByLesson?: Record<string, number>,
+ *   levelByLesson?: Record<string, number>, diagnosticScore?: number|null, recommendations?: Array}} input
+ *   state: el del store (lessonStars, lessonRounds, levelByModule, starsByModuleLevel); no se modifica.
+ */
+export function getMapModel({ catalog, state = {}, starsByLesson, levelByLesson, diagnosticScore = null, recommendations = [] } = {}) {
+  const stars = starsByLesson ?? state.lessonStars ?? {};
+  const levels = levelByLesson ?? Object.fromEntries(
+    Object.entries(state.lessonRounds ?? {}).filter(([, r]) => r?.level != null).map(([id, r]) => [id, r.level]),
+  );
+  const path = getLearningPath({ catalog, starsByLesson: stars, levelByLesson: levels, diagnosticScore });
+  const continueTarget = resolveContinueRoute({
+    catalog, lessonRounds: state.lessonRounds ?? {}, starsByLesson: stars, recommendations,
+  });
+  return { ...path, continueTarget, legacyHistory: legacyMapHistory(state) };
 }

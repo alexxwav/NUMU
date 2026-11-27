@@ -11,6 +11,7 @@ import { createLessonProgressService } from '../../src/services/lessonProgressSe
 import { starsForRound, academicStarsFor } from '../../src/utils/stars.js';
 import { levelAfterRound, lessonLevelFor } from '../../src/utils/lessonLevel.js';
 import { getLessonById } from '../../src/utils/lessonContent.js';
+import { readFileSync } from 'node:fs';
 
 export const APPROVED_LESSONS = Object.freeze({
   aritmetica: [
@@ -94,4 +95,53 @@ export function alumno({ catalog, db, usuarioId, diagnosticScore = 0, storeModul
     return { plan, saved: true, academic, roundStars, level, result, recommendations };
   };
   return me;
+}
+
+// ---------- Catálogo ficticio de 15 lecciones: 4 reales + 11 con ejercicios «[FICTICIO]» ----------
+const real = JSON.parse(readFileSync(new URL('../../src/data/lessonContent.json', import.meta.url), 'utf8'));
+const realLesson = (id) => real.courses.flatMap((c) => c.lessons).find((l) => l.id === id);
+
+// ---------- Catálogo de prueba de 15 lecciones ----------
+export function ficticio(id, level, n) {
+  const count = ((n + level) % 9) + 1;
+  const options = [count, count + 1, count + 2, count + 3];
+  return {
+    id: `${id}-n${level}-${n}`, prompt: `[FICTICIO] ${id} · nivel ${level} · pregunta ${n}`,
+    visual: { type: 'objects', icon: 'star', count }, options, answer_index: 0, correct_answer: count,
+    hint: '[FICTICIO] Pista.', feedback_correct: '[FICTICIO] ¡Bien!', feedback_incorrect: '[FICTICIO] Otra vez.',
+    semanticKey: JSON.stringify([`ficticio-${id}`, [level, n]]),
+  };
+}
+export const lessonV2 = (id, courseId, title, position, extra = {}) => ({
+  id, course_id: courseId, title, position, base_level: 1, published: true,
+  objective: '[FICTICIO] Objetivo.', explanation: '[FICTICIO] Teoría de la lección.',
+  guided_example: { mode: 'visual', visual: { type: 'objects', icon: 'star', count: 2 }, explanation: '[FICTICIO] Ejemplo.' },
+  levels: Object.fromEntries([1, 2, 3].map((lv) => [lv, { exercises: [1, 2, 3, 4, 5, 6].map((n) => ficticio(id, lv, n)) }])),
+  ...extra,
+});
+export function catalogo15(extra = {}) {
+  const v2 = (id, course, title, pos) => lessonV2(id, course, title, pos, extra[id] ?? {});
+  return {
+    courses: [
+      { id: 'aritmetica', title: 'Aritmética', position: 1, description: '—', lessons: [
+        realLesson('conteo-basico'), realLesson('sumas-basicas'),
+        v2('cuantos-quedan', 'aritmetica', '¿Cuántos quedan?', 3),
+        v2('grupos-iguales', 'aritmetica', 'Grupos iguales', 4),
+        v2('repartimos-por-igual', 'aritmetica', 'Repartimos por igual', 5),
+      ] },
+      { id: 'geometria-patrones', title: 'Geometría', position: 2, description: '—', lessons: [
+        realLesson('figuras'), realLesson('patrones'),
+        v2('la-mitad-del-espejo', 'geometria-patrones', 'La mitad del espejo', 3),
+        v2('una-vuelta-al-contorno', 'geometria-patrones', 'Una vuelta al contorno', 4),
+        v2('llenamos-el-mosaico', 'geometria-patrones', 'Llenamos el mosaico', 5),
+      ] },
+      { id: 'algebra', title: 'Álgebra', position: 3, description: '—', lessons: [
+        v2('escaleras-de-numeros', 'algebra', 'Escaleras de números', 1),
+        v2('la-balanza-de-numu', 'algebra', 'La balanza de NUMU', 2),
+        v2('el-numero-escondido', 'algebra', 'El número escondido', 3),
+        v2('la-maquina-de-reglas', 'algebra', 'La máquina de reglas', 4),
+        v2('de-un-dibujo-a-una-regla', 'algebra', 'De un dibujo a una regla', 5),
+      ] },
+    ],
+  };
 }
