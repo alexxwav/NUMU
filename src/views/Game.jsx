@@ -5,11 +5,13 @@ import { Home, Lightbulb, X, Volume2 } from 'lucide-react';
 import { store, getTotalXp } from '../state/store.js';
 import { generateQuestions, buildQuestionHint } from '../state/questions.js';
 import { lessonForModule, lessonLevelFromState, levelAfterRound, MAX_LESSON_LEVEL } from '../utils/lessonLevel.js';
-import { buildLessonRound, QUESTIONS_PER_ROUND } from '../utils/lessonRound.js';
+import { planLessonRound, isLessonPublished, QUESTIONS_PER_ROUND } from '../utils/lessonRound.js';
 import { sfx, speak } from '../utils/audio.js';
 import { useAuth } from '../hooks/useAuth.jsx';
 import { useLessonProgress } from '../hooks/useLessonProgress.js';
-import { academicStarsFor, needsReinforcement, starsForRound } from '../utils/stars.js';
+import { useRecommendations } from '../hooks/useRecommendations.js';
+import Recommendations from '../components/Recommendations.jsx';
+import { academicStarsFor, starsForRound } from '../utils/stars.js';
 import { roundProgressTargets } from '../utils/areaProgress.js';
 import { ROUTES } from '../services/startRoute.js';
 import { courseSlugForModule } from '../data/subjects.js';
@@ -56,11 +58,16 @@ export default function Game() {
   const [lessonLevel] = useState(() => (lessonEntry ? lessonLevelFromState(store.get(), lessonEntry.lesson.id) : null));
 
   // Estados del juego
-  const [questions] = useState(() => {
-    // Lección: ejercicios según su nivel (nivel 1 catálogo de Viviana; 2 y 3 generador con R12–R14).
-    if (lessonEntry) return buildLessonRound({ lesson: lessonEntry.lesson, level: lessonLevel });
-    return generateQuestions(moduleId, 1, QUESTIONS_PER_ROUND);
+  // Lección del catálogo: planLessonRound decide cómo se arma la ronda (legacy de las 4 actuales,
+  // selector v2 o «no disponible»). Nunca usa conteo como respaldo ni abre lecciones no publicadas.
+  // Una ruta /lecciones/:id/jugar con un id inexistente tampoco se juega.
+  const [roundPlan] = useState(() => {
+    if (lessonEntry) return planLessonRound({ lesson: lessonEntry.lesson, level: lessonLevel });
+    if (lessonId) return { mode: 'unavailable', questions: [], reasons: ['La lección no existe en el catálogo.'] };
+    return { mode: 'legacy', questions: generateQuestions(moduleId, 1, QUESTIONS_PER_ROUND), reasons: [] };
   });
+  const questions = roundPlan.questions;
+  const isUnavailable = roundPlan.mode === 'unavailable';
 
   const [index, setIndex] = useState(0);
   const [mistakes, setMistakes] = useState(0); // errores de la ronda (para las estrellas)
@@ -85,8 +92,19 @@ export default function Game() {
   const progressPercent = (index / questions.length) * 100;
   // Estrellas de la ronda: 0 si se acabaron las vidas, de 1 a 3 según los errores.
   const roundStars = starsForRound({ total: questions.length, mistakes, approved: lives > 0 });
-  // El resultado solo ofrece refuerzo tras una ronda con errores; con 3 estrellas no hay mensajes.
-  const showReinforcement = Boolean(lessonEntry) && needsReinforcement({ mistakes, stars: roundStars });
+  // Siguiente actividad: la decide el recomendador con el resultado ACADÉMICO de la ronda (C1, R7–R10):
+  // 0 estrellas y sin aprobar si se agotaron las vidas; tras 3 estrellas, siguiente lección del área
+  // y seguir practicando el nivel nuevo (por eso hasta 2 sugerencias).
+  const { recommendations: nextSteps } = useRecommendations({
+    lastRound: isFinished && lessonEntry ? {
+      lessonId: lessonEntry.lesson.id,
+      stars: academicStarsFor({ roundStars, livesDepleted }),
+      approved: lives > 0 && !livesDepleted,
+      levelBefore: lessonLevel,
+      levelAfter: levelResult?.level ?? lessonLevel,
+    } : null,
+    limit: 2,
+  });
 
   // Escuchar la instrucción al cargar la pregunta
   useEffect(() => {
@@ -229,6 +247,31 @@ export default function Game() {
     </aside>
   );
 
+  // --- Práctica no disponible: lección no publicada, inexistente o sin 6 preguntas distintas ---
+  // Salida segura: no se juega, no se guarda progreso y no se otorgan recompensas.
+  if (isUnavailable) {
+    return (
+      <div className="min-h-screen bg-soft-lavender text-text-dark flex flex-col items-center justify-center px-6 py-10 text-center font-poppins">
+        <div className="w-full max-w-md rounded-card bg-white px-6 py-8 shadow-lg" role="status">
+          <div className="mx-auto mb-4 grid h-20 w-20 place-items-center rounded-full bg-soft-lavender p-3">
+            <img src={mascotUrl} alt="" className="h-full w-full object-contain" />
+          </div>
+          <p className="font-fredoka font-bold text-3xl text-numu-purple">Práctica no disponible</p>
+          <p className="mt-2 text-base text-text-dark/70">
+            Esta práctica todavía se está preparando. Vuelve pronto o elige otra lección.
+          </p>
+          <button
+            type="button"
+            onClick={() => { sfx.tap(); navigate(lessonEntry && isLessonPublished(lessonEntry.lesson) ? exitTo : ROUTES.home); }}
+            className="mt-6 w-full min-h-[64px] rounded-btn bg-numu-purple text-white font-fredoka font-bold text-xl shadow-3d-primary active:translate-y-1 active:shadow-none transition-all"
+          >
+            Volver
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // --- Vista de Resultados (Frame 5) ---
   if (isFinished) {
     const stars = roundStars;
@@ -264,19 +307,10 @@ export default function Game() {
           </p>
         )}
 
-        {showReinforcement && (
-          <div className="relative z-10 w-full max-w-md mb-8 rounded-card bg-white px-5 py-5 text-left text-text-dark shadow-lg">
-            <p className="font-fredoka font-bold text-xl text-numu-purple mb-1">Refuerza esta habilidad</p>
-            <p className="font-poppins text-base">
-              Tuviste varios errores en esta ronda. ¿Quieres practicar «{lessonEntry.lesson.title}» de nuevo para dominarla?
-            </p>
-            <button
-              type="button"
-              onClick={() => { sfx.tap(); navigate(`/lecciones/${lessonEntry.lesson.id}/jugar`); }}
-              className="mt-4 min-h-[64px] w-full rounded-btn bg-orange-energy text-white font-fredoka font-bold text-lg shadow-3d-orange active:translate-y-1 active:shadow-none transition-all"
-            >
-              Reforzar ahora
-            </button>
+        {lessonEntry && nextSteps.length > 0 && (
+          <div className="relative z-10 w-full max-w-md mb-8">
+            <p className="font-fredoka font-bold text-xl mb-3">¿Qué sigue?</p>
+            <Recommendations recommendations={nextSteps} compact />
           </div>
         )}
 

@@ -1,4 +1,6 @@
 import { initialLevelForScore, lessonLevelFor, MAX_LESSON_LEVEL } from '../utils/lessonLevel.js';
+import { isLessonPublished, hasLegacyRound, lessonCoverage } from '../utils/lessonRound.js';
+import { isLessonCompleted } from '../utils/areaProgress.js';
 
 // Sistema de recomendación de NUMU: reglas deterministas, sin modelos predictivos.
 //
@@ -24,7 +26,10 @@ export const CRITERIA = Object.freeze({
   C7: 'Si todas las lecciones están dominadas, se sugiere un repaso de la primera lección del curso de interés.',
   C8: 'Se muestran como máximo 3 recomendaciones y nunca dos sobre la misma lección.',
   C9: 'Para decidir reforzar, continuar o avanzar se usa la última ronda de cada lección cuando existe; si no, la mejor puntuación. La mejor sigue siendo la que cuentan premios y logros.',
-  C10: 'Si una lección se dominó (3 estrellas) y por eso subió de nivel sin llegar al máximo, se recomienda practicarla en su nuevo nivel antes de pasar a otra lección.',
+  C10: 'Si una lección se dominó (3 estrellas) y por eso subió de nivel sin llegar al máximo, se ofrece seguir practicándola en su nuevo nivel (después de la siguiente lección del área, C12).',
+  C12: 'Tras una ronda de 3 estrellas se recomienda primero la siguiente lección no terminada (T2) de la misma área, por posición (R17).',
+  C13: 'Si todas las lecciones disponibles del área tienen 3 estrellas, se recomienda la primera lección no terminada de otra área (interés primero).',
+  C16: 'Nunca se recomiendan lecciones no publicadas ni lecciones que no reúnen 6 preguntas distintas en su nivel.',
 });
 
 export const RECOMMENDATION_TYPES = Object.freeze({
@@ -108,10 +113,10 @@ export function buildRecommendations({
     if (ia !== ib) return (ia === -1 ? Infinity : ia) - (ib === -1 ? Infinity : ib);
     return a.position - b.position;
   });
-  const ordered = courses.flatMap((course) => [...course.lessons]
+  const catalogOrder = courses.flatMap((course) => [...course.lessons]
     .sort((a, b) => a.position - b.position)
     .map((lesson) => ({ lesson, course })));
-  const byId = new Map(ordered.map((entry) => [entry.lesson.id, entry]));
+  const byId = new Map(catalogOrder.map((entry) => [entry.lesson.id, entry]));
 
   // Mejor y última estrella por lección. La ronda recién terminada es la última y puede subir la mejor.
   const best = {};
@@ -131,6 +136,11 @@ export function buildRecommendations({
   const levels = { ...(levelByLesson ?? {}) };
   if (round && Number.isInteger(round.levelAfter)) levels[round.lessonId] = round.levelAfter;
   const levelOf = (lessonId) => lessonLevelFor({ lessonId, levelByLesson: levels, diagnosticScore });
+  // C16: solo se recomiendan lecciones publicadas que se pueden jugar en su nivel: las 4 actuales
+  // siempre (tienen su flujo de juego); las de formato v2, si ese nivel reúne 6 preguntas distintas.
+  // Nunca se ofrece una ruta a una lección no publicada o imposible de jugar.
+  const ordered = catalogOrder.filter(({ lesson }) => isLessonPublished(lesson)
+    && (hasLegacyRound(lesson) || lessonCoverage({ lesson, level: levelOf(lesson.id), samples: 60 }).playable));
   const hasStoredLevel = (lessonId) => levels[lessonId] !== null && levels[lessonId] !== undefined;
   const bestOf = (lessonId) => best[lessonId] ?? 0;
   const hasLatest = (lessonId) => Object.hasOwn(latest, lessonId);
@@ -165,6 +175,14 @@ export function buildRecommendations({
     const start = afterLessonId ? ordered.findIndex((e) => e.lesson.id === afterLessonId) + 1 : 0;
     return [...ordered.slice(start), ...ordered.slice(0, start)].find((e) => !started(e.lesson.id)) ?? null;
   };
+  // C12 (R17): primera lección no terminada (T2 = mejor de 3) de la misma área, por posición.
+  const nextInArea = (current) => ordered
+    .filter((e) => e.course.id === current.course.id && e.lesson.id !== current.lesson.id)
+    .find((e) => !isLessonCompleted(bestOf(e.lesson.id))) ?? null;
+  // C13: con el área completa, la primera lección no terminada de otra área (interés primero, C6).
+  const nextInOtherArea = (current) => ordered
+    .filter((e) => e.course.id !== current.course.id)
+    .find((e) => !isLessonCompleted(bestOf(e.lesson.id))) ?? null;
 
   // C1: la ronda recién terminada manda (R10 antes que R7–R9).
   if (round) {
@@ -182,15 +200,27 @@ export function buildRecommendations({
     } else if (round.stars === 2) {
       add(CONTINUAR, entry, `¡Vas muy bien en ${name}! Una ronda más para ganar las 3 estrellas.`,
         `Tuviste 2 o 3 errores: se mantiene la dificultad y se sigue practicando.${at}`, ['R8', 'C1']);
-    } else if (round.stars === 3 && leveledUp) {
-      add(AVANZAR, entry, `¡Excelente! Sube la dificultad: ${name}, nivel ${round.levelAfter}.`,
-        `Dominaste el nivel ${round.levelBefore} con 0 o 1 errores, así que esta lección sube al nivel ${round.levelAfter}.`,
-        ['R7', 'C1', 'C10']);
     } else if (round.stars === 3) {
-      const next = nextUnstarted(round.lessonId);
+      // Prioridad aprobada (contrato v1.1 §6): primero la siguiente lección de la misma área,
+      // después seguir practicando el nivel nuevo; con el área completa, otra área.
+      const next = nextInArea(entry);
       if (next) {
         add(AVANZAR, next, `¡Excelente! Puedes continuar con un nuevo desafío: ${next.lesson.title.toLowerCase()}.`,
-          `Dominaste ${name} con 0 o 1 errores, así que puedes avanzar a la siguiente lección.`, ['R7', 'C1', 'C4']);
+          `Dominaste ${name} con 0 o 1 errores, así que puedes avanzar a la siguiente lección de ${entry.course.title}.`,
+          ['R7', 'C1', 'C4', 'C12']);
+      }
+      if (leveledUp) {
+        add(AVANZAR, entry, `¡Excelente! Sube la dificultad: ${name}, nivel ${round.levelAfter}.`,
+          `Dominaste el nivel ${round.levelBefore} con 0 o 1 errores, así que esta lección sube al nivel ${round.levelAfter}.`,
+          ['R7', 'C1', 'C10']);
+      }
+      if (!next) {
+        const other = nextInOtherArea(entry);
+        if (other) {
+          add(AVANZAR, other, `¡Terminaste ${entry.course.title}! Explora ${other.course.title}: ${other.lesson.title.toLowerCase()}.`,
+            `Todas las lecciones disponibles de ${entry.course.title} tienen 3 estrellas, así que puedes empezar otra área.`,
+            ['R7', 'C1', 'C13']);
+        }
       }
     }
   }

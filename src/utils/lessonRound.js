@@ -299,3 +299,34 @@ export function selectLessonQuestions({ lesson, level, count = QUESTIONS_PER_ROU
   }
   return result(chosen);
 }
+
+/** ¿Es una de las lecciones actuales que el juego ya sabe armar (generador registrado)? */
+export function hasLegacyRound(lesson) {
+  return isKnownGenerator(lesson?.module_id);
+}
+
+/**
+ * Cómo arma Game.jsx la ronda de una lección (contrato v1.1 §4). Nunca usa conteo como respaldo.
+ * · 'unavailable': lección no publicada (también por URL directa), sin contenido para el nivel
+ *   o sin forma segura de armar 6 preguntas distintas → «Práctica no disponible», sin guardar nada.
+ * · 'selector':    lección con `levels` (v2 o ampliación) y 6 preguntas distintas jugables.
+ * · 'legacy':      una de las 4 lecciones actuales con buildLessonRound, igual que siempre. Si tiene
+ *   una ampliación que todavía no es jugable (falta el adaptador de Viviana), se conserva este flujo
+ *   temporalmente para no romper el juego actual.
+ * @returns {{mode: 'legacy'|'selector'|'unavailable', questions: Object[], reasons: string[]}}
+ */
+export function planLessonRound({ lesson, level, count = QUESTIONS_PER_ROUND, random = Math.random } = {}) {
+  if (!lesson) return { mode: 'unavailable', questions: [], reasons: ['La lección no existe en el catálogo.'] };
+  if (!isLessonPublished(lesson)) return { mode: 'unavailable', questions: [], reasons: ['La lección no está publicada.'] };
+
+  const legacy = () => ({ mode: 'legacy', questions: buildLessonRound({ lesson, level, count, random }), reasons: [] });
+  const hasLevels = Boolean(lesson.levels) && typeof lesson.levels === 'object' && Object.keys(lesson.levels).length > 0;
+  if (hasLevels) {
+    const selection = selectLessonQuestions({ lesson, level, count, random });
+    if (selection.playable) return { mode: 'selector', questions: selection.questions, reasons: selection.reasons };
+    if (hasLegacyRound(lesson)) return { ...legacy(), reasons: selection.reasons };
+    return { mode: 'unavailable', questions: [], reasons: selection.reasons };
+  }
+  if (hasLegacyRound(lesson)) return legacy();
+  return { mode: 'unavailable', questions: [], reasons: ['La lección no tiene ejercicios por nivel ni un generador registrado.'] };
+}

@@ -154,11 +154,15 @@ test('6. 3 estrellas y luego 1: la mejor sigue en 3, la última es 1 y se recomi
   assert.match(rec.reason, /mejor marca sigue siendo de 3/);
 });
 
-test('6b. tras subir de nivel (C10) se recomienda la misma lección en su nuevo nivel; en el máximo, la siguiente', () => {
-  const justNow = buildRecommendations({
+test('6b. tras subir de nivel: primero la siguiente lección del área (C12) y luego seguir practicando el nivel nuevo (C10)', () => {
+  const [next, practice] = buildRecommendations({
     catalog,
     lastRound: { lessonId: 'conteo-basico', stars: 3, approved: true, levelBefore: 1, levelAfter: 2 },
-  }).recommendations[0];
+  }).recommendations;
+  assert.equal(next.type, T.AVANZAR);
+  assert.equal(next.lessonId, 'sumas-basicas', 'siguiente lección no terminada de Aritmética');
+  assert.ok(next.rules.includes('C12'));
+  const justNow = practice;
   assert.equal(justNow.type, T.AVANZAR);
   assert.equal(justNow.lessonId, 'conteo-basico');
   assert.deepEqual(justNow.rules, ['R7', 'C1', 'C10']);
