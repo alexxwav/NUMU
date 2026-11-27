@@ -78,3 +78,24 @@ test('las rondas de las 11 lecciones nuevas no escriben en el mapa antiguo; las 
     else assert.deepEqual([targets.recordsModuleProgress, targets.moduleId], [true, lesson.module_id], lesson.id);
   }
 });
+
+test('Álgebra: la vista del curso muestra su mapa de 5 paradas aunque ninguna práctica esté publicada', () => {
+  const index = read('../src/components/lessonExamples/CourseTheoryIndex.jsx');
+  assert.doesNotMatch(index, /hasPractice && children/, 'ya no oculta la vista del curso');
+  assert.match(index, /\{children\}/);
+  const algebra = getMapModel({ catalog }).areas.find((a) => a.areaId === 'algebra');
+  assert.equal(algebra.stops.length, 5);
+  for (const stop of algebra.stops) {
+    assert.deepEqual([stop.availability, stop.playPath, stop.isNext], ['no-publicada', null, false], stop.lessonId);
+    assert.equal(stop.theoryPath, `/lecciones/${stop.lessonId}`, 'la teoría se puede abrir');
+  }
+});
+
+test('el historial del mapa antiguo solo aparece en áreas con rutas por sección y Álgebra no cambia el módulo', () => {
+  const view = read('../src/views/CourseView.jsx');
+  assert.match(view, /const hasLegacyRoutes = routeModules\.some\(\(route\) => normalizeModuleId\(route\.moduleId\)\);/);
+  assert.match(view, /if \(!hasLegacyRoutes\) return;/);
+  assert.match(view, /\{hasLegacyRoutes && \(\s*<section aria-labelledby="ruta-titulo">/);
+  const withLegacy = catalog.courses.filter((c) => c.lessons.some((l) => l.published !== false && l.module_id)).map((c) => c.id);
+  assert.deepEqual(withLegacy, ['aritmetica', 'geometria-patrones']);
+});

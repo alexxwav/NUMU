@@ -108,3 +108,22 @@ Antes de aplicar cada una en producción:
 | Conteo N1–N2 | Viviana + equipo | Decidir la evidencia semántica (hoy cobertura 4 y 5; se juega con el flujo anterior). |
 | XP de lecciones nuevas | equipo | Decidir la regla (hoy «+0 XP»). |
 | XP histórica | equipo | Autorizar los cambios de la sección 3 y la migración 2. |
+
+## 6. Reglas provisionales de economía (aprobadas para la integración local)
+
+| Regla | Dónde se cumple | Prueba |
+|---|---|---|
+| La XP histórica nunca baja al recalcular el mapa | `store.load`, `applyModuleProgress`, `useAuth.loadProfile/recordRound`, Home | `tests/xpRegresion.test.js` |
+| Repetir una parada sin mejorar: +0 XP | `store.recordModuleRound` (suma solo lo que sube la XP derivada) | «suma solo las estrellas mejoradas» |
+| Mejorar una estrella del mapa antiguo: +50 XP | `getTotalXp` (XP_PER_STAR = 50) | ídem |
+| Lecciones nuevas: +0 XP | `addRewards` ya no suma XP; las lecciones nuevas no tienen parada | «secuencia real de Game.jsx» |
+| Gemas: +5 por estrella de la ronda, sin duplicar | `Game.finishRound` + `roundClosedRef` | `tests/recorridoIntegral.test.js` (13) |
+
+`addRewards` solo se llama en `Game.finishRound` (una vez por ronda). Antes sumaba XP que luego se
+sobrescribía con la derivada; con la XP protegida esa suma se habría conservado (XP por repetir y por
+lecciones nuevas), por eso ya no suma XP. Gemas y estrellas siguen igual.
+
+**Contradicción documentada (sin resolver, anterior a este bloque):** las compras bajan gemas solo en
+el dispositivo (`ShopView` → `store.purchase`, sin `saveProfile`) y `loadProfile` toma
+`max(gemas locales, gemas de la cuenta)`. Al iniciar sesión antes de terminar otra ronda, las gemas
+gastadas vuelven. Requiere decidir cómo sincronizar compras; no se inventó una regla.

@@ -8,17 +8,16 @@ export default function CourseTheoryIndex({ children }) {
   if (!course) return children;
 
   const lessons = getLessonsForCourse(catalog, courseId, { includeUnpublished: true });
+  // La vista del curso (mapa de 5 lecciones) se muestra siempre, también en un área sin prácticas
+  // publicadas (p. ej. Álgebra): sus paradas quedan con candado y abren solo la teoría.
   const hasPractice = lessons.some(isLessonPublished);
-  const Container = hasPractice ? 'div' : 'main';
-  const Heading = hasPractice ? 'h2' : 'h1';
   return (
     <>
-      <Container className="bg-soft-lavender px-6 py-6 md:px-10">
+      <div className="bg-soft-lavender px-6 py-6 md:px-10">
         <section aria-labelledby="guia-del-curso" className="mx-auto max-w-4xl rounded-card border-2 border-gray-100 bg-white p-5 text-text-dark shadow-sm">
-          {!hasPractice && <Link to="/cursos" className="inline-flex min-h-touch items-center font-bold text-numu-purple underline">Volver a cursos</Link>}
-          <Heading id="guia-del-curso" className="font-fredoka text-2xl font-bold">
+          <h2 id="guia-del-curso" className="font-fredoka text-2xl font-bold">
             {hasPractice ? 'Teoría y ejemplos' : course.title + ' · Teoría y ejemplos'}
-          </Heading>
+          </h2>
           <ol className="mt-2 list-decimal pl-5">
             {lessons.map(lesson => (
               <li key={lesson.id}>
@@ -29,8 +28,8 @@ export default function CourseTheoryIndex({ children }) {
             ))}
           </ol>
         </section>
-      </Container>
-      {hasPractice && children}
+      </div>
+      {children}
     </>
   );
 }

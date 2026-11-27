@@ -141,3 +141,15 @@ test('el mapa antiguo se conserva como historial de solo lectura', () => {
   assert.throws(() => { history.sections[0].starsByStop[1] = 0; }, TypeError, 'congelado');
   assert.equal(JSON.stringify(STORED.starsByModuleLevel), before, 'el estado original no cambia');
 });
+
+test('CONTRADICCIÓN DOCUMENTADA (sin resolver) · una compra no se guarda en la cuenta y al iniciar sesión vuelve el máximo de gemas', () => {
+  // Regla aprobada: las compras pueden bajar gemas. Flujo actual: ShopView solo llama a store.purchase
+  // (local) y loadProfile toma max(gemas locales, gemas de la cuenta). No se inventa otra regla aquí.
+  const shop = readFileSync(new URL('../src/views/ShopView.jsx', import.meta.url), 'utf8');
+  assert.doesNotMatch(shop, /saveProfile/, 'la compra no se envía a la cuenta en ese momento');
+  assert.match(useAuthSource, /gems: Math\.max\(local\.gems, profile\.gems\)/);
+  const remoteGems = 40; // cuenta antes de comprar
+  const afterPurchase = 15; // dispositivo tras comprar
+  assert.equal(Math.max(0, remoteGems), 40, 'otro dispositivo (o tras cerrar sesión) recupera 40: la compra se pierde');
+  assert.equal(Math.max(afterPurchase, remoteGems), 40, 'mismo dispositivo al volver a iniciar sesión: también 40');
+});
