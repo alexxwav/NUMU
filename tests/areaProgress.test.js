@@ -58,10 +58,14 @@ test('R16 · cinco lecciones con T2 completan el área; cuatro no', () => {
   assert.equal(isAreaCompleted({ catalog, areaId: 'algebra', starsByLesson: four }), false);
 });
 
-test('R16 · con el catálogo actual (2 lecciones por área) ningún área está completa', () => {
+// Catálogo oficial integrado (Viviana b3687f8): 5 lecciones por área; solo 4 publicadas en total.
+test('R16 · catálogo oficial: el área se completa con sus 5 lecciones, no solo con las publicadas', () => {
   for (const area of realCatalog.courses) {
-    const stars = Object.fromEntries(area.lessons.map((l) => [l.id, 3]));
-    assert.equal(isAreaCompleted({ catalog: realCatalog, areaId: area.id, starsByLesson: stars }), false, area.id);
+    assert.equal(area.lessons.length, LESSONS_PER_AREA, area.id);
+    const published = Object.fromEntries(area.lessons.filter((l) => l.published !== false).map((l) => [l.id, 3]));
+    assert.equal(isAreaCompleted({ catalog: realCatalog, areaId: area.id, starsByLesson: published }), false, `${area.id}: solo publicadas`);
+    const all = Object.fromEntries(area.lessons.map((l) => [l.id, 3]));
+    assert.equal(isAreaCompleted({ catalog: realCatalog, areaId: area.id, starsByLesson: all }), true, `${area.id}: las 5`);
   }
 });
 
@@ -95,7 +99,7 @@ test('getAreaRoute: una parada por lessonId con estado, mejor estrella y nivel, 
   assert.equal(route.stops[2].level, 1, 'nivel inicial por diagnóstico (R1)');
   // Solo rutas existentes: teoría para las publicadas; práctica solo si se puede jugar.
   assert.equal(route.stops[0].theoryPath, '/lecciones/escaleras-de-numeros');
-  assert.equal(route.stops[4].theoryPath, null, 'no publicada: sin teoría ni práctica');
+  assert.equal(route.stops[4].theoryPath, '/lecciones/de-un-dibujo-a-una-regla', 'no publicada: solo su teoría (LessonView la muestra sin práctica)');
   assert.equal(route.stops[4].playPath, null);
   assert.ok(route.stops.every((s) => s.playPath === null || s.playPath === `${s.theoryPath}/jugar`));
   assert.equal(JSON.stringify({ withUnpublished, stars }), before);
@@ -104,5 +108,7 @@ test('getAreaRoute: una parada por lessonId con estado, mejor estrella y nivel, 
 
 test('getAreaRoute funciona con las áreas actuales por lessonId', () => {
   const route = getAreaRoute({ catalog: realCatalog, areaId: 'geometria-patrones', starsByLesson: { figuras: 3 } });
-  assert.deepEqual(route.stops.map((s) => [s.lessonId, s.status]), [['figuras', 'terminada'], ['patrones', 'siguiente']]);
+  assert.deepEqual(route.stops.map((s) => [s.lessonId, s.status]), [['figuras', 'terminada'], ['patrones', 'siguiente'],
+    ['la-mitad-del-espejo', 'no-publicada'], ['una-vuelta-al-contorno', 'no-publicada'], ['llenamos-el-mosaico', 'no-publicada']]);
+  assert.ok(route.stops.slice(2).every((s) => s.playPath === null), 'las no publicadas no abren práctica');
 });

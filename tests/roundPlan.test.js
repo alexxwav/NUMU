@@ -33,13 +33,16 @@ test('regresión: las 4 lecciones actuales se juegan en los niveles 1, 2 y 3 con
     for (const level of [1, 2, 3]) {
       for (let run = 0; run < 25; run++) {
         const plan = planLessonRound({ lesson: lessons[id], level });
-        // Sin repetir preguntas donde hay 6 distintas. Flujo legacy temporal (con repetidas) en:
-        // Figuras N1–N3 (hasta su ampliación) y Conteo N1–N2 (decisión pendiente sobre su evidencia).
-        const legacyExpected = id === 'figuras' || (id === 'conteo-basico' && level < 3);
+        // Sin repetir preguntas donde hay 6 distintas. Flujo legacy temporal (con repetidas) solo en
+        // Conteo N1–N2 (decisión pendiente sobre su evidencia). Figuras ya juega con su ampliación.
+        const legacyExpected = id === 'conteo-basico' && level < 3;
         assert.equal(plan.mode, legacyExpected ? 'legacy' : 'selector', `${id} N${level}`);
         assert.equal(plan.questions.length, QUESTIONS_PER_ROUND, `${id} N${level}`);
         assert.ok(plan.questions.every((q) => q.level === level));
-        if (level > 1) assert.ok(plan.questions.every((q) => q.source === 'generador'), 'N2–N3: el mismo generador (R12–R14)');
+        // N2–N3: el mismo generador (R12–R14); Figuras, el banco editorial de su nivel (sin generador).
+        const levelIds = new Set((lessons[id].levels?.[level]?.exercises ?? []).map((e) => e.id));
+        if (level > 1 && id === 'figuras') assert.ok(plan.questions.every((q) => q.source === 'catalogo' && levelIds.has(q.id)), 'Figuras N2–N3: su banco');
+        else if (level > 1) assert.ok(plan.questions.every((q) => q.source === 'generador'), 'N2–N3: el mismo generador (R12–R14)');
         if (!legacyExpected) assert.equal(new Set(plan.questions.map(questionSignature)).size, QUESTIONS_PER_ROUND, `${id} N${level}: sin repetidas`);
       }
     }

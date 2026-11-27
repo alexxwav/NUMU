@@ -79,7 +79,14 @@ export default function Game() {
   const reduceMotion = Boolean(store.get().settings?.reduceMotion);
   const [answered, setAnswered] = useState(false);
   const [selectedOption, setSelectedOption] = useState(null);
-  const [sheet, setSheet] = useState(null); // Controla el mensaje emergente de abajo
+  // Controla el mensaje emergente de abajo. Entrar a una ronda con 0 vidas no es válido: se muestra el
+  // mismo aviso de vidas agotadas (Salir / Recargar) antes de la primera pregunta. No da vidas extra.
+  const [sheet, setSheet] = useState(() => (!isUnavailable && store.get().lives <= 0 ? {
+    kind: 'danger',
+    title: '¡Se acabaron las vidas!',
+    message: 'Recarga tus corazones para empezar la ronda.',
+    isGameOver: true,
+  } : null));
   const [isFinished, setIsFinished] = useState(false);
   const [lives, setLives] = useState(() => store.get().lives);
   // R10: si en esta ronda las vidas llegaron a 0, no hay avance académico aunque se recarguen.
@@ -124,7 +131,8 @@ export default function Game() {
   };
 
   const handleAnswer = (optionIndex) => {
-    if (answered) return;
+    // Sin vidas no se responde: primero se recargan con el botón existente.
+    if (answered || lives <= 0) return;
     setAnswered(true);
     setSelectedOption(optionIndex);
 

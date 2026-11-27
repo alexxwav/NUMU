@@ -52,9 +52,10 @@ test('4 · cada lección publicada inicia una ronda de 6 preguntas distintas (15
       const plan = planLessonRound({ lesson: getLessonById(catalog, id).lesson, level });
       assert.notEqual(plan.mode, 'unavailable', `${id} N${level}`);
       assert.equal(plan.questions.length, QUESTIONS_PER_ROUND);
-      // Excepciones conocidas con flujo legacy temporal (pueden repetir): Figuras N1–N3 (hasta integrar
-      // la ampliación de Viviana) y Conteo N1–N2 (la evidencia de contar objetos es solo la cantidad).
-      if (id === 'figuras' || (id === 'conteo-basico' && level < 3)) { assert.equal(plan.mode, 'legacy'); continue; }
+      // Única excepción con flujo legacy temporal (puede repetir): Conteo N1–N2 (la evidencia de contar
+      // objetos es solo la cantidad). Figuras ya usa el selector con la ampliación integrada de Viviana.
+      if (id === 'conteo-basico' && level < 3) { assert.equal(plan.mode, 'legacy'); continue; }
+      assert.equal(plan.mode, 'selector', `${id} N${level}`);
       assert.equal(new Set(plan.questions.map(questionSignature)).size, QUESTIONS_PER_ROUND, `${id} N${level}: distintas`);
     }
   }
@@ -148,8 +149,8 @@ test('12 · las cuatro lecciones antiguas conservan ids, flujo legacy y registro
   const fede = alumno({ catalog, db, usuarioId: 6 });
   for (const id of ['conteo-basico', 'sumas-basicas', 'figuras', 'patrones']) {
     const r = await fede.play(id, { mistakes: 0 });
-    // Nivel 1 (diagnóstico 0): Figuras y Conteo usan el flujo legacy temporal; Sumas y Patrones, el selector.
-    assert.equal(r.plan.mode, ['figuras', 'conteo-basico'].includes(id) ? 'legacy' : 'selector', id);
+    // Nivel 1 (diagnóstico 0): solo Conteo usa el flujo legacy temporal; Sumas, Figuras y Patrones, el selector.
+    assert.equal(r.plan.mode, id === 'conteo-basico' ? 'legacy' : 'selector', id);
     assert.equal(r.plan.questions.length, QUESTIONS_PER_ROUND);
   }
   assert.deepEqual(fede.moduleWrites, ['conteo', 'aritmetica', 'geometria', 'patrones'], 'su mapa por sección sigue igual');
@@ -172,7 +173,7 @@ test('13 · lección no publicada o sin cobertura: práctica no disponible, sin 
   assert.equal(db.rows.size, 0, 'sin guardados');
   const stops = getLearningPath({ catalog }).areas.flatMap((a) => a.stops);
   const grupos = stops.find((s) => s.lessonId === 'grupos-iguales');
-  assert.deepEqual([grupos.status, grupos.theoryPath, grupos.playPath], ['no-publicada', null, null]);
+  assert.deepEqual([grupos.status, grupos.theoryPath, grupos.playPath], ['no-publicada', '/lecciones/grupos-iguales', null], 'solo teoría');
   const maquina = stops.find((s) => s.lessonId === 'la-maquina-de-reglas');
   assert.deepEqual([maquina.published, maquina.playable, maquina.playPath], [true, false, null], 'teoría sí, práctica no');
   const recs = buildRecommendations({ catalog, starsByLesson: Object.fromEntries([...IDS.aritmetica.slice(0, 3), ...IDS.algebra.slice(0, 3)].map((id) => [id, 3])), limit: 3 }).recommendations;

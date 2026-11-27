@@ -107,7 +107,9 @@ export function buildRecommendations({
   // Solo las áreas activas del alcance actual (Aritmética, Geometría y Álgebra). Un área fuera de
   // alcance que exista en algún catálogo no se recomienda; su progreso guardado no se toca.
   const activeCourses = (catalog?.courses ?? []).filter((course) => isActiveArea(course.id));
-  const courseIds = new Set(activeCourses.map((course) => course.id));
+  // R6/C16: un curso cuenta como disponible solo si tiene al menos una lección publicada; si no,
+  // el interés se muestra como «Próximamente» (p. ej. Álgebra mientras sus 5 lecciones no se publiquen).
+  const courseIds = new Set(activeCourses.filter((course) => (course.lessons ?? []).some(isLessonPublished)).map((course) => course.id));
   const interestCourses = [...new Set(chosen.map((id) => INTEREST_COURSES[id]).filter((id) => id && courseIds.has(id)))];
   const unavailableInterests = chosen
     .filter((id) => !INTEREST_COURSES[id] || !courseIds.has(INTEREST_COURSES[id]))
@@ -191,10 +193,14 @@ export function buildRecommendations({
     .filter((e) => e.course.id !== current.course.id)
     .find((e) => !isLessonCompleted(bestOf(e.lesson.id))) ?? null;
   // C15: avance del área en palabras sencillas («3 de 5 lecciones terminadas en Aritmética»).
+  // Distingue las lecciones que existen en el área de las disponibles (publicadas) para practicar.
   const areaNote = (course) => {
-    const inArea = catalogOrder.filter((e) => e.course.id === course.id && isLessonPublished(e.lesson));
-    const done = inArea.filter((e) => isLessonCompleted(bestOf(e.lesson.id))).length;
-    return ` Llevas ${done} de ${inArea.length} lecciones terminadas en ${course.title}.`;
+    const all = catalogOrder.filter((e) => e.course.id === course.id);
+    const available = all.filter((e) => isLessonPublished(e.lesson));
+    const done = available.filter((e) => isLessonCompleted(bestOf(e.lesson.id))).length;
+    if (available.length === all.length) return ` Llevas ${done} de ${all.length} lecciones terminadas en ${course.title}.`;
+    return ` Llevas ${done} de ${available.length} lecciones disponibles terminadas en ${course.title}`
+      + ` (el área tiene ${all.length}; las demás llegarán pronto).`;
   };
 
   // C1: la ronda recién terminada manda (R10 antes que R7–R9).

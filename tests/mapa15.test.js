@@ -41,7 +41,7 @@ test('1b · disponibilidad: no publicada, solo teoría (práctica no disponible)
   });
   const stops = getMapModel({ catalog }).areas.flatMap((a) => a.stops);
   const by = (id) => stops.find((s) => s.lessonId === id);
-  assert.deepEqual([by('grupos-iguales').availability, by('grupos-iguales').theoryPath, by('grupos-iguales').playPath], ['no-publicada', null, null]);
+  assert.deepEqual([by('grupos-iguales').availability, by('grupos-iguales').theoryPath, by('grupos-iguales').playPath], ['no-publicada', '/lecciones/grupos-iguales', null], 'no publicada: teoría sí; práctica nunca');
   assert.deepEqual([by('la-maquina-de-reglas').availability, by('la-maquina-de-reglas').theoryPath, by('la-maquina-de-reglas').playPath],
     ['practica-no-disponible', '/lecciones/la-maquina-de-reglas', null], 'teoría sí; práctica no');
   assert.equal(by('cuantos-quedan').availability, 'disponible', 'sin bloqueos artificiales');

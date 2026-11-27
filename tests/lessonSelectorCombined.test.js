@@ -34,14 +34,31 @@ function figurasWith(levels) {
   return { ...figuras, levels };
 }
 
+// Sin `levels` (formato publicado antes del catálogo de Viviana): capa de compatibilidad legacy.
+const withoutLevels = ({ levels, ...lesson }) => lesson;
+
 test('las cuatro lecciones sin ampliación conservan el formato legacy y buildLessonRound', () => {
   for (const id of ['conteo-basico', 'sumas-basicas', 'figuras', 'patrones']) {
     for (const level of [1, 2, 3]) {
-      const spec = lessonLevelSpec(lessons[id], level);
+      const spec = lessonLevelSpec(withoutLevels(lessons[id]), level);
       assert.equal(spec.format, 'legacy', `${id} N${level}`);
       assert.equal(spec.generatorKey, lessons[id].module_id);
       assert.deepEqual(spec.ignoredIds, []);
       assert.equal(buildLessonRound({ lesson: lessons[id], level }).length, QUESTIONS_PER_ROUND);
+    }
+  }
+});
+
+test('catálogo oficial: las cuatro lecciones traen sus bancos completos por nivel (v2), con sus ids y su generador', () => {
+  for (const id of ['conteo-basico', 'sumas-basicas', 'figuras', 'patrones']) {
+    const oldIds = new Set((lessons[id].exercises ?? []).map((e) => e.id));
+    for (const level of [1, 2, 3]) {
+      const spec = lessonLevelSpec(lessons[id], level);
+      assert.equal(spec.format, 'v2', `${id} N${level}: el nivel ya contiene su banco completo`);
+      assert.ok(spec.generatorKey === null || spec.generatorKey === lessons[id].module_id, `${id} N${level}: generador de su módulo`);
+      assert.deepEqual(spec.ignoredIds, []);
+      const levelIds = new Set((lessons[id].levels?.[level]?.exercises ?? []).map((e) => e.id));
+      assert.ok(spec.exercises.every((e) => levelIds.has(e.id) || oldIds.has(e.id)), `${id} N${level}: ejercicios del catálogo`);
     }
   }
 });

@@ -153,7 +153,9 @@ export function getAreaRoute({ catalog, areaId, starsByLesson = {}, levelByLesso
       status,
       bestStars,
       level,
-      theoryPath: published ? lessonTheoryPath(lesson.id) : null,
+      // La teoría de las 15 lecciones es visible (LessonView de Viviana muestra también las no
+      // publicadas, sin botón de práctica); la práctica solo se abre si la lección es jugable.
+      theoryPath: lessonTheoryPath(lesson.id),
       playPath: playable ? lessonPlayPath(lesson.id) : null,
     };
   });

@@ -183,8 +183,78 @@ function ModuleDecorations({ theme }) {
   );
 }
 
+function StopStars({ stars }) {
+  return (
+    <span className="absolute -top-4 flex gap-0.5" aria-hidden="true">
+      {[0, 1, 2].map((i) => (
+        <img key={i} src={starIcon} alt=""
+          className={`w-5 h-5 object-contain ${i < stars ? '' : 'opacity-25 grayscale'} ${i === 1 ? '-translate-y-1' : ''}`} />
+      ))}
+    </span>
+  );
+}
+
+/**
+ * Parada de una lección (modo `stops`, de getMapModel). Reutiliza los estilos del mapa:
+ * terminada (T2, 3★) = verde · siguiente = morado con NUMU · disponible = blanca ·
+ * no publicada = gris con candado (abre solo la teoría; la práctica sigue cerrada).
+ * Nunca usa ?parada=N: abre playPath (práctica publicada) o theoryPath.
+ */
+function LessonStop({ stop, number, onOpen }) {
+  const open = (path) => () => { if (path && onOpen) onOpen(path, stop); };
+  const stars = Math.max(0, Math.min(3, Number(stop.bestStars) || 0));
+  if (!stop.published || !stop.playPath) {
+    return (
+      <button type="button" onClick={open(stop.theoryPath)} disabled={!stop.theoryPath} title={stop.title}
+        aria-label={`Parada ${number}: ${stop.title}. Práctica próximamente; abrir la teoría`}
+        className="w-20 h-20 rounded-full bg-gray-200 text-gray-400 border-4 border-white/80 font-fredoka font-bold text-3xl grid place-items-center shadow-3d-neutral opacity-90 active:translate-y-1 transition-transform">
+        <Lock className="w-8 h-8" />
+      </button>
+    );
+  }
+  if (stop.completed) {
+    return (
+      <button type="button" onClick={open(stop.playPath)} title={stop.title}
+        aria-label={`Parada ${number}: ${stop.title}, terminada con ${stars} de 3 estrellas. Jugar otra ronda`}
+        className="w-20 h-20 rounded-full bg-mint-success text-white shadow-3d-success border-4 border-white font-fredoka font-bold text-3xl grid place-items-center active:translate-y-1 transition-transform relative">
+        {number}
+        <span className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-white text-mint-success grid place-items-center shadow-sm" aria-hidden="true">
+          <Check className="w-5 h-5" strokeWidth={3} />
+        </span>
+        <StopStars stars={stars} />
+      </button>
+    );
+  }
+  if (stop.isNext) {
+    return (
+      <button type="button" onClick={open(stop.playPath)} title={stop.title}
+        aria-label={`Parada ${number}: ${stop.title}, estás aquí. Siguiente lección`}
+        className="w-24 h-24 rounded-full bg-numu-purple text-white shadow-3d-primary border-4 border-white font-fredoka font-bold text-4xl grid place-items-center animate-pulse-active active:translate-y-1 transition-transform relative">
+        {number}
+        <span className="absolute -top-14 left-1/2 -translate-x-1/2 w-14 h-14 rounded-full bg-white grid place-items-center shadow-lg border-2 border-gray-100 p-1.5" aria-hidden="true">
+          <img src={mascotUrl} alt="" className="w-full h-full object-contain" />
+        </span>
+        <span className="absolute -bottom-9 whitespace-nowrap font-poppins font-bold text-sm text-numu-purple bg-white px-3 py-1 rounded-full shadow-sm border border-gray-100">
+          Siguiente lección
+        </span>
+      </button>
+    );
+  }
+  return (
+    <button type="button" onClick={open(stop.playPath)} title={stop.title}
+      aria-label={`Parada ${number}: ${stop.title}, disponible${stars ? ` (${stars} de 3 estrellas)` : ''}. Jugar`}
+      className="w-20 h-20 rounded-full bg-white text-numu-purple shadow-3d-neutral border-4 border-white font-fredoka font-bold text-3xl grid place-items-center active:translate-y-1 transition-transform relative">
+      {number}
+      {stars > 0 && <StopStars stars={stars} />}
+    </button>
+  );
+}
+
 /**
  * @param {Object} props
+ * @param {Array<Object>} [props.stops] - Paradas por lección de getMapModel (modo 15 lecciones). Si se
+ *   pasa, reemplaza totalLevels/currentLevel/starsByLevel y cada parada abre su theoryPath o playPath.
+ * @param {(path: string, stop: Object) => void} [props.onOpenStop] - Navega a la ruta de la parada.
  * @param {number} props.totalLevels - Cantidad de niveles del recorrido.
  * @param {number} props.currentLevel - Parada actual de la sección (state.levelByModule[moduleId]).
  * @param {Object<string, number>} [props.starsByLevel] - Estrellas ganadas por parada de la sección.
@@ -193,12 +263,16 @@ function ModuleDecorations({ theme }) {
  * @param {boolean} [props.reduceMotion] - Ajuste «Reducir animaciones».
  * @param {string} [props.moduleId] - Módulo activo: elige el tema visual del mapa.
  */
-export default function OceanMap({ totalLevels, currentLevel, starsByLevel = {}, activityTitle, onPlayLevel, reduceMotion = false, moduleId = 'conteo' }) {
+export default function OceanMap({ totalLevels, currentLevel, starsByLevel = {}, activityTitle, onPlayLevel, reduceMotion = false, moduleId = 'conteo', stops = null, onOpenStop }) {
   const theme = THEME_IDS.includes(moduleId) ? moduleId : 'conteo';
   const what = activityTitle ? ` de ${activityTitle}` : '';
-  const points = levelPositions(totalLevels);
-  const height = PAD_TOP + (totalLevels - 1) * ROW + PAD_BOTTOM;
-  const reached = Math.min(currentLevel, totalLevels);
+  // Modo «lecciones» (getMapModel): una parada por lessonId. Sin `stops`, el mapa antiguo de paradas.
+  const lessonMode = Array.isArray(stops);
+  const count = lessonMode ? stops.length : totalLevels;
+  const points = levelPositions(count);
+  const height = PAD_TOP + (count - 1) * ROW + PAD_BOTTOM;
+  const firstPending = lessonMode ? stops.findIndex((stop) => !stop.completed) : -1;
+  const reached = lessonMode ? (firstPending === -1 ? count : firstPending + 1) : Math.min(currentLevel, totalLevels);
 
   return (
     <div
@@ -228,7 +302,7 @@ export default function OceanMap({ totalLevels, currentLevel, starsByLevel = {},
       <div className="ocean-map__fish ocean-map__fish--left" style={{ top: PAD_TOP + ROW * 5.4, '--duration': '30s', '--delay': '-14s', '--rest-x': '84%' }}>
         <Fish tone="ocean-map__fill-c" size={32} />
       </div>
-      {totalLevels > 7 && (
+      {count > 7 && (
         <div className="ocean-map__fish" style={{ top: PAD_TOP + ROW * 7.6, '--duration': '27s', '--delay': '-20s', '--rest-x': '12%' }}>
           <Fish tone="ocean-map__fill-b" size={28} />
         </div>
@@ -275,7 +349,12 @@ export default function OceanMap({ totalLevels, currentLevel, starsByLevel = {},
 
       {/* Niveles */}
       <ol className="absolute inset-0 list-none m-0 p-0">
-        {points.map(({ level, x, y }) => {
+        {lessonMode && points.map(({ level, x, y }) => (
+          <li key={stops[level - 1].lessonId} className="absolute z-10" style={{ left: `${x}%`, top: y, transform: 'translate(-50%, -50%)' }}>
+            <LessonStop stop={stops[level - 1]} number={level} onOpen={onOpenStop} />
+          </li>
+        ))}
+        {!lessonMode && points.map(({ level, x, y }) => {
           const isDone = level < currentLevel;
           const isCurrent = level === currentLevel;
           const isLocked = level > currentLevel;

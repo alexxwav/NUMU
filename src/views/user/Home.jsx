@@ -15,6 +15,7 @@ import catalog from '../../data/lessonContent.json';
 import { COURSE_STYLE } from '../CoursesView.jsx';
 import { starIcon } from '../../components/iconAssets.js';
 import { resolveContinueRoute } from '../../services/startRoute.js';
+import { reconcileXp } from '../../utils/xpProtection.js';
 import { RECOMMENDATION_TYPES } from '../../services/recommendationService.js';
 
 export default function Home() {
@@ -50,18 +51,21 @@ export default function Home() {
 
   // Contador global: estrellas de las paradas completadas en las 4 rutas y su XP (50 por estrella).
   const starCount = getTotalModuleStars(state);
-  const totalXp = getTotalXp(state);
+  // XP mostrada = XP guardada protegida (nunca menor que la derivada de las paradas).
+  const totalXp = reconcileXp({ localXp: state.xp, derivedXp: getTotalXp(state) });
   const { recommendations, unavailableInterests } = useRecommendations();
   // Las tarjetas de refuerzo (pocas estrellas) van primero cuando existen.
   const displayedRecommendations = [...recommendations].sort((a, b) =>
     Number(b.type === RECOMMENDATION_TYPES.REFORZAR) - Number(a.type === RECOMMENDATION_TYPES.REFORZAR));
 
-  // «¡Continuar Aventura!»: la última lección jugada; si no hay, la primera recomendación.
+  // «¡Continuar Aventura!»: la última lección jugada; si ya cumple T2 (3★), la siguiente pendiente y
+  // disponible de su área; si no hay, la primera recomendación jugable.
   const continueTarget = resolveContinueRoute({
     lessonRounds: state.lessonRounds,
     catalog,
     recommendations,
     moduleId: selectedModule.id,
+    starsByLesson: state.lessonStars ?? {},
   });
   const continueLesson = continueTarget.lessonId
     ? lessons.find(({ lesson }) => lesson.id === continueTarget.lessonId)?.lesson

@@ -1,5 +1,6 @@
 import { mergeLessonProgress, clampLessonLevel } from '../utils/lessonLevel.js';
 import { normalizeModuleId } from '../data/subjects.js';
+import { reconcileXp } from '../utils/xpProtection.js';
 
 const STORAGE_KEY = 'numu-state-v1';
 
@@ -116,7 +117,8 @@ function load() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return structuredClone(DEFAULT_STATE);
     const saved = deepMerge(DEFAULT_STATE, JSON.parse(raw));
-    return { ...saved, stars: getTotalModuleStars(saved), xp: getTotalXp(saved) };
+    // La XP guardada nunca baja al recalcular las estrellas del mapa (xpProtection.js).
+    return { ...saved, stars: getTotalModuleStars(saved), xp: reconcileXp({ localXp: saved.xp, derivedXp: getTotalXp(saved) }) };
   } catch {
     return structuredClone(DEFAULT_STATE);
   }
@@ -219,10 +221,13 @@ export const store = {
   },
 
   addRewards({ gems = 0, stars = 0, xp = 0, levelStars = null }) {
+    // La XP NO se suma aquí: la regla vigente es +50 por estrella MEJORADA en una parada del mapa
+    // (recordModuleRound). Antes, este valor se sobrescribía con la XP derivada; ahora que la XP
+    // guardada se conserva, sumarlo crearía una regla nueva (XP por repetir o por lecciones nuevas).
+    void xp;
     const patch = {
       gems: state.gems + gems,
       stars: state.stars + stars,
-      xp: state.xp + xp,
     };
     if (levelStars !== null) {
       patch.starsByLevel = { ...state.starsByLevel, [state.level]: Math.max(state.starsByLevel[state.level] ?? 0, levelStars) };
@@ -252,11 +257,14 @@ export const store = {
     const byLevel = cleanModuleStars(state.starsByModuleLevel[id]);
     byLevel[finished] = Math.max(byLevel[finished] ?? 0, earned);
     const starsByModuleLevel = { ...state.starsByModuleLevel, [id]: byLevel };
+    // Se suma solo lo que sube la XP derivada (estrellas mejoradas × 50), sobre la XP guardada.
+    const derivedBefore = getTotalXp(state);
+    const derivedAfter = getTotalXp({ ...state, starsByModuleLevel });
     return store.set({
       levelByModule: { ...state.levelByModule, [id]: next },
       starsByModuleLevel,
       stars: getTotalModuleStars({ ...state, starsByModuleLevel }),
-      xp: getTotalXp({ ...state, starsByModuleLevel }),
+      xp: reconcileXp({ localXp: state.xp + Math.max(0, derivedAfter - derivedBefore), derivedXp: derivedAfter }),
     });
   },
 
@@ -288,7 +296,8 @@ export const store = {
       levelByModule: levels,
       starsByModuleLevel: stars,
       stars: getTotalModuleStars({ ...state, starsByModuleLevel: stars }),
-      xp: getTotalXp({ ...state, starsByModuleLevel: stars }),
+      // Combinar con otro dispositivo no otorga XP ni la reduce: el máximo conocido.
+      xp: reconcileXp({ localXp: state.xp, derivedXp: getTotalXp({ ...state, starsByModuleLevel: stars }) }),
     });
   },
 

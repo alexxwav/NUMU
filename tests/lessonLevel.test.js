@@ -347,7 +347,9 @@ test('11b. premios, vidas y nivel general siguen igual; el nivel de lección es 
   store.completeLevel();
   store.recordLessonRound({ lessonId: 'conteo-basico', stars, level: levelAfterRound({ level: 1, stars }).level });
   const state = store.get();
-  assert.deepEqual([state.gems, state.stars, state.xp, state.level], [15, 3, 30, 2]);
+  // La XP de addRewards se sobrescribía siempre con la derivada del mapa (nunca se conservaba). Con la
+  // XP protegida, solo recordModuleRound la sube (+50 por estrella mejorada): aquí no hay parada → 0.
+  assert.deepEqual([state.gems, state.stars, state.xp, state.level], [15, 3, 0, 2]);
   assert.equal(state.lives, 5);
   assert.equal(state.lessonRounds['conteo-basico'].level, 2);
   assert.equal(lessonLevelFromState(state, 'sumas-basicas'), 1, 'otras lecciones no cambian');

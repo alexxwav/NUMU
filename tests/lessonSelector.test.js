@@ -47,12 +47,26 @@ test('las cuatro lecciones conservan sus IDs y el flujo actual (buildLessonRound
   }
 });
 
-test('capa de compatibilidad: las lecciones actuales se leen como formato legacy por nivel', () => {
-  const conteo = lessonLevelSpec(lessons['conteo-basico'], 1);
+// Las lecciones como se publicaron antes del catálogo de Viviana (sin `levels`).
+const legacyOf = ({ levels, ...lesson }) => lesson;
+
+test('capa de compatibilidad: las lecciones sin `levels` se leen como formato legacy por nivel', () => {
+  const conteo = lessonLevelSpec(legacyOf(lessons['conteo-basico']), 1);
   assert.equal(conteo.format, 'legacy');
   assert.equal(conteo.generatorKey, 'conteo');
   assert.ok(conteo.exercises.every((e) => e.visual.count <= 5), 'nivel 1 usa solo ejercicios que caben (fitsLevelOne)');
-  assert.deepEqual(lessonLevelSpec(lessons.figuras, 2).exercises, [], 'niveles 2–3 no usan ejercicios editoriales');
+  assert.deepEqual(lessonLevelSpec(legacyOf(lessons.figuras), 2).exercises, [], 'niveles 2–3 no usan ejercicios editoriales');
+  assert.equal(lessonLevelSpec(legacyOf(lessons.patrones), 9).level, 3, 'el nivel se acota a 1–3');
+});
+
+test('catálogo oficial: las lecciones actuales se leen en formato v2 con el banco de cada nivel', () => {
+  const conteo = lessonLevelSpec(lessons['conteo-basico'], 1);
+  assert.equal(conteo.format, 'v2');
+  assert.equal(conteo.generatorKey, 'conteo');
+  assert.ok(conteo.exercises.every((e) => e.visual.count <= 5), 'nivel 1 sigue usando solo cantidades que caben');
+  const figurasN2 = lessonLevelSpec(lessons.figuras, 2);
+  assert.ok(figurasN2.exercises.length > 0, 'Figuras N2 ya tiene ejercicios editoriales (ampliación de Viviana)');
+  assert.deepEqual(figurasN2.exercises.map((e) => e.id), lessons.figuras.levels[2].exercises.map((e) => e.id));
   assert.equal(lessonLevelSpec(lessons.patrones, 9).level, 3, 'el nivel se acota a 1–3');
 });
 
@@ -82,18 +96,32 @@ test('conteo N3, sumas y patrones N1–N3: 6 preguntas distintas', () => {
   }
 });
 
-test('figuras: cobertura insuficiente en los tres niveles (se informa, no se rellena)', () => {
-  // Pendiente de Viviana (contrato v1.1 §4): ampliar Figuras con variaciones reales.
+test('figuras ampliada (catálogo oficial): 6 preguntas distintas en los tres niveles', () => {
+  // Contrato v1.1 §4 cumplido por Viviana (b3687f8): N1 = 6 distintas; N2–N3 = 10.
+  const expected = { 1: 6, 2: 10, 3: 10 };
+  for (const level of LEVELS) {
+    assert.equal(lessonCoverage({ lesson: lessons.figuras, level }).distinct, expected[level], `figuras N${level}`);
+    for (let run = 0; run < RUNS; run++) {
+      const result = selectLessonQuestions({ lesson: lessons.figuras, level });
+      assert.equal(result.playable, true, `figuras N${level}`);
+      assert.equal(new Set(signatures(result.questions)).size, QUESTIONS_PER_ROUND, `figuras N${level}: sin repetidas`);
+      assert.ok(result.questions.every((q) => q.level === level));
+    }
+  }
+});
+
+test('figuras sin ampliación (formato anterior): cobertura insuficiente en los tres niveles (se informa, no se rellena)', () => {
   // N1: triángulo, cuadrado y pentágono (G05 y G06 solo cambian giro/tamaño: no cuentan aparte).
   // N2–N3: el generador solo tiene 4 figuras.
   const expected = { 1: 3, 2: 4, 3: 4 };
+  const figurasAntigua = legacyOf(lessons.figuras);
   for (const level of LEVELS) {
-    const coverage = lessonCoverage({ lesson: lessons.figuras, level });
+    const coverage = lessonCoverage({ lesson: figurasAntigua, level });
     assert.equal(coverage.playable, false, `figuras N${level}`);
     assert.equal(coverage.distinct, expected[level], `figuras N${level}: preguntas distintas`);
     assert.ok(coverage.reasons.some((r) => r.startsWith('Cobertura insuficiente')));
 
-    const result = selectLessonQuestions({ lesson: lessons.figuras, level });
+    const result = selectLessonQuestions({ lesson: figurasAntigua, level });
     assert.equal(result.playable, false);
     assert.equal(result.questions.length, expected[level], 'no se repiten preguntas para completar 6');
     assert.equal(new Set(signatures(result.questions)).size, result.questions.length);

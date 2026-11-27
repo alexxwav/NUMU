@@ -10,8 +10,11 @@ import { lessonLevelFromState, MAX_LESSON_LEVEL } from '../utils/lessonLevel.js'
 import { COURSE_STYLE } from './CoursesView.jsx';
 import OceanMap from '../components/OceanMap.jsx';
 import { starIcon } from '../components/iconAssets.js';
+import { getMapModel } from '../utils/areaProgress.js';
 
 const TOTAL_LEVELS = 10;
+// Tema visual (decoraciones ya existentes de OceanMap) para el mapa de 5 lecciones de cada área.
+const AREA_THEME = { aritmetica: 'aritmetica', 'geometria-patrones': 'geometria', algebra: 'patrones' };
 
 export default function CourseView() {
   const { courseId } = useParams();
@@ -45,6 +48,8 @@ export default function CourseView() {
   const moduleLevel = state.levelByModule?.[activeModuleId] ?? 1;
   const moduleStars = state.starsByModuleLevel?.[activeModuleId] ?? {};
   const activeStars = getModuleStars(state, activeModuleId);
+  // Mapa de 15 lecciones (getMapModel): las 5 paradas de esta área por lessonId.
+  const areaMap = getMapModel({ catalog, state }).areas.find((area) => area.areaId === course.id) ?? null;
 
   const selectModule = (moduleId) => {
     sfx.tap();
@@ -56,6 +61,12 @@ export default function CourseView() {
     sfx.tap();
     store.set({ module: activeModuleId });
     navigate(`/jugar/${activeModuleId}?parada=${level}`);
+  };
+
+  // Cada parada abre su teoría o su práctica publicada; nunca usa ?parada=N.
+  const openLessonStop = (path) => {
+    sfx.tap();
+    navigate(path);
   };
 
   return (
@@ -84,10 +95,48 @@ export default function CourseView() {
       </header>
 
       <main className="max-w-4xl mx-auto space-y-10">
+        {areaMap && (
+          <section aria-labelledby="lecciones-titulo">
+            <div className="mb-4">
+              <h2 id="lecciones-titulo" className="text-2xl font-fredoka font-bold text-text-dark">
+                Tus 5 lecciones de {course.title}
+              </h2>
+              <p className="mt-1 text-base text-gray-600">
+                Llevas {areaMap.completed} de {areaMap.total} lecciones terminadas
+                {' '}({areaMap.stops.filter((stop) => stop.playPath).length} disponibles para practicar). Una lección se termina con 3 estrellas.
+              </p>
+            </div>
+            <ul className="mb-4 flex flex-wrap gap-x-5 gap-y-2 text-sm font-bold text-text-dark" aria-label="Cómo leer el mapa de lecciones">
+              <li className="inline-flex items-center gap-2">
+                <span className="w-6 h-6 rounded-full bg-mint-success border-2 border-white shadow-sm grid place-items-center text-white" aria-hidden="true"><Check className="w-4 h-4" strokeWidth={3} /></span>
+                Terminada
+              </li>
+              <li className="inline-flex items-center gap-2">
+                <span className="w-6 h-6 rounded-full bg-numu-purple border-2 border-white shadow-sm" aria-hidden="true" />
+                Siguiente lección
+              </li>
+              <li className="inline-flex items-center gap-2">
+                <span className="w-6 h-6 rounded-full bg-white border-2 border-gray-200 shadow-sm" aria-hidden="true" />
+                Disponible
+              </li>
+              <li className="inline-flex items-center gap-2">
+                <span className="w-6 h-6 rounded-full bg-gray-200 border-2 border-white shadow-sm grid place-items-center text-gray-400" aria-hidden="true"><Lock className="w-3.5 h-3.5" /></span>
+                Próximamente: solo teoría
+              </li>
+            </ul>
+            <OceanMap
+              stops={areaMap.stops}
+              onOpenStop={openLessonStop}
+              moduleId={AREA_THEME[course.id] ?? 'conteo'}
+              reduceMotion={Boolean(state.settings?.reduceMotion)}
+            />
+          </section>
+        )}
+
         <section aria-labelledby="ruta-titulo">
           <div className="mb-4">
             <h2 id="ruta-titulo" className="text-2xl font-fredoka font-bold text-text-dark">
-              Tu ruta: {activeLesson?.title ?? course.title}
+              Historial de tu ruta: {activeLesson?.title ?? course.title}
             </h2>
             <p className="mt-1 text-base text-gray-600">
               Cada vez que terminas una ronda, avanzas una parada. Toca la parada de NUMU para jugar.
