@@ -6,7 +6,7 @@ import { onboardingService, toStoreProfile } from '../services/onboardingService
 import { progressService } from '../services/progressService.js';
 import { moduleProgressService } from '../services/moduleProgressService.js';
 import { courseSlugForModule } from '../data/subjects.js';
-import { store } from '../state/store.js';
+import { store, getTotalXp } from '../state/store.js';
 
 const AuthContext = createContext(null);
 
@@ -28,12 +28,12 @@ async function loadProfile(userId) {
   if (!store.get().profile?.completed) store.completeOnboarding(storeProfile);
   else store.set({ profile: storeProfile });
 
-  // Recupera gemas, XP y el nivel del curso actual (sin perder lo que ya hubiera en este dispositivo).
+  // Recupera gemas y el nivel del curso actual; el XP se deriva de las estrellas de las rutas.
   const local = store.get();
   const saved = progress?.[courseSlugForModule(local.module)];
   store.set({
     gems: Math.max(local.gems, profile.gems),
-    xp: Math.max(local.xp, profile.xp),
+    xp: getTotalXp(store.get()),
     ...(saved ? { level: Math.max(local.level, saved.nivel_actual ?? 1), streak: Math.max(local.streak, saved.racha_dias ?? 1) } : {}),
   });
   return { profile, error: null };
@@ -121,7 +121,7 @@ export function AuthProvider({ children }) {
         courseSlug
           ? progressService.recordRound({ courseSlug, stars, nextLevel: state.level, streak: state.streak })
           : { error: null },
-        profileService.saveProfile({ gems: state.gems, xp: state.xp }),
+        profileService.saveProfile({ gems: state.gems, xp: getTotalXp(state) }),
       ]);
       return { error: round.error || totals.error };
     },

@@ -1,42 +1,35 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import confetti from 'canvas-confetti';
-import { Home, Lightbulb, X, Volume2 } from 'lucide-react';
-import { store } from '../state/store.js';
-import { generateQuestions } from '../state/questions.js';
+import { Home, Lightbulb, X, Volume2, VolumeX } from 'lucide-react';
+import { store, getTotalXp } from '../state/store.js';
+import { generateQuestions, buildQuestionHint } from '../state/questions.js';
 import { lessonForModule, lessonLevelFromState, levelAfterRound, MAX_LESSON_LEVEL } from '../utils/lessonLevel.js';
 import { buildLessonRound, QUESTIONS_PER_ROUND } from '../utils/lessonRound.js';
-import { sfx, speak } from '../utils/audio.js';
+import { isVoiceMuted, sfx, speak, stopSpeech } from '../utils/audio.js';
 import { useAuth } from '../hooks/useAuth.jsx';
 import { useLessonProgress } from '../hooks/useLessonProgress.js';
-import { useRecommendations } from '../hooks/useRecommendations.js';
-import Recommendations from '../components/Recommendations.jsx';
-import { starsForRound } from '../utils/stars.js';
+import { MAX_MODULE_LEVEL, needsReinforcement, STARS_TO_UNLOCK, starsForRound } from '../utils/stars.js';
 import { ROUTES } from '../services/startRoute.js';
-import { normalizeModuleId } from '../data/subjects.js';
+import { normalizeModuleId, courseSlugForModule } from '../data/subjects.js';
 import lessonCatalog from '../data/lessonContent.json';
 import { getLessonById } from '../utils/lessonContent.js';
 import mascotUrl from '../assets/brand/mascot/numu-morado.png';
 import { heartOn, heartOff, starIcon } from '../components/iconAssets.js';
-
-const ROUND_TIPS = {
-  conteo: 'Señala un objeto a la vez mientras cuentas. El último número que digas es el total.',
-  aritmetica: 'Empieza en el primer número. Avanza si ves + o retrocede si ves −. El segundo número te dice cuántos pasos dar.',
-  geometria: 'Elige una esquina y recorre el borde. Cuenta cada lado una sola vez hasta volver a esa esquina.',
-  patrones: 'Busca el grupo de colores que se repite. Sigue ese mismo orden hasta llegar al espacio vacío.',
-};
 
 function burst({ particleCount = 60, spread = 70 } = {}) {
   if (store.get().settings?.reduceMotion) return;
   confetti({ particleCount, spread, origin: { y: 0.7 }, colors: ['#5124EE', '#FFC700', '#00D282', '#00B4D8', '#FF8800'] });
 }
 
-export default function Game() {
+function GameRound({ onRestart }) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const roundKey = `${location.pathname}${location.search}`;
   const { recordRound, recordModuleRound } = useAuth();
   const { saveLessonResult } = useLessonProgress();
   const { nivel, lessonId } = useParams(); // módulo ('conteo', 'sumas', …) o lección del catálogo
-  const [searchParams] = useSearchParams(); // ?parada=N la envía el mapa de /inicio
+  const [searchParams] = useSearchParams(); // ?parada=N la envía el mapa del curso
   // La lección del catálogo: la de la ruta /lecciones/:id/jugar o, desde /jugar/:modulo, la de ese módulo.
   const [lessonEntry] = useState(() => (lessonId
     ? getLessonById(lessonCatalog, lessonId)
@@ -45,7 +38,11 @@ export default function Game() {
   // Parada del mapa que se está jugando; si viene de una lección, se usa la parada actual del módulo.
   const fromMap = Number(searchParams.get('parada'));
   const playedLevel = Math.max(1, Math.floor(fromMap || store.get().levelByModule?.[moduleId] || 1));
-  const exitTo = lessonId && lessonEntry ? `/lecciones/${lessonEntry.lesson.id}` : '/inicio';
+  // Las rondas del mapa vuelven a la vista del curso con la ruta activa; las de lección, a su ficha.
+  const courseId = lessonEntry?.course?.id ?? courseSlugForModule(moduleId);
+  const exitTo = lessonId && lessonEntry
+    ? `/lecciones/${lessonEntry.lesson.id}`
+    : courseId ? `/cursos/${courseId}?modulo=${moduleId}` : ROUTES.home;
 
   // Nivel ACADÉMICO de esta lección (1 a 3): el guardado o el inicial del diagnóstico (R1–R3).
   // Es independiente del nivel general (state.level), que solo es gamificación.
@@ -59,42 +56,76 @@ export default function Game() {
   });
 
   const [index, setIndex] = useState(0);
-  const [mistakes, setMistakes] = useState(0);
+  const [mistakes, setMistakes] = useState(0); // errores de la ronda (para las estrellas)
+  const [questionMistakes, setQuestionMistakes] = useState(0); // errores del ejercicio actual
   const [isTipOpen, setIsTipOpen] = useState(false);
-  const [hintSeen, setHintSeen] = useState(false); // etiqueta «¡Nueva!» del botón de pista
+  const [showHintPrompt, setShowHintPrompt] = useState(false);
+  const [hintDeclined, setHintDeclined] = useState(false);
+  const [hintOffered, setHintOffered] = useState(false);
   const reduceMotion = Boolean(store.get().settings?.reduceMotion);
   const [answered, setAnswered] = useState(false);
   const [selectedOption, setSelectedOption] = useState(null);
   const [sheet, setSheet] = useState(null); // Controla el mensaje emergente de abajo
   const [isFinished, setIsFinished] = useState(false);
-  const [lives, setLives] = useState(() => store.get().lives);
+  const [lives, setLives] = useState(() => store.get().maxLives);
   // R10: si en esta ronda las vidas llegaron a 0, no hay avance académico aunque se recarguen.
   const [livesDepleted, setLivesDepleted] = useState(false);
   const [levelResult, setLevelResult] = useState(null);
-  
+  const [unlockedNextLevel, setUnlockedNextLevel] = useState(null);
+  const [xpEarned, setXpEarned] = useState(0);
+  const [voiceMuted, setVoiceMuted] = useState(() => isVoiceMuted());
+
+  useEffect(() => store.subscribe((next) => setVoiceMuted(Boolean(next.settings?.voiceMuted))), []);
+
+  useEffect(() => {
+    store.restoreLives();
+    setLives(store.get().maxLives);
+    setLivesDepleted(false);
+  }, [roundKey]);
+
   const currentQ = questions[index];
   const maxLives = store.get().maxLives;
   const progressPercent = (index / questions.length) * 100;
   // Estrellas de la ronda: 0 si se acabaron las vidas, de 1 a 3 según los errores.
   const roundStars = starsForRound({ total: questions.length, mistakes, approved: lives > 0 });
-  // Siguiente actividad recomendada a partir del resultado que ya decidió el motor (solo rondas de lección).
-  const { recommendations: nextSteps } = useRecommendations({
-    lastRound: isFinished && lessonEntry ? {
-      lessonId: lessonEntry.lesson.id,
-      stars: roundStars,
-      approved: lives > 0 && !livesDepleted,
-      levelBefore: lessonLevel,
-      levelAfter: levelResult?.level ?? lessonLevel,
-    } : null,
-    limit: 1,
-  });
+  const isLevelLocked = roundStars < STARS_TO_UNLOCK;
+  // El resultado solo ofrece refuerzo tras una ronda con errores; con 3 estrellas no hay mensajes.
+  const showReinforcement = !isLevelLocked && Boolean(lessonEntry) && needsReinforcement({ mistakes, stars: roundStars });
 
-  // Escuchar la instrucción al cargar la pregunta
+  // Escuchar la instrucción al cargar la pregunta (y al reactivar la voz).
   useEffect(() => {
-    if (currentQ && !isFinished) {
+    if (currentQ && !isFinished && !voiceMuted) {
       speak(currentQ.speakText);
     }
-  }, [index, currentQ, isFinished]);
+  }, [index, currentQ, isFinished, voiceMuted]);
+
+  const toggleVoice = () => {
+    const next = !voiceMuted;
+    store.setVoiceMuted(next);
+    sfx.tap();
+    if (next) stopSpeech();
+  };
+
+  const repeatSpeech = () => {
+    if (voiceMuted) return;
+    sfx.tap();
+    speak(currentQ?.speakText);
+  };
+
+  const practiceAgain = () => {
+    sfx.tap();
+    if (typeof onRestart === 'function') onRestart();
+    else navigate(`/jugar/${moduleId}?parada=${playedLevel}`);
+  };
+
+  // Solo se llama al cambiar de ejercicio (o al salir): recargar vidas no toca estos estados.
+  const resetHintStates = () => {
+    setQuestionMistakes(0);
+    setIsTipOpen(false);
+    setShowHintPrompt(false);
+    setHintDeclined(false);
+    setHintOffered(false);
+  };
 
   const handleAnswer = (optionIndex) => {
     if (answered) return;
@@ -115,7 +146,7 @@ export default function Game() {
           if (index + 1 >= questions.length) {
             finishRound();
           } else {
-            setIsTipOpen(false);
+            resetHintStates();
             setIndex(index + 1);
             setAnswered(false);
             setSelectedOption(null);
@@ -125,6 +156,14 @@ export default function Game() {
     } else {
       sfx.wrong();
       setMistakes((m) => m + 1);
+      const nextMistakes = questionMistakes + 1;
+      setQuestionMistakes(nextMistakes);
+      // Se ofrece en el 2.º error aunque este fallo se lleve las últimas vidas;
+      // al recargar corazones el pop-up (o el botón mostaza) seguirá disponible.
+      if (nextMistakes >= 2 && !hintOffered) {
+        setHintOffered(true);
+        setShowHintPrompt(true);
+      }
       const updated = store.loseLife();
       setLives(updated.lives);
 
@@ -156,6 +195,7 @@ export default function Game() {
     store.restoreLives();
     setLives(store.get().lives);
     setSheet(null);
+    // No se tocan questionMistakes ni los estados de pista de este ejercicio.
     setAnswered(false);
     setSelectedOption(null);
   };
@@ -164,9 +204,15 @@ export default function Game() {
     setIsFinished(true);
     const stars = roundStars;
     const completedLevel = playedLevel; // parada de esta sección que se acaba de terminar
-    store.addRewards({ gems: stars * 5, stars, xp: stars * 10, levelStars: stars });
-    // Avance de esta sección: parada siguiente y estrellas de la parada terminada.
+    const xpBefore = getTotalXp(store.get());
+    store.addRewards({ gems: stars * 5, stars, xp: stars * 50, levelStars: stars });
+    // Avance de esta sección: solo se abre la parada siguiente con 2 estrellas o más.
+    const beforeLevel = store.get().levelByModule?.[moduleId] ?? 1;
     store.recordModuleRound({ moduleId, stars, level: completedLevel });
+    const afterLevel = store.get().levelByModule?.[moduleId] ?? 1;
+    setUnlockedNextLevel(afterLevel > beforeLevel ? afterLevel : null);
+    // Repetir una parada con las mismas estrellas no añade XP; mejorar sí suma 50 por estrella.
+    setXpEarned(getTotalXp(store.get()) - xpBefore);
     store.completeLevel();
     recordModuleRound({ moduleId, stars, level: completedLevel }).then(({ error }) => {
       if (error) console.warn('No se pudo guardar el progreso de la sección en la cuenta:', error);
@@ -188,12 +234,14 @@ export default function Game() {
     burst({ particleCount: 160, spread: 110 });
   };
 
-  const roundTipCard = isTipOpen && (
-    <aside className="flex items-start gap-3 rounded-card bg-soft-lavender border-2 border-numu-purple/20 px-4 py-3 text-left text-text-dark shadow-sm">
+  // La tarjeta depende solo de que el niño haya pedido la pista: el texto siempre existe.
+  const tipText = buildQuestionHint(currentQ, moduleId);
+  const tipCard = isTipOpen && (
+    <aside id="question-tip" role="status" className="flex items-start gap-3 rounded-card bg-soft-lavender border-2 border-numu-purple/20 px-4 py-3 text-left text-text-dark shadow-sm">
       <Lightbulb className="mt-1 h-6 w-6 shrink-0 text-numu-purple" aria-hidden="true" />
       <div>
         <p className="font-fredoka text-xl font-bold text-numu-purple">¡Vamos paso a paso!</p>
-        <p className="text-sm sm:text-base">{ROUND_TIPS[moduleId]}</p>
+        <p className="text-sm sm:text-base">{tipText}</p>
       </div>
     </aside>
   );
@@ -206,7 +254,9 @@ export default function Game() {
         <div className="absolute -top-20 -right-20 w-72 h-72 rounded-full bg-white/5" aria-hidden="true"></div>
         <div className="absolute -bottom-24 -left-16 w-80 h-80 rounded-full bg-white/5" aria-hidden="true"></div>
 
-        <p className="font-fredoka font-bold text-4xl sm:text-5xl mb-6 relative z-10">¡LO LOGRASTE!</p>
+        <p className="font-fredoka font-bold text-4xl sm:text-5xl mb-6 relative z-10">
+          {isLevelLocked ? '¡Casi lo logras! Nivel aún bloqueado' : '¡LO LOGRASTE!'}
+        </p>
 
         <div className="flex gap-4 mb-7 relative z-10">
           {[0, 1, 2].map((i) => (
@@ -220,8 +270,23 @@ export default function Game() {
         </div>
 
         <div className="bg-white text-text-dark rounded-card px-8 py-5 mb-8 font-fredoka font-bold text-2xl shadow-lg relative z-10">
-          {questions.length} respuestas · {stars * 10} XP · +{stars * 5} gemas
+          {questions.length} respuestas · +{xpEarned} XP · +{stars * 5} gemas
         </div>
+
+        {isLevelLocked && (
+          <div className="relative z-10 w-full max-w-md mb-8 rounded-card border-2 border-sunshine-yellow bg-white px-6 py-5 text-left text-text-dark shadow-lg">
+            <p className="font-fredoka font-bold text-xl text-numu-purple mb-2">Te falta un poquito más</p>
+            <p className="font-poppins text-base">
+              Conseguiste {stars} {stars === 1 ? 'estrella' : 'estrellas'} en esta ronda. Necesitas mínimo {STARS_TO_UNLOCK} estrellas para pasar al siguiente nivel. ¡Inténtalo de nuevo para desbloquearlo!
+            </p>
+          </div>
+        )}
+
+        {!isLevelLocked && unlockedNextLevel && unlockedNextLevel <= MAX_MODULE_LEVEL && (
+          <p className="relative z-10 -mt-4 mb-8 font-fredoka font-bold text-xl text-sunshine-yellow" role="status">
+            ¡Nivel desbloqueado! Ya puedes jugar la parada {unlockedNextLevel} de esta ruta.
+          </p>
+        )}
 
         {lessonEntry && levelResult && (
           <p className="relative z-10 -mt-4 mb-8 font-fredoka font-bold text-xl" role="status">
@@ -233,23 +298,41 @@ export default function Game() {
           </p>
         )}
 
-        {roundTipCard && <div className="relative z-10 mb-8 w-full max-w-md">{roundTipCard}</div>}
-
-        {lessonEntry && nextSteps.length > 0 && (
-          <div className="relative z-10 w-full max-w-md mb-8">
-            <p className="font-fredoka font-bold text-xl mb-3">¿Qué sigue?</p>
-            <Recommendations recommendations={nextSteps} compact />
+        {showReinforcement && (
+          <div className="relative z-10 w-full max-w-md mb-8 rounded-card bg-white px-5 py-5 text-left text-text-dark shadow-lg">
+            <p className="font-fredoka font-bold text-xl text-numu-purple mb-1">Refuerza esta habilidad</p>
+            <p className="font-poppins text-base">
+              Tuviste varios errores en esta ronda. ¿Quieres practicar «{lessonEntry.lesson.title}» de nuevo para dominarla?
+            </p>
+            <button
+              type="button"
+              onClick={practiceAgain}
+              className="mt-4 min-h-[64px] w-full rounded-btn bg-orange-energy text-white font-fredoka font-bold text-lg shadow-3d-orange active:translate-y-1 active:shadow-none transition-all"
+            >
+              Reforzar ahora
+            </button>
           </div>
         )}
 
-        <div className="flex flex-col sm:flex-row gap-4 relative z-10 w-full max-w-md">
-          <button onClick={() => { sfx.tap(); navigate(exitTo); }} className="flex-1 bg-mint-success text-white font-fredoka font-bold text-xl py-4 rounded-btn shadow-3d-primary hover:translate-y-1 hover:shadow-none transition-all">
-            CONTINUAR
-          </button>
-          <button onClick={() => { sfx.tap(); window.location.reload(); }} className="flex-1 bg-cyan-ocean text-white font-fredoka font-bold text-xl py-4 rounded-btn shadow-3d-primary hover:translate-y-1 hover:shadow-none transition-all">
-            REPETIR
-          </button>
-        </div>
+        {isLevelLocked ? (
+          <div className="flex flex-col sm:flex-row gap-4 relative z-10 w-full max-w-md">
+            <button type="button" onClick={practiceAgain} className="flex-1 min-h-[64px] bg-orange-energy text-white font-fredoka font-bold text-xl rounded-btn shadow-3d-orange active:translate-y-1 active:shadow-none transition-all">
+              Volver a intentar
+            </button>
+            <button type="button" onClick={() => { sfx.tap(); navigate(exitTo); }} className="flex-1 min-h-[64px] bg-cyan-ocean text-white font-fredoka font-bold text-xl rounded-btn shadow-3d-cyan active:translate-y-1 active:shadow-none transition-all">
+              Volver al mapa
+            </button>
+          </div>
+        ) : (
+          <div className="flex flex-col sm:flex-row gap-4 relative z-10 w-full max-w-md">
+            <button onClick={() => { sfx.tap(); navigate(exitTo); }} className="flex-1 bg-mint-success text-white font-fredoka font-bold text-xl py-4 rounded-btn shadow-3d-primary hover:translate-y-1 hover:shadow-none transition-all">
+              CONTINUAR
+            </button>
+            <button onClick={() => { sfx.tap(); window.location.reload(); }} className="flex-1 bg-cyan-ocean text-white font-fredoka font-bold text-xl py-4 rounded-btn shadow-3d-primary hover:translate-y-1 hover:shadow-none transition-all">
+              REPETIR
+            </button>
+          </div>
+        )}
 
         {/* El progreso ya se guardó en finishRound; este botón solo navega. */}
         <button onClick={() => { sfx.tap(); navigate(ROUTES.home); }} className="relative z-10 mt-4 w-full max-w-md min-h-[64px] bg-white text-numu-purple font-fredoka font-bold text-xl py-4 rounded-btn shadow-3d-white hover:translate-y-1 hover:shadow-none transition-all inline-flex items-center justify-center gap-2">
@@ -279,7 +362,19 @@ export default function Game() {
           <div className="flex-1 bg-gray-100 rounded-full h-4 overflow-hidden border border-gray-200">
             <div className="bg-numu-purple h-full rounded-full transition-all duration-300" style={{ width: `${progressPercent}%` }}></div>
           </div>
-          
+
+          {/* Voz: preferencia persistente durante toda la lección */}
+          <button
+            type="button"
+            onClick={toggleVoice}
+            aria-pressed={!voiceMuted}
+            aria-label={voiceMuted ? 'Activar voz' : 'Silenciar voz'}
+            title={voiceMuted ? 'Voz silenciada' : 'Voz activa'}
+            className={`w-12 h-12 shrink-0 grid place-items-center rounded-full active:translate-y-1 transition-all focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-numu-purple ${voiceMuted ? 'bg-gray-200 text-gray-500 shadow-3d-neutral' : 'bg-numu-purple text-white shadow-3d-primary'}`}
+          >
+            {voiceMuted ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />}
+          </button>
+
           {/* Corazones (Vidas) */}
           <div className="flex items-center gap-1">
             {Array.from({ length: maxLives }).map((_, i) => (
@@ -292,29 +387,6 @@ export default function Game() {
             ))}
           </div>
         </div>
-        {mistakes >= 2 && (
-          <div className="mx-auto max-w-3xl px-4 pb-3">
-            {/* Amarillo con sombra 3D para que destaque; aparece con un pequeño «pop» y la etiqueta
-                «¡Nueva!» hasta que se abre por primera vez (sin animación si se reducen las animaciones). */}
-            <button
-              type="button"
-              aria-expanded={isTipOpen}
-              aria-controls="round-tip"
-              onClick={() => { sfx.tap(); setHintSeen(true); setIsTipOpen((open) => !open); }}
-              className={`relative inline-flex min-h-[64px] items-center gap-2 rounded-btn bg-sunshine-yellow px-6 font-fredoka text-2xl font-bold text-text-dark shadow-3d-yellow active:translate-y-1 active:shadow-none transition-all focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-numu-purple ${reduceMotion ? '' : 'animate-pop-in'}`}
-            >
-              {isTipOpen ? 'Ocultar pista' : <><span aria-hidden="true">💡</span> Pista</>}
-              {!hintSeen && (
-                <span className="absolute -top-3 -right-3 rounded-full bg-numu-purple px-2 py-0.5 font-poppins text-xs font-bold text-white shadow-sm">
-                  ¡Nueva!
-                </span>
-              )}
-            </button>
-            <div id="round-tip" role="status" className={isTipOpen ? 'mt-3' : undefined}>
-              {roundTipCard}
-            </div>
-          </div>
-        )}
       </header>
 
       {/* Área de la Pregunta */}
@@ -322,15 +394,25 @@ export default function Game() {
         <section className="space-y-6">
           <div className="flex items-start justify-center gap-3">
             <h1 className="font-fredoka font-bold text-3xl md:text-4xl text-text-dark text-center flex-1">{currentQ?.prompt}</h1>
-            <button onClick={() => { sfx.tap(); speak(currentQ?.speakText); }} className="w-14 h-14 shrink-0 grid place-items-center rounded-full bg-numu-purple text-white shadow-3d-primary active:translate-y-1 transition-transform">
-              <Volume2 className="w-7 h-7" />
-            </button>
+            {!voiceMuted && (
+              <button
+                type="button"
+                onClick={repeatSpeech}
+                aria-label="Repetir dictado"
+                title="Repetir dictado"
+                className="min-h-[56px] h-14 shrink-0 flex items-center justify-center gap-2 rounded-full bg-numu-purple px-4 text-white shadow-3d-primary active:translate-y-1 transition-transform focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-numu-purple"
+              >
+                <Volume2 className="w-7 h-7" />
+                <span className="hidden font-fredoka font-bold text-lg sm:inline">Repetir</span>
+              </button>
+            )}
           </div>
           
           {/* Imagen o visual de la pregunta */}
           {currentQ?.visual && (
             <div className="flex justify-center text-6xl" dangerouslySetInnerHTML={{ __html: currentQ.visual }}></div>
           )}
+          {tipCard && <div className="mx-auto w-full max-w-2xl">{tipCard}</div>}
         </section>
 
         {/* Opciones de Respuesta */}
@@ -404,6 +486,60 @@ export default function Game() {
         )}
       </div>
 
+      {/* Botón flotante mostaza: aparece solo si rechazó la pista y aún no la abrió */}
+      {hintDeclined && !isTipOpen && !showHintPrompt && (
+        <button
+          type="button"
+          aria-controls="question-tip"
+          aria-expanded={isTipOpen}
+          onClick={() => { sfx.tap(); setHintDeclined(false); setIsTipOpen(true); }}
+          className={`fixed bottom-40 right-4 z-40 inline-flex min-h-[64px] items-center gap-2 rounded-btn bg-mustard-yellow px-6 font-fredoka text-xl font-bold text-text-dark shadow-3d-mustard active:translate-y-1 active:shadow-none transition-all focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-numu-purple sm:bottom-36 sm:right-8 ${reduceMotion ? '' : 'animate-pop-in'}`}
+        >
+          <span aria-hidden="true">💡</span> Pista
+        </button>
+      )}
+
+      {/* Modal al segundo error del mismo ejercicio */}
+      {showHintPrompt && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-text-dark/50 px-4">
+          <div role="dialog" aria-modal="true" aria-labelledby="tip-prompt-title" className="w-full max-w-md rounded-card border-2 border-numu-purple/20 bg-white p-6 text-center shadow-2xl">
+            <div className="mx-auto mb-4 grid h-20 w-20 place-items-center rounded-full bg-soft-lavender">
+              <Lightbulb className="h-10 w-10 text-numu-purple" aria-hidden="true" />
+            </div>
+            <h2 id="tip-prompt-title" className="font-fredoka font-bold text-2xl text-text-dark">¿Quieres una pista?</h2>
+            <p className="mt-2 font-poppins text-base text-text-dark/70">Te ayudamos con este ejercicio sin quitarte más vidas.</p>
+            <div className="mt-6 flex flex-col gap-3">
+              <button
+                type="button"
+                onClick={() => { sfx.tap(); setShowHintPrompt(false); setHintDeclined(false); setIsTipOpen(true); }}
+                className="min-h-[64px] rounded-btn bg-mint-success text-white font-fredoka font-bold text-xl shadow-3d-success active:translate-y-1 active:shadow-none transition-all focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-numu-purple"
+              >
+                Sí, quiero una pista
+              </button>
+              <button
+                type="button"
+                onClick={() => { sfx.tap(); setShowHintPrompt(false); setHintDeclined(true); }}
+                className="min-h-[64px] rounded-btn border-2 border-border-gray bg-white text-text-dark font-fredoka font-bold text-xl shadow-3d-white active:translate-y-1 active:shadow-none transition-all focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-numu-purple"
+              >
+                No, gracias
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
+  );
+}
+
+export default function Game() {
+  const location = useLocation();
+  const [retryKey, setRetryKey] = useState(0);
+
+  return (
+    <GameRound
+      key={`${location.pathname}${location.search}:${retryKey}`}
+      onRestart={() => setRetryKey((key) => key + 1)}
+    />
   );
 }

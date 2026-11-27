@@ -155,3 +155,26 @@ test('No interpola texto arbitrario como HTML ni acepta colores o iconos inyecta
   const pattern = copy('P01'); pattern.visual.sequence[0] = 'red; background:url(x)';
   assert.throws(() => adaptExerciseToGame(pattern), TypeError);
 });
+
+test('Los ejercicios generados llevan una pista específica de su pregunta', () => {
+  for (const level of [1, 2, 3]) {
+    for (const question of generateQuestions('conteo', level, 12)) {
+      const name = question.prompt.match(/¿Cuántos (.+) ves\?/)[1];
+      assert.ok(question.hint.includes(name), question.hint);
+      assert.ok(question.hint.includes('cuenta'), question.hint);
+    }
+    for (const question of generateQuestions('aritmetica', level, 12)) {
+      const [, a, symbol, b] = question.prompt.match(/¿Cuánto es (\d+) ([+−]) (\d+)\?/);
+      assert.ok(question.hint.includes(a) && question.hint.includes(b), question.hint);
+      assert.ok(question.hint.includes(symbol === '+' ? 'hacia adelante' : 'hacia atrás'), question.hint);
+    }
+    for (const question of generateQuestions('geometria', level, 12)) {
+      const shape = question.prompt.match(/¿Cuántos lados tiene el (.+)\?/)[1];
+      assert.ok(question.hint.includes(shape), question.hint);
+      assert.ok(question.hint.includes('lados'), question.hint);
+    }
+    for (const question of generateQuestions('patrones', level, 12)) {
+      assert.ok(question.hint.includes('se repite') && question.hint.includes('vuelve'), question.hint);
+    }
+  }
+});

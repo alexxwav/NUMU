@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createModuleProgressService } from '../src/services/moduleProgressService.js';
-import { store } from '../src/state/store.js';
+import { store, getModuleStars, getTotalModuleStars, getTotalXp } from '../src/state/store.js';
 
 function fakeClient({ tables = {} } = {}) {
   const calls = [];
@@ -34,12 +34,26 @@ test('recordModuleRound avanza solo la sección jugada y guarda estrellas por pa
   assert.equal(store.get().starsByModuleLevel.conteo[1], 3);
 });
 
+test('recordModuleRound solo desbloquea la parada siguiente con 2 estrellas o más', () => {
+  store.startSession('module-lock-test');
+  store.recordModuleRound({ moduleId: 'conteo', stars: 1, level: 1 });
+  assert.equal(store.get().levelByModule.conteo, 1);
+  assert.equal(store.get().starsByModuleLevel.conteo[1], 1);
+
+  store.recordModuleRound({ moduleId: 'conteo', stars: 2, level: 1 });
+  assert.equal(store.get().levelByModule.conteo, 2);
+
+  store.recordModuleRound({ moduleId: 'conteo', stars: 1, level: 2 });
+  assert.equal(store.get().levelByModule.conteo, 2);
+  assert.equal(store.get().starsByModuleLevel.conteo[2], 1);
+});
+
 test('applyModuleProgress conserva el mayor nivel y las mejores estrellas', () => {
   store.startSession('module-progress-merge-test');
   store.recordModuleRound({ moduleId: 'patrones', stars: 3, level: 1 });
   store.applyModuleProgress({
     levelByModule: { patrones: 4, conteo: 2 },
-    starsByModuleLevel: { patrones: { 1: 1, 3: 2 }, conteo: { 1: 3 } },
+    starsByModuleLevel: { patrones: { 1: 3, 2: 2, 3: 2 }, conteo: { 1: 3 } },
   });
   const state = store.get();
   assert.equal(state.levelByModule.patrones, 4);
@@ -57,7 +71,7 @@ test('getModuleProgress lee current_level y stars_by_level por módulo', async (
   ], error: null } } });
   const res = await createModuleProgressService(() => client, profiles).getModuleProgress();
   assert.equal(res.error, null);
-  assert.deepEqual(res.levelByModule, { conteo: 3, patrones: 2, aritmetica: 5 });
+  assert.deepEqual(res.levelByModule, { conteo: 3, patrones: 1, aritmetica: 1 });
   assert.deepEqual(res.starsByModuleLevel.conteo, { 1: 3, 2: 2 });
   assert.ok(client.calls.some((c) => c[0] === 'from' && c[1] === 'user_module_progress'));
 });
@@ -86,6 +100,70 @@ test('saveModuleRound guarda la parada siguiente y conserva la mejor estrella de
     current_level: 3,
     stars_by_level: { 1: 1, 2: 3 },
   }, { onConflict: 'usuario_id,module_id' }]);
+});
+
+test('saveModuleRound no guarda un current_level superior sin 2 estrellas en la parada', async () => {
+  const client = fakeClient({ tables: { user_module_progress: {
+    data: { current_level: 2, stars_by_level: { 1: 2 } }, error: null,
+  } } });
+  const res = await createModuleProgressService(() => client, profiles)
+    .saveModuleRound({ moduleId: 'geometria', stars: 1, level: 2 });
+  assert.equal(res.error, null);
+  assert.equal(res.currentLevel, 2);
+  assert.deepEqual(res.starsByLevel, { 1: 2, 2: 1 });
+  assert.equal(client.calls.find((c) => c[0] === 'upsert')[1].current_level, 2);
+});
+
+test('getTotalModuleStars suma las paradas de las 4 rutas y conserva el máximo al repetir', () => {
+  store.startSession('module-stars-selector');
+  assert.equal(getTotalModuleStars(store.get()), 0);
+  store.recordModuleRound({ moduleId: 'conteo', stars: 2, level: 1 });
+  store.recordModuleRound({ moduleId: 'conteo', stars: 1, level: 2 });
+  store.recordModuleRound({ moduleId: 'aritmetica', stars: 3, level: 1 });
+  store.recordModuleRound({ moduleId: 'geometria', stars: 2, level: 1 });
+  store.recordModuleRound({ moduleId: 'patrones', stars: 1, level: 1 });
+  assert.equal(getModuleStars(store.get(), 'conteo'), 3);
+  assert.equal(getTotalModuleStars(store.get()), 9);
+  assert.equal(store.get().stars, 9);
+
+  // Repetir la parada 1 con más estrellas suma la mejora, no la ronda completa.
+  store.recordModuleRound({ moduleId: 'conteo', stars: 3, level: 1 });
+  assert.equal(getTotalModuleStars(store.get()), 10);
+  assert.equal(store.get().stars, 10);
+});
+
+test('getTotalXp vale 50 por estrella y solo sube si mejora una parada', () => {
+  store.startSession('module-xp-test');
+  store.recordModuleRound({ moduleId: 'conteo', stars: 2, level: 1 });
+  assert.equal(getTotalXp(store.get()), 100);
+  assert.equal(store.get().xp, 100);
+
+  // Repetir con la misma puntuación no duplica el XP; mejorar de 2 a 3 suma 50.
+  store.recordModuleRound({ moduleId: 'conteo', stars: 2, level: 1 });
+  assert.equal(getTotalXp(store.get()), 100);
+  store.recordModuleRound({ moduleId: 'conteo', stars: 3, level: 1 });
+  assert.equal(getTotalXp(store.get()), 150);
+  assert.equal(store.get().xp, 150);
+
+  store.applyModuleProgress({ starsByModuleLevel: { conteo: { 1: 3 }, aritmetica: { 1: 2 } } });
+  assert.equal(getTotalXp(store.get()), 250);
+  assert.equal(store.get().xp, 250);
+});
+
+test('getTotalModuleStars ignora rutas desconocidas y acota estrellas fuera de rango', () => {
+  store.startSession('module-stars-invalid');
+  store.applyModuleProgress({
+    starsByModuleLevel: {
+      conteo: { 1: 3, 2: 99, 3: -4 },
+      sumas: { 1: 2 },
+      patrones: '{"1":2,"2":1}',
+      otro: { 1: 3 },
+    },
+  });
+  assert.equal(getModuleStars(store.get(), 'sumas'), 2);
+  assert.equal(getModuleStars(store.get(), 'otro'), 0);
+  assert.equal(getTotalModuleStars(store.get()), 11);
+  assert.equal(store.get().stars, 11);
 });
 
 test('saveModuleRound no retrocede al repetir una parada ya completada', async () => {

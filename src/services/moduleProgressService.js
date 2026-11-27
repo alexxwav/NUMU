@@ -1,7 +1,7 @@
 import { requireSupabase } from '../lib/supabase.js';
 import { profileService } from './profileService.js';
 import { normalizeModuleId } from '../data/subjects.js';
-import { clampStars } from '../utils/stars.js';
+import { clampStars, MAX_MODULE_LEVEL, STARS_TO_UNLOCK, unlockedLevelFor } from '../utils/stars.js';
 
 // Progreso del mapa por SECCIÓN, independiente del curso y de la lección:
 //   user_module_progress(usuario_id, module_id, current_level, stars_by_level)
@@ -48,8 +48,12 @@ export function createModuleProgressService(getClient = requireSupabase, profile
       for (const row of data ?? []) {
         const moduleId = normalizeModuleId(row?.module_id);
         if (!moduleId) continue;
-        result.levelByModule[moduleId] = clampLevel(row.current_level);
-        result.starsByModuleLevel[moduleId] = cleanStars(row.stars_by_level);
+        const starsByLevel = cleanStars(row.stars_by_level);
+        result.starsByModuleLevel[moduleId] = starsByLevel;
+        result.levelByModule[moduleId] = Math.min(
+          clampLevel(row.current_level),
+          unlockedLevelFor(starsByLevel, row.current_level),
+        );
       }
       return result;
     },
@@ -82,10 +86,13 @@ export function createModuleProgressService(getClient = requireSupabase, profile
         .maybeSingle();
       if (readError) return fail(readError.message);
 
-      const currentLevel = clampLevel(current?.current_level ?? 1);
-      const nextLevel = Math.max(currentLevel, level + 1);
+      const currentLevel = Math.min(MAX_MODULE_LEVEL, clampLevel(current?.current_level ?? 1));
       const starsByLevel = cleanStars(current?.stars_by_level);
-      starsByLevel[String(level)] = Math.max(starsByLevel[String(level)] ?? 0, stars);
+      const best = Math.max(starsByLevel[String(level)] ?? 0, stars);
+      starsByLevel[String(level)] = best;
+      const nextLevel = best >= STARS_TO_UNLOCK
+        ? Math.min(MAX_MODULE_LEVEL, Math.max(currentLevel, level + 1))
+        : currentLevel;
 
       const { error: writeError } = await client
         .from(TABLE)

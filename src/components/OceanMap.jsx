@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Check, Lock } from 'lucide-react';
 import mascotUrl from '../assets/brand/mascot/logo-mascota-morado.png';
 import { starIcon } from './iconAssets.js';
@@ -194,6 +195,7 @@ function ModuleDecorations({ theme }) {
  * @param {string} [props.moduleId] - Módulo activo: elige el tema visual del mapa.
  */
 export default function OceanMap({ totalLevels, currentLevel, starsByLevel = {}, activityTitle, onPlayLevel, reduceMotion = false, moduleId = 'conteo' }) {
+  const [lockedNotice, setLockedNotice] = useState(false);
   const theme = THEME_IDS.includes(moduleId) ? moduleId : 'conteo';
   const what = activityTitle ? ` de ${activityTitle}` : '';
   const points = levelPositions(totalLevels);
@@ -206,6 +208,12 @@ export default function OceanMap({ totalLevels, currentLevel, starsByLevel = {},
       style={{ height, '--travel': `${height}px` }}
     >
       <div className="ocean-map__rays" aria-hidden="true" />
+
+      {lockedNotice && (
+        <p role="status" className="absolute left-1/2 top-4 z-20 w-[88%] -translate-x-1/2 rounded-card border-2 border-sunshine-yellow bg-white px-4 py-2 text-center font-poppins text-sm font-bold text-text-dark shadow-md">
+          Este nivel está bloqueado. Consigue al menos 2 estrellas en la parada anterior para abrirlo.
+        </p>
+      )}
 
       {/* Superficie con olas */}
       <svg className="ocean-map__surface" viewBox="0 0 400 28" preserveAspectRatio="none" aria-hidden="true">
@@ -327,8 +335,10 @@ export default function OceanMap({ totalLevels, currentLevel, starsByLevel = {},
               {isLocked && (
                 <button
                   type="button"
-                  disabled
-                  aria-label={`Parada ${level}, bloqueada. Termina la parada anterior para abrirla`}
+                  aria-disabled="true"
+                  onClick={() => setLockedNotice(true)}
+                  title="Este nivel está bloqueado. Consigue al menos 2 estrellas en la parada anterior para abrirlo"
+                  aria-label={`Parada ${level}, bloqueada. Consigue al menos 2 estrellas en la parada anterior para abrirla`}
                   className="w-20 h-20 rounded-full bg-gray-200 text-gray-400 border-4 border-white/80 font-fredoka font-bold text-3xl grid place-items-center cursor-not-allowed shadow-3d-neutral opacity-90"
                 >
                   <Lock className="w-8 h-8" />

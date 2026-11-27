@@ -62,6 +62,17 @@ export const sfx = {
 
 /* ---------- Lectura en voz alta (Web Speech API, sin dependencias) ---------- */
 
+/** Preferencia de narración guardada en ajustes (persiste entre preguntas y partidas). */
+export function isVoiceMuted() {
+  return store.get().settings?.voiceMuted === true;
+}
+
+/** Detiene la lectura que estuviera sonando ahora mismo. No toca los efectos de sonido. */
+export function stopSpeech() {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+}
+
 // Orden de preferencia de las voces en español. Si el navegador no tiene ninguna,
 // se pide 'es-ES' y el navegador decide (puede sonar con acento de otro idioma).
 const SPANISH_PREFERENCE = ['es-MX', 'es-US', 'es-419', 'es-ES'];
@@ -111,7 +122,7 @@ export function toSpeechText(text) {
 
 /** Lee en voz alta exactamente el texto indicado, con una voz en español si existe. */
 export function speak(text) {
-  if (!enabled() || !('speechSynthesis' in window) || !text) return;
+  if (isVoiceMuted() || !enabled() || typeof window === 'undefined' || !('speechSynthesis' in window) || !text) return;
   const volume = masterVolume();
   if (volume <= 0) return;
   window.speechSynthesis.cancel();

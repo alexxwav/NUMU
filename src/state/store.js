@@ -1,7 +1,12 @@
 import { mergeLessonProgress, clampLessonLevel } from '../utils/lessonLevel.js';
+import { MAX_MODULE_LEVEL, STARS_TO_UNLOCK, unlockedLevelFor } from '../utils/stars.js';
 import { normalizeModuleId } from '../data/subjects.js';
 
 const STORAGE_KEY = 'numu-state-v1';
+
+// Las 4 rutas del mapa; el total de estrellas se deriva de sus paradas, no de las lecciones.
+export const MODULE_IDS = ['conteo', 'aritmetica', 'geometria', 'patrones'];
+export const XP_PER_STAR = 50;
 
 const DEFAULT_STATE = {
   userId: null,
@@ -39,6 +44,7 @@ const DEFAULT_STATE = {
   settings: {
     sound: true,
     volume: 0.8,
+    voiceMuted: false,
     colorblind: false,
     reduceMotion: false,
     fontScale: 1,
@@ -89,11 +95,30 @@ function cleanModuleStars(raw = {}) {
   return result;
 }
 
+/** Estrellas reales de una ruta: suma de la mejor puntuación de cada parada. */
+export function getModuleStars(state, moduleId) {
+  const id = normalizeModuleId(moduleId);
+  if (!id) return 0;
+  const byLevel = cleanModuleStars(state?.starsByModuleLevel?.[id]);
+  return Object.values(byLevel).reduce((total, value) => total + value, 0);
+}
+
+/** Total global: estrellas de las paradas de las 4 rutas (conteo, aritmética, geometría y patrones). */
+export function getTotalModuleStars(state) {
+  return MODULE_IDS.reduce((total, id) => total + getModuleStars(state, id), 0);
+}
+
+/** Cada estrella de una parada vale exactamente 50 XP. */
+export function getTotalXp(state) {
+  return getTotalModuleStars(state) * XP_PER_STAR;
+}
+
 function load() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return structuredClone(DEFAULT_STATE);
-    return deepMerge(DEFAULT_STATE, JSON.parse(raw));
+    const saved = deepMerge(DEFAULT_STATE, JSON.parse(raw));
+    return { ...saved, stars: getTotalModuleStars(saved), xp: getTotalXp(saved) };
   } catch {
     return structuredClone(DEFAULT_STATE);
   }
@@ -195,6 +220,11 @@ export const store = {
     return store.set({ lives: state.maxLives });
   },
 
+  // Preferencia de narración: se guarda con los ajustes y sobrevive a cada pregunta y partida.
+  setVoiceMuted(muted) {
+    return store.set({ settings: { voiceMuted: Boolean(muted) } });
+  },
+
   addRewards({ gems = 0, stars = 0, xp = 0, levelStars = null }) {
     const patch = {
       gems: state.gems + gems,
@@ -225,12 +255,18 @@ export const store = {
     const earned = clampModuleStars(stars);
     const current = clampModuleLevel(state.levelByModule[id] ?? 1);
     const finished = level === undefined ? current : clampModuleLevel(level);
-    const next = Math.max(current, finished + 1);
     const byLevel = cleanModuleStars(state.starsByModuleLevel[id]);
-    byLevel[finished] = Math.max(byLevel[finished] ?? 0, earned);
+    const best = Math.max(byLevel[finished] ?? 0, earned);
+    byLevel[finished] = best;
+    const next = best >= STARS_TO_UNLOCK
+      ? Math.min(MAX_MODULE_LEVEL, Math.max(current, finished + 1))
+      : current;
+    const starsByModuleLevel = { ...state.starsByModuleLevel, [id]: byLevel };
     return store.set({
       levelByModule: { ...state.levelByModule, [id]: next },
-      starsByModuleLevel: { ...state.starsByModuleLevel, [id]: byLevel },
+      starsByModuleLevel,
+      stars: getTotalModuleStars({ ...state, starsByModuleLevel }),
+      xp: getTotalXp({ ...state, starsByModuleLevel }),
     });
   },
 
@@ -244,11 +280,6 @@ export const store = {
     const stars = {};
     for (const id of Object.keys(state.starsByModuleLevel)) stars[id] = cleanModuleStars(state.starsByModuleLevel[id]);
 
-    for (const [rawId, value] of Object.entries(remote.levelByModule ?? {})) {
-      const id = normalizeModuleId(rawId);
-      if (!id) continue;
-      levels[id] = Math.max(clampModuleLevel(levels[id] ?? 1), clampModuleLevel(value));
-    }
     for (const [rawId, value] of Object.entries(remote.starsByModuleLevel ?? {})) {
       const id = normalizeModuleId(rawId);
       if (!id) continue;
@@ -258,7 +289,18 @@ export const store = {
       }
       stars[id] = merged;
     }
-    return store.set({ levelByModule: levels, starsByModuleLevel: stars });
+    for (const [rawId, value] of Object.entries(remote.levelByModule ?? {})) {
+      const id = normalizeModuleId(rawId);
+      if (!id) continue;
+      const allowed = unlockedLevelFor(stars[id], value);
+      levels[id] = Math.max(clampModuleLevel(levels[id] ?? 1), allowed);
+    }
+    return store.set({
+      levelByModule: levels,
+      starsByModuleLevel: stars,
+      stars: getTotalModuleStars({ ...state, starsByModuleLevel: stars }),
+      xp: getTotalXp({ ...state, starsByModuleLevel: stars }),
+    });
   },
 
   /* ---- Progreso por lección ---- */

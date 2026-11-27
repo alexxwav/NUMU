@@ -42,7 +42,7 @@ Leyenda: ✅ disponible · ⛔ redirige a la pantalla que falta.
 | `/conocerte` | ✅ | ⛔ → `/iniciar-sesion` | ✅ | ⛔ → `/inicio` |
 | `/inicio` | ✅ | ⛔ → `/iniciar-sesion` | ⛔ → `/conocerte` | ✅ |
 | `/cursos` | ✅ | ⛔ → `/iniciar-sesion` | ⛔ → `/conocerte` | ✅ |
-| `/cursos/:courseId` | ✅ | ⛔ → `/iniciar-sesion` | ⛔ → `/conocerte` | ✅ |
+| `/cursos/:courseId` (y `?modulo=conteo\|aritmetica\|geometria\|patrones`) | ✅ | ⛔ → `/iniciar-sesion` | ⛔ → `/conocerte` | ✅ |
 | `/lecciones/:lessonId` | ✅ | ⛔ → `/iniciar-sesion` | ⛔ → `/conocerte` | ✅ |
 | `/lecciones/:lessonId/jugar` | ✅ | ⛔ → `/iniciar-sesion` | ⛔ → `/conocerte` | ✅ |
 | `/jugar` y `/jugar/:nivel` | ✅ | ⛔ → `/iniciar-sesion` | ⛔ → `/conocerte` | ✅ |
@@ -60,7 +60,7 @@ Leyenda: ✅ disponible · ⛔ redirige a la pantalla que falta.
 
 ### Nivel general y avance por sección
 
-`state.level` es la gamificación global y sube al terminar cualquier ronda. El mapa de `/inicio` **ya no lo usa**: cada pestaña muestra su propio progreso.
+`state.level` es la gamificación global y sube al terminar cualquier ronda. El mapa vive en la vista del curso (`/cursos/:courseId`) **ya no lo usa**: cada pestaña muestra su propio progreso. `/inicio` solo conserva el encabezado, la misión del día, las recomendaciones y los cursos; las tarjetas de curso abren esa vista.
 
 - `state.levelByModule[moduleId]`: parada actual de esa sección (empieza en 1).
 - `state.starsByModuleLevel[moduleId][parada]`: mejores estrellas (0 a 3) de cada parada de esa sección.
@@ -71,11 +71,11 @@ Para la sección activa:
 - `parada === levelByModule[moduleId]` → **Estás aquí** (pulpo y botón «Siguiente lección»).
 - `parada > levelByModule[moduleId]` → **Bloqueada** (deshabilitada).
 
-Cambiar de pestaña solo cambia `state.module`; el pulpo salta a la parada que esa sección tenga guardada en Supabase (o en el dispositivo si no hay sesión).
+Cambiar de pestaña solo cambia `state.module`; el pulpo salta a la parada que esa sección tenga guardada en Supabase (o en el dispositivo si no hay sesión). Al terminar una ronda del mapa se vuelve al curso con `?modulo=...`, y el wallpaper del mapa usa el tema de ese módulo.
 
 ### Módulos habilitados
 
-Los cuatro módulos están siempre disponibles en las pestañas de `/inicio`, sin importar los intereses elegidos:
+Los cuatro módulos están siempre jugables, pero las pestañas del mapa se filtran por curso: `aritmetica` muestra Conteo básico y Sumas básicas; `geometria-patrones` muestra Figuras geométricas y Patrones de colores. Al entrar se selecciona la primera ruta del curso o la que indique `?modulo=...`, sin importar los intereses elegidos:
 
 | Módulo (`module_id`) | Lección del catálogo | Curso |
 |---|---|---|
