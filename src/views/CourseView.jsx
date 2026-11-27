@@ -62,7 +62,11 @@ export default function CourseView() {
   const handlePlayLevel = (level) => {
     sfx.tap();
     store.set({ module: activeModuleId });
-    navigate(`/jugar/${activeModuleId}?parada=${level}`);
+    // La dirección del curso guarda la ruta activa (?modulo=), que es a donde vuelve la ronda: al
+    // salir se regresa en el historial a esta misma entrada, sin duplicarla.
+    const coursePath = `/cursos/${course.id}?modulo=${activeModuleId}`;
+    navigate(coursePath, { replace: true });
+    navigate(`/jugar/${activeModuleId}?parada=${level}`, { state: { from: coursePath } });
   };
 
   // Cada parada abre su teoría o su práctica publicada; nunca usa ?parada=N.

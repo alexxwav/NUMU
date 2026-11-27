@@ -4,6 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { store, MODULES, getModuleStars } from '../src/state/store.js';
+import { roundProgressTargets } from '../src/utils/areaProgress.js';
 
 const read = (path) => readFileSync(new URL(path, import.meta.url), 'utf8');
 
@@ -28,7 +29,7 @@ test('el inicio muestra el mapa de la lección elegida con sus datos reales y vu
   assert.match(home, /<LessonRouteMap/, 'el mapa vuelve a estar en el inicio');
   assert.match(home, /moduleId=\{selectedModule\.id\}/);
   assert.match(home, /MODULES\.map\(\(module\) => \(\{ module, lesson: lessonForModule\(catalog, module\.id\)/, 'un mapa por lección');
-  assert.match(home, /navigate\(`\/jugar\/\$\{selectedModule\.id\}\?parada=\$\{level\}&desde=inicio`\)/);
+  assert.match(home, /navigate\(`\/jugar\/\$\{selectedModule\.id\}\?parada=\$\{level\}&desde=inicio`, \{ state: \{ from: '\/inicio' \} \}\)/);
   // El panel lee SOLO el progreso de su lección.
   assert.match(panel, /state\.levelByModule\?\.\[moduleId\]/);
   assert.match(panel, /state\.starsByModuleLevel\?\.\[moduleId\]/);
@@ -64,4 +65,48 @@ test('los botones dicen lo que hacen', () => {
   const home = read('../src/views/user/Home.jsx');
   assert.match(home, /'siguiente-leccion': '¡Siguiente lección!'/);
   assert.match(home, /'ultima-leccion': '¡Continuar aventura!'/, '«Continuar» solo cuando se retoma la última lección');
+});
+
+test('misión del día: comportamiento original del módulo guardado (lecciones sin module_id no arrastran otro)', () => {
+  const home = read('../src/views/user/Home.jsx');
+  assert.match(home, /if \(continueLesson\) store\.set\(\{ module: continueLesson\.module_id \}\);/);
+  // Por qué importa: una lección futura sin module_id de Geometría con el módulo vacío registra su
+  // curso; con un módulo de Aritmética arrastrado, no lo registraría.
+  const futura = { id: 'leccion-futura', module_id: null, course_id: 'geometria-patrones' };
+  assert.equal(roundProgressTargets({ lesson: futura, areaId: 'geometria-patrones', storeModuleId: undefined }).recordsCourseProgress, true);
+  assert.equal(roundProgressTargets({ lesson: futura, areaId: 'geometria-patrones', storeModuleId: 'conteo' }).recordsCourseProgress, false);
+  // Las lecciones publicadas usan su propio módulo, sin depender del guardado.
+  assert.equal(roundProgressTargets({ lesson: { id: 'patrones', module_id: 'patrones' }, storeModuleId: 'conteo' }).moduleId, 'patrones');
+});
+
+test('salir de una ronda: sin pantallas duplicadas y sin guardar la ronda abandonada', () => {
+  const game = read('../src/views/Game.jsx');
+  // Vuelve atrás si el destino es la pantalla de origen; si no, reemplaza la entrada del juego.
+  assert.match(game, /const origin = location\.state\?\.from \?\? null;/);
+  assert.match(game, /if \(origin === path && \(window\.history\.state\?\.idx \?\? 0\) > 0\) navigate\(-1\);\s*else navigate\(path, \{ replace: true \}\);/);
+  // Las pantallas de origen declaran desde dónde se entró, con la misma dirección a la que vuelve la ronda.
+  assert.match(read('../src/views/LessonView.jsx'), /\{ state: \{ from: `\/lecciones\/\$\{lesson\.id\}` \} \}/);
+  const course = read('../src/views/CourseView.jsx');
+  assert.match(course, /const coursePath = `\/cursos\/\$\{course\.id\}\?modulo=\$\{activeModuleId\}`;/);
+  assert.match(course, /\{ state: \{ from: coursePath \} \}/);
+  assert.match(game, /: courseId \? `\/cursos\/\$\{courseId\}\?modulo=\$\{moduleId\}`/, 'mismo formato que el destino de la ronda');
+  // Salir solo navega: leaveTo no guarda nada y finishRound (único punto de guardado) se llama
+  // solo al responder la última pregunta.
+  const leave = game.slice(game.indexOf('const leaveTo = (path) => {'), game.indexOf('};', game.indexOf('const leaveTo = (path) => {')));
+  assert.doesNotMatch(leave, /record|save|store\.|finishRound/);
+  assert.equal(game.match(/finishRound\(\)/g).length, 1, 'finishRound se llama en un solo lugar');
+  assert.match(game, /if \(index \+ 1 >= questions\.length\) \{\s*finishRound\(\);/);
+});
+
+test('/conocerte: «Salir» en el primer paso, «Regresar» y «Siguiente» grandes, sin guardar lo parcial', () => {
+  const view = read('../src/views/LoginView.jsx');
+  assert.match(view, /step === 0 \? \(/, 'en el primer paso cambia «Regresar» por «Salir»');
+  assert.match(view, /if \(configured && session\) await signOut\(\);\s*navigate\('\/bienvenida', \{ replace: true \}\);/);
+  assert.doesNotMatch(view, /hidden sm:inline">Regresar/, '«Regresar» se ve también en móvil');
+  assert.match(view, /\(saving \? 'Guardando…' : '¡A JUGAR!'\) : 'Siguiente'/);
+  assert.match(view, /className="min-h-touch px-5 [^"]*text-numu-deep-indigo[^"]*"\s*>\s*<ArrowLeft/, '«Regresar» mide al menos 64 px');
+  // Solo se guarda al finalizar (último paso).
+  const exit = view.slice(view.indexOf('const handleExit'), view.indexOf('};', view.indexOf('const handleExit')));
+  assert.doesNotMatch(exit, /saveOnboarding|completeOnboarding|store\./);
+  assert.equal(view.match(/saveOnboarding\(/g).length, 1);
 });

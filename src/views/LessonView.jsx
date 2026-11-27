@@ -48,7 +48,8 @@ export default function LessonView() {
   const practice = () => {
     sfx.tap();
     store.set({ module: lesson.module_id });
-    navigate(`/lecciones/${lesson.id}/jugar`);
+    // Al salir de la ronda se vuelve atrás a esta misma ficha (sin duplicarla en el historial).
+    navigate(`/lecciones/${lesson.id}/jugar`, { state: { from: `/lecciones/${lesson.id}` } });
   };
 
   const practiceButton = (disabled = false) => (

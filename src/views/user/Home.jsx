@@ -86,8 +86,10 @@ export default function Home() {
     : null;
   const handleContinue = () => {
     sfx.tap();
-    if (continueLesson?.module_id) store.set({ module: continueLesson.module_id });
-    navigate(continueTarget.route);
+    // Comportamiento original: el módulo guardado pasa a ser el de la lección, también cuando la
+    // lección no tiene module_id (queda vacío y no se arrastra el de otra área: roundProgressTargets).
+    if (continueLesson) store.set({ module: continueLesson.module_id });
+    navigate(continueTarget.route, { state: { from: '/inicio' } });
   };
 
   const selectRoute = (moduleId) => {
@@ -99,7 +101,7 @@ export default function Home() {
   const handlePlayLevel = (level) => {
     sfx.tap();
     store.set({ module: selectedModule.id });
-    navigate(`/jugar/${selectedModule.id}?parada=${level}&desde=inicio`);
+    navigate(`/jugar/${selectedModule.id}?parada=${level}&desde=inicio`, { state: { from: '/inicio' } });
   };
 
   return (

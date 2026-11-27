@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import confetti from 'canvas-confetti';
 import { Home, Lightbulb, X, Volume2 } from 'lucide-react';
 import { store, getTotalXp } from '../state/store.js';
@@ -27,6 +27,7 @@ function burst({ particleCount = 60, spread = 70 } = {}) {
 
 export default function Game() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { recordRound, recordModuleRound } = useAuth();
   const { saveLessonResult } = useLessonProgress();
   const { nivel, lessonId } = useParams(); // módulo ('conteo', 'sumas', …) o lección del catálogo
@@ -58,9 +59,16 @@ export default function Game() {
   // Texto de los botones de salida según su destino real.
   const exitLabel = exitTo === ROUTES.home ? 'Volver al inicio'
     : lessonId ? 'Volver a la lección' : 'Volver al mapa';
-  // Salir de la ronda reemplaza la entrada del juego: «Regresar» en la pantalla siguiente no
-  // vuelve a abrir una ronda terminada.
-  const leaveTo = (path) => { sfx.tap(); navigate(path, { replace: true }); };
+  // Salir de la ronda solo navega (nunca guarda: el guardado está en finishRound).
+  // · Si el destino es la pantalla desde la que se entró (state.from), se vuelve atrás en el
+  //   historial: no queda esa pantalla dos veces y «Regresar» lleva a la anterior real.
+  // · Si es otra, se reemplaza la entrada del juego: «Regresar» no vuelve a abrir la ronda.
+  const origin = location.state?.from ?? null;
+  const leaveTo = (path) => {
+    sfx.tap();
+    if (origin === path && (window.history.state?.idx ?? 0) > 0) navigate(-1);
+    else navigate(path, { replace: true });
+  };
 
   // Nivel ACADÉMICO de esta lección (1 a 3): el guardado o el inicial del diagnóstico (R1–R3).
   // Es independiente del nivel general (state.level), que solo es gamificación.

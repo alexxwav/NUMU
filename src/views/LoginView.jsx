@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import confetti from 'canvas-confetti';
-import { Check, Settings, Sparkles, ArrowLeft, ArrowRight, Gauge } from 'lucide-react';
+import { Check, Settings, Sparkles, ArrowLeft, ArrowRight, Gauge, LogOut } from 'lucide-react';
 import logoUrl from '../assets/brand/mascot/logo-completo-blanco.png';
 import { useAuth } from '../hooks/useAuth.jsx';
 import { buildOnboardingPayload, toStoreProfile } from '../services/onboardingService.js';
@@ -45,7 +45,8 @@ const AVATARS = ['👾', '🐱', '🐶', '🦊', '🚀', '⭐'];
 // --- Componente Principal ---
 export default function LoginView() {
   const navigate = useNavigate();
-  const { configured, saveOnboarding } = useAuth();
+  const { configured, session, saveOnboarding, signOut } = useAuth();
+  const [leaving, setLeaving] = useState(false);
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
@@ -120,6 +121,16 @@ export default function LoginView() {
 
   const handleBack = () => {
     if (step > 0) setStep(step - 1);
+  };
+
+  // Salir en el primer paso: no se guarda nada del cuestionario (el borrador solo vive en esta
+  // pantalla y se guarda al finalizar). Con cuenta se cierra la sesión; si no, /bienvenida
+  // volvería a mandar aquí porque el perfil sigue incompleto.
+  const handleExit = async () => {
+    if (leaving) return;
+    setLeaving(true);
+    if (configured && session) await signOut();
+    navigate('/bienvenida', { replace: true });
   };
 
   // --- Handlers de Inputs ---
@@ -310,37 +321,54 @@ export default function LoginView() {
             <p role="alert" className="mt-6 text-sm font-medium text-coral-alert text-center">{saveError}</p>
           )}
 
-          {/* Footer de Navegación */}
-          <footer className="mt-8 pt-5 border-t-2 border-gray-100 grid grid-cols-[auto_1fr_auto] items-center gap-4">
-            
-            <div>
-              <button 
-                onClick={handleBack} 
-                disabled={step === 0}
-                className={`flex items-center gap-2 px-4 py-2 font-fredoka font-bold rounded-lg transition-colors ${step === 0 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:bg-gray-100 hover:text-text-dark'}`}
-              >
-                <ArrowLeft className="w-5 h-5" />
-                <span className="hidden sm:inline">Regresar</span>
-              </button>
-            </div>
-
-            <div className="flex items-center justify-center gap-1.5">
+          {/* Navegación del cuestionario: puntos de avance arriba y botones grandes abajo
+              (mismo lugar en todos los pasos). En el primer paso, «Salir» reemplaza a «Regresar». */}
+          <footer className="mt-8 pt-5 border-t-2 border-gray-100 flex flex-col gap-4">
+            <div className="flex items-center justify-center gap-1.5" aria-hidden="true">
               {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
                 <span key={i} className={`h-2.5 rounded-full transition-all duration-300 ${i === step ? 'w-6 bg-numu-purple' : i < step ? 'w-2.5 bg-numu-purple/40' : 'w-2.5 bg-gray-200'}`}></span>
               ))}
             </div>
 
-            <div>
-              <button 
+            <div className="flex items-center justify-between gap-3">
+              {step === 0 ? (
+                <button
+                  type="button"
+                  onClick={handleExit}
+                  disabled={leaving}
+                  aria-label={configured ? 'Salir del cuestionario y cerrar sesión' : 'Salir del cuestionario'}
+                  className="min-h-touch px-5 inline-flex items-center gap-2 rounded-btn bg-white border-2 border-border-gray text-coral-alert font-fredoka font-bold text-lg shadow-3d-white active:translate-y-1 active:shadow-none transition-all disabled:opacity-60"
+                >
+                  <LogOut className="w-6 h-6" aria-hidden="true" />
+                  Salir
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleBack}
+                  disabled={saving}
+                  className="min-h-touch px-5 inline-flex items-center gap-2 rounded-btn bg-white border-2 border-border-gray text-numu-deep-indigo font-fredoka font-bold text-lg shadow-3d-white active:translate-y-1 active:shadow-none transition-all disabled:opacity-60"
+                >
+                  <ArrowLeft className="w-6 h-6" aria-hidden="true" />
+                  Regresar
+                </button>
+              )}
+
+              <button
+                type="button"
                 onClick={handleNext}
                 disabled={!isValid() || saving}
-                className={`flex items-center gap-2 px-6 py-3 font-fredoka font-bold text-lg rounded-btn transition-all shadow-md ${!isValid() || saving ? 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none' : step === TOTAL_STEPS - 1 ? 'bg-sunshine-yellow text-text-dark shadow-3d-yellow hover:translate-y-1 hover:shadow-none' : 'bg-numu-purple text-white shadow-3d-primary hover:translate-y-1 hover:shadow-none'}`}
+                className={`min-h-touch px-6 inline-flex items-center gap-2 font-fredoka font-bold text-lg rounded-btn transition-all ${!isValid() || saving ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : step === TOTAL_STEPS - 1 ? 'bg-sunshine-yellow text-text-dark shadow-3d-yellow active:translate-y-1 active:shadow-none' : 'bg-numu-purple text-white shadow-3d-primary active:translate-y-1 active:shadow-none'}`}
               >
-                {step === TOTAL_STEPS - 1 ? (saving ? 'Guardando…' : '¡A JUGAR!') : 'Continuar'}
-                {step !== TOTAL_STEPS - 1 && <ArrowRight className="w-5 h-5" />}
+                {step === TOTAL_STEPS - 1 ? (saving ? 'Guardando…' : '¡A JUGAR!') : 'Siguiente'}
+                {step !== TOTAL_STEPS - 1 && <ArrowRight className="w-6 h-6" aria-hidden="true" />}
               </button>
             </div>
-
+            {step === 0 && (
+              <p className="text-center text-sm text-gray-600">
+                {configured ? '«Salir» cierra tu sesión sin guardar el cuestionario. Puedes volver cuando quieras.' : '«Salir» vuelve a la bienvenida sin guardar el cuestionario.'}
+              </p>
+            )}
           </footer>
         </div>
       </section>
