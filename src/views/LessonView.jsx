@@ -1,8 +1,9 @@
+import { useState } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Target, Volume2 } from 'lucide-react';
+import { ArrowLeft, Target, Volume2, VolumeX } from 'lucide-react';
 import catalog from '../data/lessonContent.json';
 import { getLessonById, isLessonPublished } from '../utils/lessonContent.js';
-import { sfx, speak } from '../utils/audio.js';
+import { sfx, speak, stopSpeech } from '../utils/audio.js';
 import { store } from '../state/store.js';
 import { useLessonProgress } from '../hooks/useLessonProgress.js';
 import { lessonLevelFromState, MAX_LESSON_LEVEL } from '../utils/lessonLevel.js';
@@ -15,6 +16,21 @@ import { COURSE_STYLE } from './CoursesView.jsx';
 function PublishedLessonLevel({ lessonId }) {
   useLessonProgress();
   return <> · Nivel {lessonLevelFromState(store.get(), lessonId)} de {MAX_LESSON_LEVEL}</>;
+}
+
+function TheoryAudioButton({ explanation }) {
+  const [reading, setReading] = useState(false);
+  const Icon = reading ? VolumeX : Volume2;
+  function toggleReading() {
+    if (reading) stopSpeech();
+    else setReading(speak(explanation, { onFinish: () => setReading(false) }));
+  }
+  return (
+    <button type="button" onClick={toggleReading} aria-label={reading ? 'Detener lectura' : 'Escuchar la explicación'}
+      className="w-12 h-12 shrink-0 grid place-items-center rounded-full bg-numu-purple text-white shadow-3d-primary motion-safe:active:translate-y-1 motion-safe:transition-transform">
+      <Icon aria-hidden="true" className="w-6 h-6" />
+    </button>
+  );
 }
 
 export default function LessonView() {
@@ -75,10 +91,7 @@ export default function LessonView() {
           <div className="flex-1">
             <div className="flex items-center justify-between gap-3 mb-1">
               <h2 className="font-fredoka font-bold text-xl">{isCountingLesson ? '¡Vamos a contar!' : 'Octo te explica'}</h2>
-              <button type="button" onClick={() => speak(lesson.explanation)} aria-label="Escuchar la explicación"
-                className="w-12 h-12 shrink-0 grid place-items-center rounded-full bg-numu-purple text-white shadow-3d-primary active:translate-y-1 transition-transform">
-                <Volume2 aria-hidden="true" className="w-6 h-6" />
-              </button>
+              <TheoryAudioButton key={lesson.id} explanation={lesson.explanation} />
             </div>
             <p className="text-gray-600 text-lg">{lesson.explanation}</p>
           </div>

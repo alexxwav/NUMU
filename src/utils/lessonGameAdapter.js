@@ -356,7 +356,7 @@ export function adaptExerciseToGame(exercise) {
     feedback_incorrect,
     prompt: exercise.prompt,
     speakText: visual.type === 'color_sequence'
-      ? `${exercise.prompt} ${visual.sequence.join(', ')}. ¿Qué color sigue?`
+      ? `Colores: ${visual.sequence.join(', ')}. ${exercise.prompt}`
       : exercise.prompt,
     visual: renderVisual(visual),
     options: options.map(value => visual.type === 'color_sequence'

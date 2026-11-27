@@ -1,4 +1,5 @@
-import { Routes, Route, Navigate, useParams } from "react-router-dom";
+import { useLayoutEffect } from 'react';
+import { Routes, Route, Navigate, useLocation, useParams } from "react-router-dom";
 
 import Register from './views/user/Register';
 import Login from './views/user/Login';
@@ -18,6 +19,7 @@ import { normalizeModuleId } from './data/subjects.js';
 import { getLessonById, isLessonPublished } from './utils/lessonContent.js';
 import { useAuth } from './hooks/useAuth.jsx';
 import { ROUTES } from './services/startRoute.js';
+import { stopSpeech } from './utils/audio.js';
 
 // Protege las pantallas que necesitan cuenta.
 // onboarding = true: solo para quien aún no hace el cuestionario inicial; el resto lo exige terminado.
@@ -47,6 +49,9 @@ function PracticeEntry() {
 }
 
 export default function App() {
+    const { pathname, search } = useLocation();
+    useLayoutEffect(stopSpeech, [pathname, search]);
+
     return (
         <Routes>
             {/* Redirección inicial */}
