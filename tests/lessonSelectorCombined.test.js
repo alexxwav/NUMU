@@ -160,3 +160,21 @@ test('respaldo sin semanticKey: conteo, sumas y patrones siguen distinguiendo su
     assert.equal(new Set(adapted).size, lessons[id].exercises.length, `${id}: sus 6 ejercicios siguen siendo distintos`);
   }
 });
+
+test('formato del catálogo v2: si levels ya incluye los ejercicios publicados, cada nivel es el banco completo', () => {
+  // Como el fixture de Viviana: N1 con los publicados que caben; N2 y N3 sin editoriales, solo generador.
+  const lesson = {
+    ...lessons['conteo-basico'],
+    levels: {
+      1: { exercises: lessons['conteo-basico'].exercises.filter((e) => e.visual.count <= 5) },
+      2: { exercises: [], generator_key: 'conteo' },
+      3: { exercises: [], generator_key: 'conteo' },
+    },
+  };
+  assert.equal(lessonLevelSpec(lesson, 2).format, 'v2');
+  assert.deepEqual(lessonLevelSpec(lesson, 2).exercises, [], 'N2 no recibe ejercicios de nivel 1');
+  assert.equal(lessonCoverage({ lesson, level: 2 }).distinct, 5, 'igual que la cobertura que documenta Viviana');
+  // Un ejercicio que solo repite el id con otro contenido NO convierte el banco en completo.
+  const impostor = figurasWith({ 1: { exercises: [{ ...extension('G01', 'contar-objetos', [9], 9) }] } });
+  assert.equal(lessonLevelSpec(impostor, 1).format, 'combined');
+});

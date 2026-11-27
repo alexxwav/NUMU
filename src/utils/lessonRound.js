@@ -99,10 +99,17 @@ export function lessonLevelSpec(lesson, level) {
   if (v2 && typeof v2 === 'object' && !Array.isArray(v2)) {
     const extension = Array.isArray(v2.exercises) ? v2.exercises : [];
     const generatorKey = v2.generator_key ?? null;
-    if (published.length === 0) {
+    const ids = new Set(published.map((exercise) => exercise?.id));
+    // Catálogo v2 de Viviana: si `levels` ya incluye ejercicios publicados (el MISMO ejercicio: mismo
+    // id y mismo contenido), cada nivel es el banco COMPLETO (p. ej. Conteo N2 = solo generador) y no
+    // se le agregan los publicados. Un ejercicio que solo repite el id con otro contenido no cuenta.
+    const publishedById = new Map(published.map((exercise) => [exercise?.id, JSON.stringify(exercise)]));
+    const levelsAreComplete = Object.values(lesson.levels ?? {})
+      .some((bank) => (bank?.exercises ?? []).some((exercise) => publishedById.get(exercise?.id) === JSON.stringify(exercise)));
+    if (published.length === 0 || levelsAreComplete) {
       return { level: lessonLevel, format: 'v2', exercises: extension, generatorKey, ignoredIds: [] };
     }
-    const ids = new Set(published.map((exercise) => exercise?.id));
+    // Ampliación «delta» (solo ejercicios nuevos): se combina con los publicados del nivel.
     const ignoredIds = extension.filter((exercise) => ids.has(exercise?.id)).map((exercise) => exercise.id);
     return {
       level: lessonLevel,

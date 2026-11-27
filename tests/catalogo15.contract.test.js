@@ -13,6 +13,7 @@ import {
   representabilityProblem, isLessonPlayable, hasLegacyRound, QUESTIONS_PER_ROUND,
 } from '../src/utils/lessonRound.js';
 import { adaptExerciseToGame } from '../src/utils/lessonGameAdapter.js';
+import { shuffleExerciseOptions } from '../src/utils/lessonContent.js';
 import { getLearningPath, getAreaRoute, ACTIVE_AREA_IDS } from '../src/utils/areaProgress.js';
 import { resolveContinueRoute } from '../src/services/startRoute.js';
 import { courseSlugForModule } from '../src/data/subjects.js';
@@ -166,6 +167,41 @@ test('catálogo de 15 · 6 preguntas distintas por lección y nivel (salvo las c
       const result = selectLessonQuestions({ lesson: withPublished(lesson), level });
       assert.equal(result.playable, true, `${lesson.id} N${level}: ${result.reasons.join(' · ')}`);
       assert.equal(new Set(result.questions.map(questionSignature)).size, QUESTIONS_PER_ROUND, `${lesson.id} N${level}`);
+    }
+  }
+});
+
+test('catálogo de 15 · la respuesta correcta se conserva al mezclar y adaptar las opciones', FULL, () => {
+  for (const { lesson } of allLessons) {
+    const banks = [lesson.exercises ?? [], ...LEVELS.map((lv) => lesson.levels?.[lv]?.exercises ?? [])];
+    for (const exercise of banks.flat()) {
+      for (const seed of [0.1, 0.5, 0.9]) {
+        const q = adaptExerciseToGame(shuffleExerciseOptions(exercise, () => seed));
+        assert.equal(q.options[q.answerIndex].label, String(exercise.correct_answer), `${lesson.id}/${exercise.id}`);
+      }
+    }
+  }
+});
+
+test('catálogo de 15 · semanticKey del adaptador y questionSignature del selector son compatibles', FULL, () => {
+  for (const { lesson } of allLessons) for (const level of LEVELS) {
+    const bank = lesson.levels?.[level];
+    // Toda pregunta del selector se identifica por su clave [habilidad, evidencia].
+    const selection = selectLessonQuestions({ lesson: withPublished(lesson), level });
+    for (const q of selection.questions) {
+      const key = readSemanticKey(q);
+      assert.ok(key, `${lesson.id} N${level}: pregunta sin clave (${q.source})`);
+      assert.equal(questionSignature(q), JSON.stringify(['semantica', key]));
+      // Las claves de los generadores usan los tipos que el catálogo declara para ese nivel.
+      if (q.source === 'generador' && bank?.exercise_types) {
+        assert.ok(bank.exercise_types.includes(JSON.parse(key)[0]), `${lesson.id} N${level}: tipo ${JSON.parse(key)[0]}`);
+      }
+    }
+    // El mismo ejercicio adaptado dos veces (opciones en otro orden) es la misma pregunta.
+    for (const exercise of bank?.exercises ?? []) {
+      const a = adaptExerciseToGame(shuffleExerciseOptions(exercise, () => 0.1));
+      const b = adaptExerciseToGame(shuffleExerciseOptions(exercise, () => 0.9));
+      assert.equal(questionSignature(a), questionSignature(b), `${lesson.id}/${exercise.id}`);
     }
   }
 });
