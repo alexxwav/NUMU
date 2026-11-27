@@ -56,9 +56,21 @@ test('capa de compatibilidad: las lecciones actuales se leen como formato legacy
   assert.equal(lessonLevelSpec(lessons.patrones, 9).level, 3, 'el nivel se acota a 1–3');
 });
 
-test('conteo, sumas y patrones: 6 preguntas distintas en los niveles 1, 2 y 3', () => {
+// Con la evidencia semántica de Viviana para contar objetos (solo la cantidad), Conteo N1 y N2
+// no llegan a 6 cantidades distintas (N1: 2–5 objetos; N2: 2–6). Decisión educativa pendiente.
+test('conteo N1 y N2: cobertura semántica insuficiente (4 y 5 cantidades distintas), se informa', () => {
+  assert.equal(lessonCoverage({ lesson: lessons['conteo-basico'], level: 1 }).distinct, 4);
+  assert.equal(lessonCoverage({ lesson: lessons['conteo-basico'], level: 2 }).distinct, 5);
+  for (const level of [1, 2]) {
+    const result = selectLessonQuestions({ lesson: lessons['conteo-basico'], level });
+    assert.equal(result.playable, false);
+    assert.equal(new Set(signatures(result.questions)).size, result.questions.length, 'sin repetir para completar');
+  }
+});
+
+test('conteo N3, sumas y patrones N1–N3: 6 preguntas distintas', () => {
   for (const id of ['conteo-basico', 'sumas-basicas', 'patrones']) {
-    for (const level of LEVELS) {
+    for (const level of id === 'conteo-basico' ? [3] : LEVELS) {
       for (let run = 0; run < RUNS; run++) {
         const result = selectLessonQuestions({ lesson: lessons[id], level });
         assert.equal(result.playable, true, `${id} N${level}`);

@@ -27,14 +27,21 @@ const v2Lesson = (overrides = {}) => ({
   ...overrides,
 });
 
-test('regresión: las 4 lecciones actuales siguen con su flujo legacy en los niveles 1, 2 y 3', () => {
+test('regresión: las 4 lecciones actuales se juegan en los niveles 1, 2 y 3 con sus mismas fuentes', () => {
   for (const id of LEGACY) {
     assert.equal(hasLegacyRound(lessons[id]), true, id);
     for (const level of [1, 2, 3]) {
-      const plan = planLessonRound({ lesson: lessons[id], level });
-      assert.equal(plan.mode, 'legacy', `${id} N${level}`);
-      assert.equal(plan.questions.length, QUESTIONS_PER_ROUND, `${id} N${level}`);
-      assert.ok(plan.questions.every((q) => q.level === level));
+      for (let run = 0; run < 25; run++) {
+        const plan = planLessonRound({ lesson: lessons[id], level });
+        // Sin repetir preguntas donde hay 6 distintas. Flujo legacy temporal (con repetidas) en:
+        // Figuras N1–N3 (hasta su ampliación) y Conteo N1–N2 (decisión pendiente sobre su evidencia).
+        const legacyExpected = id === 'figuras' || (id === 'conteo-basico' && level < 3);
+        assert.equal(plan.mode, legacyExpected ? 'legacy' : 'selector', `${id} N${level}`);
+        assert.equal(plan.questions.length, QUESTIONS_PER_ROUND, `${id} N${level}`);
+        assert.ok(plan.questions.every((q) => q.level === level));
+        if (level > 1) assert.ok(plan.questions.every((q) => q.source === 'generador'), 'N2–N3: el mismo generador (R12–R14)');
+        if (!legacyExpected) assert.equal(new Set(plan.questions.map(questionSignature)).size, QUESTIONS_PER_ROUND, `${id} N${level}: sin repetidas`);
+      }
     }
   }
 });

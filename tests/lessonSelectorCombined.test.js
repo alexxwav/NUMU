@@ -14,16 +14,19 @@ const lessons = Object.fromEntries(catalog.courses.flatMap((c) => c.lessons).map
 const figuras = lessons.figuras;
 const byId = (id) => figuras.exercises.find((e) => e.id === id);
 const sig = (q) => questionSignature(q);
+// Las pruebas de «respaldo» comprueban el mecanismo SIN clave: se quita la que ponga el adaptador.
+const noKey = ({ semanticKey, ...question }) => question;
 
-// Ejercicio de ampliación con un visual que el adaptador actual ya admite y una semanticKey
-// con el formato acordado: JSON.stringify([tipo, evidencia]).
-function extension(id, type, evidence, count = 3) {
-  const options = [count - 1, count, count + 1, count + 2];
+// Ejercicio de ampliación FICTICIO, válido para el adaptador actual y para el de Viviana (c15baaff):
+// tipo contar-objetos con su clave en el formato acordado JSON.stringify([tipo, evidencia]).
+// Los parámetros de tipo/evidencia de cada prueba son solo descriptivos: la clave depende de `count`.
+function extension(id, _type, _evidence, count = 3) {
+  const options = [count, count + 1, count + 2, count + 3];
   return {
-    id, type, prompt: `Pregunta ${id}`, visual: { type: 'objects', icon: 'star', count },
-    options, answer_index: 1, correct_answer: count,
+    id, type: 'contar-objetos', prompt: `[FICTICIO] Pregunta ${id}`, visual: { type: 'objects', icon: 'star', count },
+    options, answer_index: 0, correct_answer: count,
     hint: 'Observa con calma.', feedback_correct: '¡Bien!', feedback_incorrect: 'Intenta de nuevo.',
-    semanticKey: JSON.stringify([type, evidence]),
+    semanticKey: JSON.stringify(['contar-objetos', [count]]),
   };
 }
 // Figuras publicada + ampliación (como figuras-ampliacion de Viviana: sin generador declarado).
@@ -62,13 +65,13 @@ test('combinado N2 y N3: todos los publicados (incluido el hexágono) + ampliaci
 test('Figuras combinada alcanza 6 distintas: N1 = 3 publicadas + 3 nuevas; N2 = 4 publicadas + 2 nuevas', () => {
   const lesson = figurasWith({
     1: { exercises: [
-      extension('N1a', 'emparejar-figura', [['pentagon', 'square', 'triangle', 'triangle'], 'square', null]),
-      extension('N1b', 'contar-lados-sin-marcar', ['triangle', 1]),
-      extension('N1c', 'elegir-por-lados', [['pentagon', 'square', 'triangle', 'triangle'], null, 4]),
+      extension('N1a', 'emparejar-figura', [['pentagon', 'square', 'triangle', 'triangle'], 'square', null], 1),
+      extension('N1b', 'contar-lados-sin-marcar', ['triangle', 1], 2),
+      extension('N1c', 'elegir-por-lados', [['pentagon', 'square', 'triangle', 'triangle'], null, 4], 3),
     ] },
     2: { exercises: [
-      extension('N2a', 'nombrar-figura', ['hexagon', null]),
-      extension('N2b', 'sumar-lados', [['square', 'triangle'], null, null]),
+      extension('N2a', 'nombrar-figura', ['hexagon', null], 4),
+      extension('N2b', 'sumar-lados', [['square', 'triangle'], null, null], 5),
     ] },
   });
   for (const level of [1, 2]) {
@@ -130,30 +133,30 @@ test('semanticKey inválida se ignora y se usa el respaldo', () => {
   for (const key of ['', '   ', 'no-json', '["solo-tipo"]', '[1, 2]', '{"a":1}', 42]) {
     assert.equal(readSemanticKey({ semanticKey: key }), null, String(key));
   }
-  const base = adaptExerciseToGame(byId('G01'));
+  const base = noKey(adaptExerciseToGame(byId('G01')));
   assert.equal(sig({ ...base, semanticKey: 'no-json' }), sig(base));
 });
 
 test('la semanticKey del catálogo llega a la pregunta adaptada y la reconoce el selector', () => {
-  const question = adaptExerciseToGame(extension('S1', 'nombrar-figura', ['square', null]));
-  assert.equal(readSemanticKey(question), JSON.stringify(['nombrar-figura', ['square', null]]));
+  const question = adaptExerciseToGame(extension('S1', 'contar-objetos', [7], 7));
+  assert.equal(readSemanticKey(question), JSON.stringify(['contar-objetos', [7]]));
 });
 
 test('respaldo sin semanticKey: el giro y el tamaño no crean preguntas distintas', () => {
-  const [g01, g02, g05, g06, g03] = ['G01', 'G02', 'G05', 'G06', 'G03'].map((id) => adaptExerciseToGame(byId(id)));
+  const [g01, g02, g05, g06, g03] = ['G01', 'G02', 'G05', 'G06', 'G03'].map((id) => noKey(adaptExerciseToGame(byId(id))));
   assert.equal(byId('G05').visual.rotation_degrees, 90);
   assert.equal(byId('G06').visual.size, 'small');
   assert.equal(sig(g05), sig(g01), 'triángulo girado = triángulo');
   assert.equal(sig(g06), sig(g02), 'cuadrado pequeño = cuadrado');
   assert.notEqual(sig(g01), sig(g02));
   assert.notEqual(sig(g02), sig(g03));
-  const published = new Set(figuras.exercises.map((e) => sig(adaptExerciseToGame(e))));
+  const published = new Set(figuras.exercises.map((e) => sig(noKey(adaptExerciseToGame(e)))));
   assert.equal(published.size, 4, 'G01–G06: triángulo, cuadrado, pentágono y hexágono');
 });
 
 test('respaldo sin semanticKey: conteo, sumas y patrones siguen distinguiendo sus preguntas', () => {
   for (const id of ['conteo-basico', 'sumas-basicas', 'patrones']) {
-    const adapted = lessons[id].exercises.map((e) => sig(adaptExerciseToGame(e)));
+    const adapted = lessons[id].exercises.map((e) => sig(noKey(adaptExerciseToGame(e))));
     assert.equal(new Set(adapted).size, lessons[id].exercises.length, `${id}: sus 6 ejercicios siguen siendo distintos`);
   }
 });

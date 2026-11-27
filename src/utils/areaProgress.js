@@ -11,8 +11,22 @@
 
 import { clampStars } from './stars.js';
 import { lessonLevelFor } from './lessonLevel.js';
-import { isLessonPublished } from './lessonRound.js';
-import { normalizeModuleId, courseSlugForModule } from '../data/subjects.js';
+import { isLessonPublished, hasLegacyRound, lessonCoverage } from './lessonRound.js';
+import { normalizeModuleId, courseSlugForModule, ACTIVE_AREA_IDS, isActiveArea } from '../data/subjects.js';
+import { lessonTheoryPath, lessonPlayPath } from '../services/startRoute.js';
+
+export { ACTIVE_AREA_IDS, isActiveArea };
+
+/**
+ * ¿Se puede practicar la lección en este nivel? Publicada y, además, una de las 4 actuales
+ * (su flujo de juego existe) o con 6 preguntas distintas en ese nivel (selector v2).
+ * Es la misma condición que usan el juego (planLessonRound) y el recomendador (C16).
+ */
+export function isLessonPlayable(lesson, level) {
+  if (!isLessonPublished(lesson)) return false;
+  if (hasLegacyRound(lesson)) return true;
+  return lessonCoverage({ lesson, level, samples: 60 }).playable;
+}
 
 /** Lecciones que forman un área completa (decisión aprobada: 4 áreas × 5 lecciones). */
 export const LESSONS_PER_AREA = 5;
@@ -101,10 +115,18 @@ export function roundProgressTargets({ lesson = null, areaId = null, routeModule
 }
 
 /**
- * Información de las paradas de un área, una por lessonId, para que la presentación la dibuje.
- * No guarda progreso, no genera rutas de navegación y no modifica el mapa actual.
- * status: 'no-publicada' | 'terminada' | 'siguiente' (R17) | 'disponible'.
- * level es el nivel académico de la lección (guardado o inicial por diagnóstico, R1–R3).
+ * Entradas lógicas de un área, una por lessonId y en orden de posición, para que la presentación
+ * (el mapa de 5 paradas de Viviana) las dibuje. Se calculan SOLO desde el progreso académico por
+ * lección: no guardan nada, no usan las 10 paradas históricas ni modifican el mapa actual.
+ * Cada entrada:
+ * · lessonId, position, title.
+ * · bestStars: mejor puntuación académica; completed: T2 (mejor = 3).
+ * · level: nivel académico (guardado o inicial por diagnóstico, R1–R3), independiente de T2.
+ * · published, playable: publicada y con práctica posible en su nivel.
+ * · isNext: la siguiente lección recomendada del área (R17: primera publicada y no terminada).
+ * · status: 'no-publicada' | 'terminada' | 'siguiente' | 'disponible'.
+ * · theoryPath: /lecciones/:id (solo publicadas); playPath: /lecciones/:id/jugar (solo jugables).
+ * Sin bloqueos artificiales: toda lección publicada se puede consultar.
  * @param {{catalog: Object, areaId: string, starsByLesson?: Record<string, number>,
  *   levelByLesson?: Record<string, number>, diagnosticScore?: number|null}} input
  */
@@ -117,19 +139,26 @@ export function getAreaRoute({ catalog, areaId, starsByLesson = {}, levelByLesso
     const bestStars = clampStars(starsByLesson?.[lesson.id]);
     const published = isLessonPublished(lesson);
     const completed = isLessonCompleted(starsByLesson?.[lesson.id]);
+    const level = lessonLevelFor({ lessonId: lesson.id, levelByLesson, diagnosticScore });
+    const playable = isLessonPlayable(lesson, level);
+    const isNext = next?.id === lesson.id;
     let status = 'disponible';
     if (!published) status = 'no-publicada';
     else if (completed) status = 'terminada';
-    else if (next?.id === lesson.id) status = 'siguiente';
+    else if (isNext) status = 'siguiente';
     return {
       lessonId: lesson.id,
       position: lesson.position,
       title: lesson.title,
       published,
+      playable,
       completed,
+      isNext,
       status,
       bestStars,
-      level: lessonLevelFor({ lessonId: lesson.id, levelByLesson, diagnosticScore }),
+      level,
+      theoryPath: published ? lessonTheoryPath(lesson.id) : null,
+      playPath: playable ? lessonPlayPath(lesson.id) : null,
     };
   });
   return {
@@ -140,5 +169,22 @@ export function getAreaRoute({ catalog, areaId, starsByLesson = {}, levelByLesso
     isCompleted: progress.isCompleted,
     nextLessonId: next?.id ?? null,
     stops,
+  };
+}
+
+/**
+ * Recorrido completo del alcance actual: las áreas activas (Aritmética, Geometría y Álgebra) en
+ * orden, con sus entradas (getAreaRoute). Las áreas que no estén en el catálogo se omiten;
+ * Trigonometría nunca aparece. nextLessonId es la primera lección siguiente en orden de áreas.
+ */
+export function getLearningPath({ catalog, starsByLesson = {}, levelByLesson = {}, diagnosticScore = null } = {}) {
+  const areas = ACTIVE_AREA_IDS
+    .map((areaId) => getAreaRoute({ catalog, areaId, starsByLesson, levelByLesson, diagnosticScore }))
+    .filter(Boolean);
+  const firstNext = areas.find((area) => area.nextLessonId);
+  return {
+    areas,
+    completedAreas: areas.filter((area) => area.isCompleted).map((area) => area.areaId),
+    nextLessonId: firstNext?.nextLessonId ?? null,
   };
 }

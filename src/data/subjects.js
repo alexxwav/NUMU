@@ -26,6 +26,18 @@ export function courseSlugForModule(id) {
 }
 
 /**
+ * Áreas del alcance actual de NUMU (15 lecciones: 3 áreas × 5), en orden.
+ * Trigonometría queda fuera: no se navega ni se recomienda, pero su progreso guardado
+ * (si existiera) no se borra ni se modifica.
+ */
+export const ACTIVE_AREA_IDS = Object.freeze(['aritmetica', 'geometria-patrones', 'algebra']);
+
+/** ¿El área (curso del catálogo) forma parte del alcance actual? */
+export function isActiveArea(areaId) {
+  return ACTIVE_AREA_IDS.includes(areaId);
+}
+
+/**
  * Intereses del diseño original (Actividad 5, 24-09-2026).
  * Solo dos tienen curso en el MVP; Álgebra y Trigonometría quedan sin curso.
  */

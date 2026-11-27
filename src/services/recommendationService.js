@@ -1,6 +1,7 @@
 import { initialLevelForScore, lessonLevelFor, MAX_LESSON_LEVEL } from '../utils/lessonLevel.js';
-import { isLessonPublished, hasLegacyRound, lessonCoverage } from '../utils/lessonRound.js';
-import { isLessonCompleted } from '../utils/areaProgress.js';
+import { isLessonPublished } from '../utils/lessonRound.js';
+import { isLessonCompleted, isLessonPlayable } from '../utils/areaProgress.js';
+import { isActiveArea } from '../data/subjects.js';
 
 // Sistema de recomendación de NUMU: reglas deterministas, sin modelos predictivos.
 //
@@ -27,8 +28,11 @@ export const CRITERIA = Object.freeze({
   C8: 'Se muestran como máximo 3 recomendaciones y nunca dos sobre la misma lección.',
   C9: 'Para decidir reforzar, continuar o avanzar se usa la última ronda de cada lección cuando existe; si no, la mejor puntuación. La mejor sigue siendo la que cuentan premios y logros.',
   C10: 'Si una lección se dominó (3 estrellas) y por eso subió de nivel sin llegar al máximo, se ofrece seguir practicándola en su nuevo nivel (después de la siguiente lección del área, C12).',
+  C11: 'Después de una ronda, los refuerzos de lecciones de la misma área van antes que los de otras áreas.',
   C12: 'Tras una ronda de 3 estrellas se recomienda primero la siguiente lección no terminada (T2) de la misma área, por posición (R17).',
   C13: 'Si todas las lecciones disponibles del área tienen 3 estrellas, se recomienda la primera lección no terminada de otra área (interés primero).',
+  C14: 'Después de una ronda se muestra como máximo 1 sugerencia de otra área; los refuerzos nunca se descartan por esta regla.',
+  C15: 'Cada sugerencia explica en palabras sencillas por qué se recomienda e indica el avance del área cuando aplica.',
   C16: 'Nunca se recomiendan lecciones no publicadas ni lecciones que no reúnen 6 preguntas distintas en su nivel.',
 });
 
@@ -41,11 +45,12 @@ export const RECOMMENDATION_TYPES = Object.freeze({
 
 const { INICIAR, CONTINUAR, REFORZAR, AVANZAR } = RECOMMENDATION_TYPES;
 
-// Intereses del diseño original y su curso publicado (null = todavía no existe).
+// Intereses del diseño original y su área (curso del catálogo). Solo cuentan si el área existe en el
+// catálogo y está activa. Trigonometría queda fuera del alcance actual (15 lecciones): sin área.
 const INTEREST_COURSES = Object.freeze({
   aritmetica: 'aritmetica',
   geometria: 'geometria-patrones',
-  algebra: null,
+  algebra: 'algebra',
   trigonometria: null,
 });
 const INTEREST_NAMES = Object.freeze({
@@ -99,7 +104,10 @@ export function buildRecommendations({
   limit = 3,
 } = {}) {
   const chosen = normalizeInterests(interests);
-  const courseIds = new Set((catalog?.courses ?? []).map((course) => course.id));
+  // Solo las áreas activas del alcance actual (Aritmética, Geometría y Álgebra). Un área fuera de
+  // alcance que exista en algún catálogo no se recomienda; su progreso guardado no se toca.
+  const activeCourses = (catalog?.courses ?? []).filter((course) => isActiveArea(course.id));
+  const courseIds = new Set(activeCourses.map((course) => course.id));
   const interestCourses = [...new Set(chosen.map((id) => INTEREST_COURSES[id]).filter((id) => id && courseIds.has(id)))];
   const unavailableInterests = chosen
     .filter((id) => !INTEREST_COURSES[id] || !courseIds.has(INTEREST_COURSES[id]))
@@ -107,7 +115,7 @@ export function buildRecommendations({
   const initialLevel = initialLevelForScore(diagnosticScore);
 
   // C6: cursos de interés primero, luego el orden del catálogo.
-  const courses = [...(catalog?.courses ?? [])].sort((a, b) => {
+  const courses = [...activeCourses].sort((a, b) => {
     const ia = interestCourses.indexOf(a.id);
     const ib = interestCourses.indexOf(b.id);
     if (ia !== ib) return (ia === -1 ? Infinity : ia) - (ib === -1 ? Infinity : ib);
@@ -139,8 +147,7 @@ export function buildRecommendations({
   // C16: solo se recomiendan lecciones publicadas que se pueden jugar en su nivel: las 4 actuales
   // siempre (tienen su flujo de juego); las de formato v2, si ese nivel reúne 6 preguntas distintas.
   // Nunca se ofrece una ruta a una lección no publicada o imposible de jugar.
-  const ordered = catalogOrder.filter(({ lesson }) => isLessonPublished(lesson)
-    && (hasLegacyRound(lesson) || lessonCoverage({ lesson, level: levelOf(lesson.id), samples: 60 }).playable));
+  const ordered = catalogOrder.filter(({ lesson }) => isLessonPlayable(lesson, levelOf(lesson.id)));
   const hasStoredLevel = (lessonId) => levels[lessonId] !== null && levels[lessonId] !== undefined;
   const bestOf = (lessonId) => best[lessonId] ?? 0;
   const hasLatest = (lessonId) => Object.hasOwn(latest, lessonId);
@@ -183,6 +190,12 @@ export function buildRecommendations({
   const nextInOtherArea = (current) => ordered
     .filter((e) => e.course.id !== current.course.id)
     .find((e) => !isLessonCompleted(bestOf(e.lesson.id))) ?? null;
+  // C15: avance del área en palabras sencillas («3 de 5 lecciones terminadas en Aritmética»).
+  const areaNote = (course) => {
+    const inArea = catalogOrder.filter((e) => e.course.id === course.id && isLessonPublished(e.lesson));
+    const done = inArea.filter((e) => isLessonCompleted(bestOf(e.lesson.id))).length;
+    return ` Llevas ${done} de ${inArea.length} lecciones terminadas en ${course.title}.`;
+  };
 
   // C1: la ronda recién terminada manda (R10 antes que R7–R9).
   if (round) {
@@ -206,7 +219,7 @@ export function buildRecommendations({
       const next = nextInArea(entry);
       if (next) {
         add(AVANZAR, next, `¡Excelente! Puedes continuar con un nuevo desafío: ${next.lesson.title.toLowerCase()}.`,
-          `Dominaste ${name} con 0 o 1 errores, así que puedes avanzar a la siguiente lección de ${entry.course.title}.`,
+          `Dominaste ${name} con 0 o 1 errores, así que puedes avanzar a la siguiente lección de ${entry.course.title}.${areaNote(entry.course)}`,
           ['R7', 'C1', 'C4', 'C12']);
       }
       if (leveledUp) {
@@ -218,7 +231,7 @@ export function buildRecommendations({
         const other = nextInOtherArea(entry);
         if (other) {
           add(AVANZAR, other, `¡Terminaste ${entry.course.title}! Explora ${other.course.title}: ${other.lesson.title.toLowerCase()}.`,
-            `Todas las lecciones disponibles de ${entry.course.title} tienen 3 estrellas, así que puedes empezar otra área.`,
+            `Todas las lecciones disponibles de ${entry.course.title} tienen 3 estrellas, así que puedes empezar otra área.${areaNote(other.course)}`,
             ['R7', 'C1', 'C13']);
         }
       }
@@ -229,16 +242,24 @@ export function buildRecommendations({
   const which = (lessonId) => (hasLatest(lessonId) ? 'Tu última ronda' : 'Tu mejor ronda');
 
   // C2: refuerzo (ronda con 1 estrella, R9; o última ronda sin aprobar, R10).
-  for (const entry of ordered) {
+  // C11: después de una ronda, primero se refuerzan las lecciones de su misma área.
+  const roundArea = round ? byId.get(round.lessonId).course.id : null;
+  const reinforceOrder = roundArea
+    ? [...ordered.filter((e) => e.course.id === roundArea), ...ordered.filter((e) => e.course.id !== roundArea)]
+    : ordered;
+  for (const entry of reinforceOrder) {
     const id = entry.lesson.id;
     const stars = decisionOf(id);
+    const sameArea = roundArea !== null && entry.course.id === roundArea && id !== round.lessonId;
+    const areaRules = sameArea ? ['C11'] : [];
     if (stars === 1) {
       add(REFORZAR, entry, `Te recomendamos repasar ${entry.lesson.title.toLowerCase()}.`,
-        `${which(id)} en esta lección (nivel ${levelOf(id)}) obtuvo 1 estrella: un repaso te ayudará a avanzar.${scoreNote(id)}`,
-        hasLatest(id) ? ['R9', 'C2', 'C9'] : ['R9', 'C2']);
+        `${which(id)} en esta lección (nivel ${levelOf(id)}) obtuvo 1 estrella: un repaso te ayudará a avanzar.${sameArea ? ` Es de ${entry.course.title}, el área que estás practicando.` : ''}${scoreNote(id)}`,
+        [...(hasLatest(id) ? ['R9', 'C2', 'C9'] : ['R9', 'C2']), ...areaRules]);
     } else if (stars === 0 && started(id)) {
       add(REFORZAR, entry, `Vuelve a intentar ${entry.lesson.title.toLowerCase()} con calma.`,
-        `Tu última ronda en esta lección no se completó porque se acabaron las vidas. Sigues en el nivel ${levelOf(id)}.${scoreNote(id)}`, ['R10', 'C2', 'C9']);
+        `Tu última ronda en esta lección no se completó porque se acabaron las vidas. Sigues en el nivel ${levelOf(id)}.${scoreNote(id)}`,
+        ['R10', 'C2', 'C9', ...areaRules]);
     }
   }
   // C3: continuar (ronda con 2 estrellas, R8).
@@ -279,7 +300,8 @@ export function buildRecommendations({
     add(INICIAR, entry, `¡Vamos a practicar ${entry.lesson.title.toLowerCase()}!`,
       `${isInterest ? `Elegiste ${course.title} entre tus intereses.` : `Es la primera lección disponible de ${course.title}.`} ${levelText} Empezarás en el nivel ${levelOf(entry.lesson.id)} de esta lección.`,
       [
-        ...(isInterest ? [course.id === 'aritmetica' ? 'R4' : 'R5'] : ['C6']),
+        // R4 = Aritmética, R5 = Geometría (reglas originales); Álgebra no tiene regla R propia.
+        ...(isInterest ? ({ aritmetica: ['R4'], 'geometria-patrones': ['R5'] }[course.id] ?? []) : ['C6']),
         ...(initialLevel ? [`R${initialLevel}`] : []), // R1, R2 o R3 según el nivel inicial
         'C5',
       ]);
@@ -293,8 +315,16 @@ export function buildRecommendations({
         : 'Obtuviste 3 estrellas en todas las lecciones publicadas.', ['R7', 'C7']);
   }
 
+  // C14: después de una ronda, como máximo 1 sugerencia de otra área; los refuerzos no se descartan.
+  let otherAreaCount = 0;
+  const balanced = recommendations.filter((rec) => {
+    if (!roundArea || rec.courseId === roundArea || rec.type === REFORZAR) return true;
+    otherAreaCount += 1;
+    return otherAreaCount <= 1;
+  });
+
   return {
-    recommendations: recommendations.slice(0, Math.max(0, limit)), // C8
+    recommendations: balanced.slice(0, Math.max(0, limit)), // C8
     unavailableInterests,
     recommendedCourseId: interestCourses[0] ?? null,
     initialLevel,

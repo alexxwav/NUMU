@@ -93,7 +93,11 @@ test('getAreaRoute: una parada por lessonId con estado, mejor estrella y nivel, 
   assert.equal(route.stops[1].bestStars, 1);
   assert.equal(route.stops[1].level, 2, 'nivel guardado');
   assert.equal(route.stops[2].level, 1, 'nivel inicial por diagnóstico (R1)');
-  assert.ok(route.stops.every((s) => !('path' in s) && !('route' in s)), 'no inventa rutas de navegación');
+  // Solo rutas existentes: teoría para las publicadas; práctica solo si se puede jugar.
+  assert.equal(route.stops[0].theoryPath, '/lecciones/escaleras-de-numeros');
+  assert.equal(route.stops[4].theoryPath, null, 'no publicada: sin teoría ni práctica');
+  assert.equal(route.stops[4].playPath, null);
+  assert.ok(route.stops.every((s) => s.playPath === null || s.playPath === `${s.theoryPath}/jugar`));
   assert.equal(JSON.stringify({ withUnpublished, stars }), before);
   assert.equal(getAreaRoute({ catalog, areaId: 'no-existe' }), null);
 });

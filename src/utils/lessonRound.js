@@ -184,13 +184,73 @@ export function questionSignature(question) {
   ]);
 }
 
+/* ---------- Claves semánticas con el formato del adaptador de Viviana ----------
+ * Contrato: JSON.stringify([tipo de habilidad, evidencia matemática]). El adaptador de Viviana
+ * (exerciseSemanticKey) la calcula para los ejercicios del catálogo; los generadores no la traen.
+ * Para que una pregunta generada y una del catálogo matemáticamente iguales se detecten como
+ * repetidas, TODAS las preguntas de una ronda deben tener clave. Estas funciones la dan, con el
+ * mismo formato, a las preguntas que llegan sin ella. Si la pregunta ya trae clave, se respeta. */
+const SHAPE_BY_NAME = Object.freeze({ triángulo: 'triangle', cuadrado: 'square', pentágono: 'pentagon', hexágono: 'hexagon' });
+const COLOR_BY_HEX = Object.freeze({ '#5124ee': 'Morado', '#ffc700': 'Amarillo', '#00d282': 'Verde', '#ff5a5f': 'Coral', '#00b4d8': 'Cian' });
+const DEFAULT_EXERCISE_TYPE = Object.freeze({ objects: 'contar-objetos', shape: 'contar-lados', color_sequence: 'continuar-patron' });
+const keyOf = (type, evidence) => JSON.stringify([type, evidence]);
+
+/** Clave de un ejercicio del catálogo de los tipos actuales (objetos, suma/resta, figura, patrón). */
+export function semanticKeyForExercise(exercise) {
+  const visual = exercise?.visual;
+  if (!visual || typeof visual !== 'object') return null;
+  const type = visual.type === 'expression'
+    ? (visual.operator === '-' ? 'resolver-resta' : 'resolver-suma')
+    : DEFAULT_EXERCISE_TYPE[visual.type];
+  // Tipos nuevos (o un tipo distinto del habitual) los resuelve el adaptador de Viviana.
+  if (!type || (exercise.type && exercise.type !== type)) return null;
+  switch (visual.type) {
+    case 'objects': return Number.isInteger(visual.count) ? keyOf(type, [visual.count]) : null;
+    case 'expression': return Array.isArray(visual.operands) && visual.operands.length === 2 ? keyOf(type, [...visual.operands]) : null;
+    case 'shape': return typeof visual.shape === 'string' ? keyOf(type, [visual.shape]) : null;
+    case 'color_sequence': return Array.isArray(visual.sequence) ? keyOf(type, visual.sequence.slice(0, 2)) : null;
+    default: return null;
+  }
+}
+
+/** Clave de una pregunta creada por un generador registrado (mismo formato que el catálogo). */
+export function semanticKeyForGenerated(generatorKey, question) {
+  const prompt = String(question?.prompt ?? '');
+  const visual = String(question?.visual ?? '');
+  switch (generatorKey) {
+    case 'conteo': {
+      const count = Number(visual.match(/aria-label="(\d+) /)?.[1]);
+      return Number.isInteger(count) ? keyOf('contar-objetos', [count]) : null;
+    }
+    case 'aritmetica': {
+      const match = prompt.match(/(\d+)\s*([+−-])\s*(\d+)/);
+      if (!match) return null;
+      return keyOf(match[2] === '+' ? 'resolver-suma' : 'resolver-resta', [Number(match[1]), Number(match[3])]);
+    }
+    case 'geometria': {
+      const shape = SHAPE_BY_NAME[prompt.match(/tiene el (.+)\?/)?.[1]];
+      return shape ? keyOf('contar-lados', [shape]) : null;
+    }
+    case 'patrones': {
+      const colors = [...visual.matchAll(/background:\s*(#[0-9a-fA-F]{6})/g)].map((m) => COLOR_BY_HEX[m[1].toLowerCase()]);
+      if (!colors.length || colors.some((c) => !c)) return null;
+      const period = [1, 2, 3].find((p) => colors.every((c, i) => c === colors[i % p])) ?? colors.length;
+      return keyOf('continuar-patron', colors.slice(0, Math.max(2, period)));
+    }
+    default: return null;
+  }
+}
+
+const withKey = (question, key) => (question.semanticKey || !key ? question : { ...question, semanticKey: key });
+
 // Ejercicios editoriales convertidos al formato del juego; los que no se pueden adaptar
 // (tipo de visual aún no admitido, datos incompletos) se informan y se omiten.
 function adaptEditorial(exercises, random, level, reasons) {
   const adapted = [];
   for (const exercise of exercises) {
     try {
-      adapted.push({ ...adaptExerciseToGame(shuffleExerciseOptions(exercise, random)), source: 'catalogo', level });
+      const question = adaptExerciseToGame(shuffleExerciseOptions(exercise, random));
+      adapted.push({ ...withKey(question, semanticKeyForExercise(exercise)), source: 'catalogo', level });
     } catch (error) {
       reasons.push(`Ejercicio ${exercise?.id ?? '?'} no se puede usar: ${error.message}`);
     }
@@ -216,7 +276,7 @@ export function lessonCoverage({ lesson, level, needed = QUESTIONS_PER_ROUND, sa
   if (spec.generatorKey !== null && spec.generatorKey !== undefined) {
     if (isKnownGenerator(spec.generatorKey)) {
       for (const question of generateQuestions(spec.generatorKey, spec.level, samples)) {
-        generatedSignatures.add(questionSignature(question));
+        generatedSignatures.add(questionSignature(withKey(question, semanticKeyForGenerated(spec.generatorKey, question))));
       }
     } else {
       reasons.push(`Generador desconocido «${spec.generatorKey}»: no se usa ningún respaldo.`);
@@ -293,7 +353,7 @@ export function selectLessonQuestions({ lesson, level, count = QUESTIONS_PER_ROU
       let attempts = (count - chosen.length) * GENERATOR_ATTEMPTS_PER_SLOT;
       while (chosen.length < count && attempts-- > 0) {
         const [question] = generateQuestions(spec.generatorKey, spec.level, 1);
-        if (question) take({ ...question, source: 'generador', level: spec.level });
+        if (question) take({ ...withKey(question, semanticKeyForGenerated(spec.generatorKey, question)), source: 'generador', level: spec.level });
       }
     }
   }
@@ -310,9 +370,10 @@ export function hasLegacyRound(lesson) {
  * · 'unavailable': lección no publicada (también por URL directa), sin contenido para el nivel
  *   o sin forma segura de armar 6 preguntas distintas → «Práctica no disponible», sin guardar nada.
  * · 'selector':    lección con `levels` (v2 o ampliación) y 6 preguntas distintas jugables.
- * · 'legacy':      una de las 4 lecciones actuales con buildLessonRound, igual que siempre. Si tiene
- *   una ampliación que todavía no es jugable (falta el adaptador de Viviana), se conserva este flujo
- *   temporalmente para no romper el juego actual.
+ *   Las 4 lecciones actuales también usan el selector (mismas fuentes, sin repetir preguntas).
+ * · 'legacy':      buildLessonRound, igual que siempre, solo para las 4 lecciones actuales que todavía
+ *   no reúnen 6 preguntas distintas (Figuras) o cuya ampliación aún no es jugable (falta el adaptador
+ *   de Viviana): se conserva temporalmente para no romper el juego actual.
  * @returns {{mode: 'legacy'|'selector'|'unavailable', questions: Object[], reasons: string[]}}
  */
 export function planLessonRound({ lesson, level, count = QUESTIONS_PER_ROUND, random = Math.random } = {}) {
@@ -327,6 +388,13 @@ export function planLessonRound({ lesson, level, count = QUESTIONS_PER_ROUND, ra
     if (hasLegacyRound(lesson)) return { ...legacy(), reasons: selection.reasons };
     return { mode: 'unavailable', questions: [], reasons: selection.reasons };
   }
-  if (hasLegacyRound(lesson)) return legacy();
+  if (hasLegacyRound(lesson)) {
+    // Mismas fuentes que buildLessonRound (catálogo en N1 y el mismo generador con R12–R14), pero
+    // sin repetir preguntas (contrato v1.1 §4). Si no llega a 6 distintas (Figuras, hasta integrar
+    // la ampliación de Viviana), se conserva temporalmente el flujo legacy.
+    const selection = selectLessonQuestions({ lesson, level, count, random });
+    if (selection.playable) return { mode: 'selector', questions: selection.questions, reasons: [] };
+    return { ...legacy(), reasons: selection.reasons };
+  }
   return { mode: 'unavailable', questions: [], reasons: ['La lección no tiene ejercicios por nivel ni un generador registrado.'] };
 }

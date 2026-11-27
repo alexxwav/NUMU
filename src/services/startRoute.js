@@ -1,3 +1,5 @@
+import { isActiveArea } from '../data/subjects.js';
+
 // Separa el login real del cuestionario inicial.
 // Rutas PROVISIONALES: '/conocerte' está por acordarse con César y Citlalli
 // (hoy el cuestionario vive en '/iniciar-sesion').
@@ -29,7 +31,10 @@ export function resolveStartRoute({ session, profile }) {
  * @returns {{route: string, lessonId: string|null, reason: 'ultima-leccion'|'recomendacion'|'modulo'}}
  */
 export function resolveContinueRoute({ lessonRounds = {}, catalog, recommendations = [], moduleId = 'conteo' } = {}) {
-  const lessonIds = new Set((catalog?.courses ?? []).flatMap((course) => course.lessons.map((lesson) => lesson.id)));
+  // Solo lecciones publicadas de las áreas activas: «Continuar» nunca lleva a una práctica bloqueada.
+  const lessonIds = new Set((catalog?.courses ?? [])
+    .filter((course) => isActiveArea(course.id))
+    .flatMap((course) => course.lessons.filter((lesson) => lesson.published !== false).map((lesson) => lesson.id)));
   const timeOf = (round) => {
     const time = Date.parse(round?.at ?? '');
     return Number.isFinite(time) ? time : -Infinity;
@@ -39,11 +44,26 @@ export function resolveContinueRoute({ lessonRounds = {}, catalog, recommendatio
     if (!lessonIds.has(lessonId) || timeOf(round) === -Infinity) continue;
     if (!last || timeOf(round) > timeOf(last.round)) last = { lessonId, round };
   }
-  if (last) return { route: `/lecciones/${last.lessonId}/jugar`, lessonId: last.lessonId, reason: 'ultima-leccion' };
+  if (last) return { route: lessonPlayPath(last.lessonId), lessonId: last.lessonId, reason: 'ultima-leccion' };
 
   const [first] = recommendations ?? [];
   if (first?.route && lessonIds.has(first.lessonId)) {
     return { route: first.route, lessonId: first.lessonId, reason: 'recomendacion' };
   }
   return { route: `/jugar/${moduleId}`, lessonId: null, reason: 'modulo' };
+}
+
+// Rutas de una lección (ya existen en App.jsx; no se crean rutas nuevas).
+// Devuelven null si el id no tiene el formato del catálogo, para no construir rutas inválidas.
+const LESSON_ID = /^[a-z0-9-]+$/;
+
+/** Teoría de la lección: /lecciones/:lessonId */
+export function lessonTheoryPath(lessonId) {
+  return typeof lessonId === 'string' && LESSON_ID.test(lessonId) ? `/lecciones/${lessonId}` : null;
+}
+
+/** Práctica de la lección: /lecciones/:lessonId/jugar */
+export function lessonPlayPath(lessonId) {
+  const theory = lessonTheoryPath(lessonId);
+  return theory ? `${theory}/jugar` : null;
 }
