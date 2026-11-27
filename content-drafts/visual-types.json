@@ -1,0 +1,99 @@
+{
+  "scope": "Propuesta para los borradores de Figuras y ¿Cuántos quedan? Los datos de esta carpeta se mantienen fuera del catálogo publicado.",
+  "visuals": {
+    "object_subtraction": {
+      "required": [
+        "type",
+        "icon",
+        "initial",
+        "removed",
+        "display"
+      ],
+      "icons": [
+        "fish",
+        "balloon",
+        "star",
+        "ball",
+        "heart"
+      ],
+      "displays": {
+        "marked": "Dibujar initial objetos y marcar removed con una señal visible además del color. Mantener las marcas distinguibles del resto para contar los objetos que quedan.",
+        "summary": "Mostrar la cantidad inicial y la cantidad que se retira junto al icono contextual. Reservar el resultado para después de la respuesta.",
+        "interactive": "En el ejemplo guiado, dibujar initial objetos seleccionables y ocultar un objeto distinto por acción hasta llegar a removed. Permitir contar los visibles antes de revelar la explicación."
+      },
+      "rules": [
+        "Usar enteros con 0 <= removed <= initial. En el ejemplo interactivo, pedir que se retire al menos un objeto.",
+        "Calcular la respuesta de práctica como initial menos removed.",
+        "Ofrecer texto accesible sobre las cantidades y los estados sin mostrar el resultado anticipadamente."
+      ]
+    },
+    "expression": {
+      "required": [
+        "type",
+        "operator",
+        "operands"
+      ],
+      "operator": "-",
+      "rules": [
+        "Esta extensión propuesta conserva el tipo expression y añade dos operandos enteros no negativos con el primero mayor o igual al segundo.",
+        "Mostrar el signo − y leerlo como «menos». Dejar el resultado como incógnita hasta responder."
+      ]
+    },
+    "shape": {
+      "required": [
+        "type",
+        "shape"
+      ],
+      "polygons": {
+        "triangle": 3,
+        "square": 4,
+        "pentagon": 5,
+        "hexagon": 6
+      },
+      "sizes": [
+        "small",
+        "normal"
+      ],
+      "optional": [
+        "rotation_degrees",
+        "size",
+        "marked_sides"
+      ],
+      "rules": [
+        "Conservar el contorno existente y admitir una rotación de 0 inclusive a 360 exclusive.",
+        "Representar marked_sides mediante índices distintos, desde cero, sobre los segmentos del contorno original. Girar las marcas junto con la figura.",
+        "En los ejercicios de reconocimiento, el nombre de la figura forma parte de las opciones. Evitar que la descripción accesible lo anuncie como respuesta."
+      ]
+    },
+    "shape_set": {
+      "required": [
+        "type",
+        "figures"
+      ],
+      "optional": [
+        "reference",
+        "target_sides"
+      ],
+      "rules": [
+        "Mostrar de dos a cuatro figuras. Cada tarjeta tiene label, shape y los campos visuales opcionales de shape. Las etiquetas consecutivas A a D se mantienen visibles con sus figuras aunque se mezclen las opciones de respuesta.",
+        "reference es una figura sin letra y sirve de modelo. target_sides es una cantidad mencionada en la consigna, no una marca de la tarjeta correcta.",
+        "Cada actividad deriva la respuesta de las propiedades de las figuras. La escala, rotación y las letras de las tarjetas por sí solas no producen una pregunta distinta."
+      ]
+    }
+  },
+  "interactions": {
+    "remove_objects": {
+      "required": [
+        "type",
+        "instructions",
+        "feedback_on_complete",
+        "restart_label"
+      ],
+      "rules": [
+        "Aceptar teclado y puntero en cada objeto. Ignorar selecciones repetidas y detener el retiro al alcanzar visual.removed.",
+        "Mantener el grupo restante disponible para contar. Revelar la explicación del resultado únicamente al terminar el paso de conteo.",
+        "Restaurar el grupo al reiniciar. El ejemplo guiado queda fuera del guardado de estrellas y del nivel académico."
+      ]
+    }
+  }
+}

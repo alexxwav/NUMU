@@ -1,0 +1,474 @@
+{
+  "id": "cuantos-quedan",
+  "course_id": "aritmetica",
+  "title": "¿Cuántos quedan?",
+  "position": 3,
+  "base_level": 1,
+  "published": false,
+  "objective": "Interpretar la resta como quitar una cantidad de otra y determinar cuántos objetos quedan.",
+  "explanation": "Restar nos ayuda a saber cuántas cosas quedan. Primero mira cuántas hay. Luego quita las que se van y cuenta las que siguen allí. El signo menos te dice que debes quitar. Si no se va ninguna, el grupo queda igual. Si se van todas, quedan cero.",
+  "guided_example": {
+    "mode": "interactive",
+    "explanation": "Hay siete peces. Toca dos peces distintos para que se escondan y cuenta los que todavía puedes ver.",
+    "visual": {
+      "type": "object_subtraction",
+      "icon": "fish",
+      "initial": 7,
+      "removed": 2,
+      "display": "interactive"
+    },
+    "interaction": {
+      "type": "remove_objects",
+      "instructions": [
+        "Toca un pez para que se esconda.",
+        "Toca otro pez distinto.",
+        "Cuenta los peces que siguen a la vista."
+      ],
+      "feedback_on_complete": "¡Quedan cinco peces! Empezaste con siete y quitaste dos. Eso se escribe 7 − 2 = 5.",
+      "restart_label": "Volver a empezar"
+    }
+  },
+  "levels": {
+    "1": {
+      "exercise_types": [
+        "restar-con-objetos"
+      ],
+      "exercises": [
+        {
+          "id": "cuantos-quedan-n1-01",
+          "type": "restar-con-objetos",
+          "prompt": "Hay 4 peces. Uno se esconde. ¿Cuántos quedan a la vista?",
+          "visual": {
+            "type": "object_subtraction",
+            "icon": "fish",
+            "initial": 4,
+            "removed": 1,
+            "display": "marked"
+          },
+          "options": [
+            2,
+            4,
+            1,
+            3
+          ],
+          "correct_answer": 3,
+          "answer_index": 3,
+          "hint": "Señala los peces que siguen a la vista y cuenta solo esos.",
+          "feedback_correct": "¡Quedan 3 peces! Quitaste el que se escondió y contaste los demás.",
+          "feedback_incorrect": "Deja fuera al pez marcado. Empieza a contar por el primer pez que todavía ves."
+        },
+        {
+          "id": "cuantos-quedan-n1-02",
+          "type": "restar-con-objetos",
+          "prompt": "De 5 globos, se escapan 2. ¿Cuántos quedan?",
+          "visual": {
+            "type": "object_subtraction",
+            "icon": "balloon",
+            "initial": 5,
+            "removed": 2,
+            "display": "marked"
+          },
+          "options": [
+            3,
+            5,
+            2,
+            4
+          ],
+          "correct_answer": 3,
+          "answer_index": 0,
+          "hint": "Fíjate en las marcas de los globos que se fueron. Cuenta los que no tienen marca.",
+          "feedback_correct": "¡Quedan 3 globos! Si a cinco les quitas dos, quedan tres.",
+          "feedback_incorrect": "Deja fuera los globos marcados y vuelve a contar los que siguen allí."
+        },
+        {
+          "id": "cuantos-quedan-n1-03",
+          "type": "restar-con-objetos",
+          "prompt": "Hay 6 estrellas. NUMU tapa 2. ¿Cuántas quedan sin tapar?",
+          "visual": {
+            "type": "object_subtraction",
+            "icon": "star",
+            "initial": 6,
+            "removed": 2,
+            "display": "marked"
+          },
+          "options": [
+            6,
+            3,
+            4,
+            2
+          ],
+          "correct_answer": 4,
+          "answer_index": 2,
+          "hint": "Recorre la fila y salta las estrellas marcadas. ¿Cuántas cuentas así?",
+          "feedback_correct": "¡Quedan 4 estrellas sin tapar! Contaste las que quedaron a la vista.",
+          "feedback_incorrect": "Imagina que las estrellas marcadas están detrás de la mano de NUMU. Cuenta las demás."
+        },
+        {
+          "id": "cuantos-quedan-n1-04",
+          "type": "restar-con-objetos",
+          "prompt": "De 6 pelotas, guardamos 4 en una caja. ¿Cuántas quedan fuera?",
+          "visual": {
+            "type": "object_subtraction",
+            "icon": "ball",
+            "initial": 6,
+            "removed": 4,
+            "display": "marked"
+          },
+          "options": [
+            4,
+            2,
+            6,
+            3
+          ],
+          "correct_answer": 2,
+          "answer_index": 1,
+          "hint": "Cuenta las pelotas sin marca. Esas son las que siguen fuera de la caja.",
+          "feedback_correct": "¡Quedan 2 pelotas fuera! Cuatro de las seis ya están guardadas.",
+          "feedback_incorrect": "Recorre la fila. Cuando llegues a una pelota marcada, sáltala y sigue contando."
+        },
+        {
+          "id": "cuantos-quedan-n1-05",
+          "type": "restar-con-objetos",
+          "prompt": "Hay 7 peces y 2 se van. ¿Cuántos quedan en el arrecife?",
+          "visual": {
+            "type": "object_subtraction",
+            "icon": "fish",
+            "initial": 7,
+            "removed": 2,
+            "display": "marked"
+          },
+          "options": [
+            4,
+            7,
+            5,
+            2
+          ],
+          "correct_answer": 5,
+          "answer_index": 2,
+          "hint": "Deja fuera los peces marcados. Empieza por el primer pez que se queda.",
+          "feedback_correct": "¡Quedan 5 peces! Siete menos dos deja cinco.",
+          "feedback_incorrect": "Si contaste todos los peces, vuelve a hacerlo dejando fuera a los que se van."
+        },
+        {
+          "id": "cuantos-quedan-n1-06",
+          "type": "restar-con-objetos",
+          "prompt": "Hay 7 corazones de papel. Guardamos 6. ¿Cuántos quedan sobre la mesa?",
+          "visual": {
+            "type": "object_subtraction",
+            "icon": "heart",
+            "initial": 7,
+            "removed": 6,
+            "display": "marked"
+          },
+          "options": [
+            1,
+            2,
+            6,
+            7
+          ],
+          "correct_answer": 1,
+          "answer_index": 0,
+          "hint": "Busca cuáles corazones siguen sobre la mesa. Las marcas señalan cuáles se guardaron.",
+          "feedback_correct": "¡Queda 1 corazón! Se guardaron seis de los siete.",
+          "feedback_incorrect": "Aparta con la vista los corazones marcados y cuenta lo que queda."
+        }
+      ]
+    },
+    "2": {
+      "exercise_types": [
+        "resolver-resta"
+      ],
+      "exercises": [
+        {
+          "id": "cuantos-quedan-n2-01",
+          "type": "resolver-resta",
+          "prompt": "¿Cuánto es 6 − 1?",
+          "visual": {
+            "type": "expression",
+            "operator": "-",
+            "operands": [
+              6,
+              1
+            ]
+          },
+          "options": [
+            4,
+            5,
+            6,
+            1
+          ],
+          "correct_answer": 5,
+          "answer_index": 1,
+          "hint": "Empieza en el número de la izquierda y da un paso hacia atrás.",
+          "feedback_correct": "¡Da 5! Al dar un paso atrás desde seis llegas a cinco.",
+          "feedback_incorrect": "El número de la derecha dice cuántos pasos debes retroceder. El punto de partida todavía no cuenta como paso."
+        },
+        {
+          "id": "cuantos-quedan-n2-02",
+          "type": "resolver-resta",
+          "prompt": "¿Cuánto es 8 − 2?",
+          "visual": {
+            "type": "expression",
+            "operator": "-",
+            "operands": [
+              8,
+              2
+            ]
+          },
+          "options": [
+            5,
+            8,
+            6,
+            4
+          ],
+          "correct_answer": 6,
+          "answer_index": 2,
+          "hint": "Usa tus dedos para llevar la cuenta de los pasos hacia atrás.",
+          "feedback_correct": "¡Da 6! Desde ocho, retroceder dos pasos te lleva a seis.",
+          "feedback_incorrect": "Vuelve al número de partida y cuenta un dedo por cada paso hacia atrás."
+        },
+        {
+          "id": "cuantos-quedan-n2-03",
+          "type": "resolver-resta",
+          "prompt": "¿Cuánto es 9 − 5?",
+          "visual": {
+            "type": "expression",
+            "operator": "-",
+            "operands": [
+              9,
+              5
+            ]
+          },
+          "options": [
+            4,
+            6,
+            5,
+            9
+          ],
+          "correct_answer": 4,
+          "answer_index": 0,
+          "hint": "Imagina una recta numérica. Empieza con el primer número de la resta y retrocede lo que indica el segundo.",
+          "feedback_correct": "¡Da 4! Si quitas cinco a nueve, quedan cuatro.",
+          "feedback_incorrect": "Dibuja nueve fichas. Tacha cinco y cuenta las fichas sin tachar."
+        },
+        {
+          "id": "cuantos-quedan-n2-04",
+          "type": "resolver-resta",
+          "prompt": "¿Cuánto es 7 − 7?",
+          "visual": {
+            "type": "expression",
+            "operator": "-",
+            "operands": [
+              7,
+              7
+            ]
+          },
+          "options": [
+            7,
+            2,
+            0,
+            1
+          ],
+          "correct_answer": 0,
+          "answer_index": 2,
+          "hint": "Compara los dos números. Imagina que retiras un grupo del mismo tamaño que el grupo inicial.",
+          "feedback_correct": "¡Da 0! Quitaste todo el grupo, así que no queda ninguna ficha.",
+          "feedback_incorrect": "Dibuja siete puntos y tacha uno por cada unidad que quitas. Cuenta los puntos sin tachar."
+        },
+        {
+          "id": "cuantos-quedan-n2-05",
+          "type": "resolver-resta",
+          "prompt": "¿Cuánto es 8 − 0?",
+          "visual": {
+            "type": "expression",
+            "operator": "-",
+            "operands": [
+              8,
+              0
+            ]
+          },
+          "options": [
+            0,
+            8,
+            7,
+            9
+          ],
+          "correct_answer": 8,
+          "answer_index": 1,
+          "hint": "Antes de retroceder, fíjate en cuántos pasos te pide la resta.",
+          "feedback_correct": "¡Da 8! Quitar cero significa que el grupo queda tal como estaba.",
+          "feedback_incorrect": "Mira el número de la derecha y comprueba si debes quitar alguna ficha."
+        },
+        {
+          "id": "cuantos-quedan-n2-06",
+          "type": "resolver-resta",
+          "prompt": "¿Cuánto es 11 − 4?",
+          "visual": {
+            "type": "expression",
+            "operator": "-",
+            "operands": [
+              11,
+              4
+            ]
+          },
+          "options": [
+            4,
+            6,
+            11,
+            7
+          ],
+          "correct_answer": 7,
+          "answer_index": 3,
+          "hint": "Puedes separar los saltos hacia atrás en dos grupos iguales y seguirlos con tus dedos.",
+          "feedback_correct": "¡Da 7! Desde once, dos pasos atrás llegan a nueve y otros dos llegan a siete.",
+          "feedback_incorrect": "Prueba con una recta numérica. Empieza en once y marca cada paso."
+        }
+      ]
+    },
+    "3": {
+      "exercise_types": [
+        "restar-en-contexto"
+      ],
+      "exercises": [
+        {
+          "id": "cuantos-quedan-n3-01",
+          "type": "restar-en-contexto",
+          "prompt": "NUMU ve 12 peces junto a un coral. Se alejan 4. ¿Cuántos siguen junto al coral?",
+          "visual": {
+            "type": "object_subtraction",
+            "icon": "fish",
+            "initial": 12,
+            "removed": 4,
+            "display": "summary"
+          },
+          "options": [
+            4,
+            8,
+            12,
+            7
+          ],
+          "correct_answer": 8,
+          "answer_index": 1,
+          "hint": "Busca cuántos peces había primero y cuántos se alejaron. La pregunta es por el grupo que se queda.",
+          "feedback_correct": "¡Quedan 8 peces! Había doce y se alejaron cuatro, así que hacemos doce menos cuatro.",
+          "feedback_incorrect": "Si elegiste el grupo que se alejó, ya encontraste cuánto quitar. Ahora calcula qué parte se queda."
+        },
+        {
+          "id": "cuantos-quedan-n3-02",
+          "type": "restar-en-contexto",
+          "prompt": "Para la fiesta hay 10 globos. Se revientan 3. ¿Cuántos globos siguen inflados?",
+          "visual": {
+            "type": "object_subtraction",
+            "icon": "balloon",
+            "initial": 10,
+            "removed": 3,
+            "display": "summary"
+          },
+          "options": [
+            3,
+            8,
+            7,
+            10
+          ],
+          "correct_answer": 7,
+          "answer_index": 2,
+          "hint": "Imagina el grupo completo y tacha los globos que se revientan. ¿Qué grupo debes contar?",
+          "feedback_correct": "¡Siguen inflados 7 globos! Quitar los tres reventados de los diez deja siete.",
+          "feedback_incorrect": "Dibuja diez puntitos. Marca los tres globos reventados y cuenta los puntos sin marca."
+        },
+        {
+          "id": "cuantos-quedan-n3-03",
+          "type": "restar-en-contexto",
+          "prompt": "Hay 9 pelotas en el patio. Al final del recreo se guardan 7. ¿Cuántas quedan en el patio?",
+          "visual": {
+            "type": "object_subtraction",
+            "icon": "ball",
+            "initial": 9,
+            "removed": 7,
+            "display": "summary"
+          },
+          "options": [
+            2,
+            7,
+            9,
+            3
+          ],
+          "correct_answer": 2,
+          "answer_index": 0,
+          "hint": "Piensa en el patio al principio y al final. Las pelotas que se guardan salen de ese grupo.",
+          "feedback_correct": "¡Quedan 2 pelotas! Nueve menos siete deja dos.",
+          "feedback_incorrect": "Si elegiste las pelotas guardadas, todavía falta contar las que siguen fuera de la caja."
+        },
+        {
+          "id": "cuantos-quedan-n3-04",
+          "type": "restar-en-contexto",
+          "prompt": "Sara tiene 14 estampas de estrellas. Regala 5 a su amiga. ¿Cuántas estampas le quedan a Sara?",
+          "visual": {
+            "type": "object_subtraction",
+            "icon": "star",
+            "initial": 14,
+            "removed": 5,
+            "display": "summary"
+          },
+          "options": [
+            5,
+            10,
+            14,
+            9
+          ],
+          "correct_answer": 9,
+          "answer_index": 3,
+          "hint": "Sigue solo las estampas de Sara. Las que regala ya no forman parte de su montón.",
+          "feedback_correct": "¡Le quedan 9 estampas! Catorce menos cinco es nueve.",
+          "feedback_incorrect": "Empieza con el montón de Sara y quita las estampas que regaló. Puedes usar una recta numérica."
+        },
+        {
+          "id": "cuantos-quedan-n3-05",
+          "type": "restar-en-contexto",
+          "prompt": "En la mesa hay 13 corazones de papel. Pegamos 3 en una tarjeta. ¿Cuántos quedan sueltos en la mesa?",
+          "visual": {
+            "type": "object_subtraction",
+            "icon": "heart",
+            "initial": 13,
+            "removed": 3,
+            "display": "summary"
+          },
+          "options": [
+            13,
+            9,
+            10,
+            3
+          ],
+          "correct_answer": 10,
+          "answer_index": 2,
+          "hint": "Separa los corazones pegados de los sueltos. Cuenta los que todavía se pueden recoger.",
+          "feedback_correct": "¡Quedan 10 corazones sueltos! Quitamos los tres pegados de los trece iniciales.",
+          "feedback_incorrect": "El grupo pegado ya está en la tarjeta. Retíralo del grupo que había en la mesa antes de contar."
+        },
+        {
+          "id": "cuantos-quedan-n3-06",
+          "type": "restar-en-contexto",
+          "prompt": "En la pecera se ven 15 peces. Nueve se esconden detrás de una roca. ¿Cuántos se ven todavía?",
+          "visual": {
+            "type": "object_subtraction",
+            "icon": "fish",
+            "initial": 15,
+            "removed": 9,
+            "display": "summary"
+          },
+          "options": [
+            9,
+            6,
+            7,
+            15
+          ],
+          "correct_answer": 6,
+          "answer_index": 1,
+          "hint": "Imagina que cubres a los peces de detrás de la roca. Cuenta el grupo que quedaría a la vista.",
+          "feedback_correct": "¡Todavía se ven 6 peces! Quince menos nueve es seis.",
+          "feedback_incorrect": "Anota cuántos había y cuántos se escondieron. Retrocede esa cantidad desde el total."
+        }
+      ]
+    }
+  }
+}
