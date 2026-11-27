@@ -1,0 +1,99 @@
+{
+  "scope": "Propuesta de datos editoriales de Álgebra. La integración con el adaptador y el selector se acuerda por separado.",
+  "exercise_contract": {
+    "format": "Cada ejercicio conserva type, prompt, visual, cuatro opciones escalares distintas, correct_answer, answer_index desde cero, hint y retroalimentación.",
+    "semantic_key": "Construir JSON.stringify([type, evidencia]). Derivar la evidencia de posiciones, términos y operaciones. Excluir iconos, redacción y orden de opciones.",
+    "accessibility": "Leer las entradas matemáticas visibles y anunciar la casilla vacía. Reservar la solución para la retroalimentación y el cierre del ejemplo guiado."
+  },
+  "visuals": {
+    "number_staircase": {
+      "required": [
+        "type",
+        "steps"
+      ],
+      "optional": [
+        "query_position"
+      ],
+      "rule": "steps enumera los números en orden. null marca un escalón sin mostrar. query_position es una posición desde uno y puede extender la escalera. Para identificar una regla se muestran todos los escalones sin selección.",
+      "evidence": "Primer valor deducido, diferencia con signo y posición consultada cuando corresponda."
+    },
+    "balance_model": {
+      "required": [
+        "type",
+        "left",
+        "right",
+        "display"
+      ],
+      "displays": [
+        "objects",
+        "symbols"
+      ],
+      "rule": "Cada plato contiene un arreglo de cantidades sumables. Una cantidad null representa una caja. En reconocimiento de cantidades, right es null para representar el plato donde se coloca una de las sumas ofrecidas.",
+      "evidence": "Términos conocidos y ubicación de la incógnita. Normalizar el orden de las sumas y el intercambio de platos cuando representen la misma igualdad."
+    },
+    "unknown_number": {
+      "required": [
+        "type",
+        "operator",
+        "operands",
+        "result",
+        "display"
+      ],
+      "operators": [
+        "+",
+        "-"
+      ],
+      "displays": [
+        "box",
+        "story"
+      ],
+      "rule": "operands guarda dos posiciones y exactamente una es null. Dibujar una caja en esa posición para box. En story, mantener oculto el valor y mostrar únicamente la relación que expresa la historia. Los números y soluciones son enteros no negativos.",
+      "evidence": "Operador, operandos ordenados con su hueco y resultado conocido."
+    },
+    "rule_machine": {
+      "required": [
+        "type"
+      ],
+      "fields": {
+        "input": "Tarjeta conocida en un ejercicio que pide aplicar operaciones.",
+        "operations": "Lista ordenada de pasos con operator y value. Los operadores admitidos son +, - y ×. Aplicar del primero al último.",
+        "examples": "Lista de pares input y output para elegir una regla de las cuatro opciones. Mantener la regla oculta.",
+        "inputs": "Tarjetas que puede probar el estudiante en el ejemplo interactivo."
+      },
+      "evidence": "Entrada y operaciones ordenadas al aplicar una regla. Pares de entrada y salida en orden de entrada al descubrirla."
+    },
+    "growing_pattern": {
+      "required": [
+        "type",
+        "repeated_icon",
+        "fixed_icon",
+        "stages"
+      ],
+      "optional": [
+        "query_position"
+      ],
+      "rule": "Cada etapa tiene position desde uno, groups como cantidades de grupos dibujados y fixed como número de piezas fijas. Mostrar una etapa por dibujo. query_position elige una etapa representada o indica cuál se debe predecir. Para elegir una regla se usan todos los dibujos.",
+      "evidence": "Piezas por grupo, piezas fijas y posición consultada cuando corresponda."
+    }
+  },
+  "interactions": {
+    "balance_objects": {
+      "required": [
+        "type",
+        "instructions",
+        "feedback_on_complete",
+        "restart_label"
+      ],
+      "rule": "Usar el plato con null como espacio para agregar fichas. Comparar totales y mostrar equilibrio cuando coincidan. Permitir reiniciar."
+    },
+    "try_rule_machine": {
+      "required": [
+        "type",
+        "instructions",
+        "feedback_on_complete",
+        "restart_label"
+      ],
+      "rule": "Permitir seleccionar una tarjeta de inputs y descubrir su salida después de predecirla. Aplicar operations en orden y permitir probar otra tarjeta o reiniciar."
+    }
+  }
+}

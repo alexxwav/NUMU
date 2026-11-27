@@ -1,8 +1,7 @@
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Target, Lightbulb, Volume2 } from 'lucide-react';
+import { ArrowLeft, Target, Volume2 } from 'lucide-react';
 import catalog from '../data/lessonContent.json';
-import { getLessonById } from '../utils/lessonContent.js';
-import { adaptExerciseToGame } from '../utils/lessonGameAdapter.js';
+import { getLessonById, isLessonPublished } from '../utils/lessonContent.js';
 import { sfx, speak } from '../utils/audio.js';
 import { store } from '../state/store.js';
 import { useLessonProgress } from '../hooks/useLessonProgress.js';
@@ -10,49 +9,24 @@ import { lessonLevelFromState, MAX_LESSON_LEVEL } from '../utils/lessonLevel.js'
 import { QUESTIONS_PER_ROUND } from '../utils/lessonRound.js';
 import mascotUrl from '../assets/brand/mascot/numu-morado.png';
 import CountingExample from '../components/CountingExample.jsx';
+import GuidedExample from '../components/lessonExamples/GuidedExample.jsx';
 import { COURSE_STYLE } from './CoursesView.jsx';
 
-const COLOR_NAMES = ['Morado', 'Amarillo', 'Verde', 'Coral', 'Cian'];
-
-// Dibuja el visual del ejemplo guiado con el mismo adaptador que usa el juego.
-function guidedExampleHtml(visual) {
-  let shown = visual;
-  let answer;
-  switch (visual?.type) {
-    case 'objects': answer = visual.count; break;
-    case 'expression': answer = visual.operands[0] + visual.operands[1]; break;
-    case 'shape': answer = visual.sides; break;
-    case 'color_sequence':
-      shown = { ...visual, sequence: visual.sequence.slice(0, 4), missing_index: 4 };
-      answer = shown.sequence[0];
-      break;
-    default: return null;
-  }
-  const options = typeof answer === 'number'
-    ? [answer, answer + 1, answer + 2, answer + 3]
-    : [answer, ...COLOR_NAMES.filter((name) => name !== answer).slice(0, 3)];
-  try {
-    return adaptExerciseToGame({
-      id: 'ejemplo', prompt: 'Ejemplo', hint: '-', feedback_correct: '-', feedback_incorrect: '-',
-      visual: shown, options, answer_index: 0, correct_answer: answer,
-    }).visual;
-  } catch {
-    return null;
-  }
+function PublishedLessonLevel({ lessonId }) {
+  useLessonProgress();
+  return <> · Nivel {lessonLevelFromState(store.get(), lessonId)} de {MAX_LESSON_LEVEL}</>;
 }
 
 export default function LessonView() {
   const navigate = useNavigate();
   const { lessonId } = useParams();
-  useLessonProgress(); // carga el progreso guardado (estrellas y nivel de cada lección)
   const found = getLessonById(catalog, lessonId);
   if (!found) return <Navigate to="/cursos" replace />;
 
   const { lesson, course } = found;
   const style = COURSE_STYLE[course.id] ?? COURSE_STYLE.aritmetica;
   const isCountingLesson = lesson.id === 'conteo-basico';
-  const exampleHtml = isCountingLesson ? null : guidedExampleHtml(lesson.guided_example?.visual);
-  const level = lessonLevelFromState(store.get(), lesson.id);
+  const canPractice = isLessonPublished(lesson);
 
   const practice = () => {
     sfx.tap();
@@ -62,42 +36,39 @@ export default function LessonView() {
 
   const practiceButton = (disabled = false) => (
     <button type="button" onClick={practice} disabled={disabled}
-      className={`w-full min-h-touch-lg bg-sunshine-yellow text-text-dark font-fredoka font-bold text-2xl rounded-btn shadow-3d-yellow ${
-        isCountingLesson
-          ? 'enabled:motion-safe:hover:translate-y-1 enabled:hover:shadow-none motion-safe:transition-all disabled:opacity-60'
-          : 'hover:translate-y-1 hover:shadow-none transition-all'
-      }`}>
+      className="w-full min-h-touch-lg bg-sunshine-yellow text-text-dark font-fredoka font-bold text-2xl rounded-btn shadow-3d-yellow enabled:motion-safe:hover:translate-y-1 enabled:hover:shadow-none motion-safe:transition-all disabled:opacity-60">
       ¡PRACTICAR! ({QUESTIONS_PER_ROUND} ejercicios)
     </button>
   );
 
   return (
-    <div className="min-h-screen bg-soft-lavender font-poppins text-text-dark p-6 md:p-10 pb-24">
+    <main className="min-h-screen bg-soft-lavender font-poppins text-text-dark p-6 md:p-10 pb-24">
       <div className="max-w-3xl mx-auto space-y-8">
         <Link to={`/cursos/${course.id}`} onClick={() => sfx.tap()}
           className="inline-flex items-center gap-2 font-fredoka font-bold text-gray-500 hover:text-text-dark">
-          <ArrowLeft className="w-5 h-5" /> {course.title}
+          <ArrowLeft aria-hidden="true" className="w-5 h-5" /> {course.title}
         </Link>
 
         <header className="flex items-center gap-5">
-          <span className={`w-16 h-16 shrink-0 rounded-full ${style.bg} text-white font-fredoka font-bold text-3xl grid place-items-center`}>
+          <span aria-hidden="true" className={`w-16 h-16 shrink-0 rounded-full ${style.bg} text-white font-fredoka font-bold text-3xl grid place-items-center`}>
             {lesson.position}
           </span>
           <div>
-            <p className="text-sm font-bold text-numu-purple">Lección {lesson.position} de {course.lessons.length} · Nivel {level} de {MAX_LESSON_LEVEL}</p>
+            <p className="text-sm font-bold text-numu-purple">
+              Lección {lesson.position} de {course.lessons.length}
+              {canPractice && <PublishedLessonLevel key={lesson.id} lessonId={lesson.id} />}
+            </p>
             <h1 className="text-3xl md:text-4xl font-fredoka font-bold text-numu-deep-indigo">{lesson.title}</h1>
           </div>
         </header>
 
-        {!isCountingLesson && (
-          <section className="bg-white rounded-card p-6 border-2 border-gray-100 shadow-sm flex gap-4">
-            <Target className="w-8 h-8 text-numu-purple shrink-0" />
-            <div>
-              <h2 className="font-fredoka font-bold text-xl mb-1">¿Qué vas a aprender?</h2>
-              <p className="text-gray-600">{lesson.objective}</p>
-            </div>
-          </section>
-        )}
+        <section className="bg-white rounded-card p-6 border-2 border-gray-100 shadow-sm flex gap-4">
+          <Target aria-hidden="true" className="w-8 h-8 text-numu-purple shrink-0" />
+          <div>
+            <h2 className="font-fredoka font-bold text-xl mb-1">¿Qué vas a aprender?</h2>
+            <p className="text-gray-600">{lesson.objective}</p>
+          </div>
+        </section>
 
         <section className="bg-white rounded-card p-6 border-2 border-gray-100 shadow-sm flex gap-4 items-start">
           <img src={mascotUrl} alt="NUMU" className="w-14 h-14 object-contain shrink-0" />
@@ -106,28 +77,19 @@ export default function LessonView() {
               <h2 className="font-fredoka font-bold text-xl">{isCountingLesson ? '¡Vamos a contar!' : 'Octo te explica'}</h2>
               <button type="button" onClick={() => speak(lesson.explanation)} aria-label="Escuchar la explicación"
                 className="w-12 h-12 shrink-0 grid place-items-center rounded-full bg-numu-purple text-white shadow-3d-primary active:translate-y-1 transition-transform">
-                <Volume2 className="w-6 h-6" />
+                <Volume2 aria-hidden="true" className="w-6 h-6" />
               </button>
             </div>
             <p className="text-gray-600 text-lg">{lesson.explanation}</p>
           </div>
         </section>
 
-        {!isCountingLesson && lesson.guided_example && (
-          <section className="bg-white rounded-card p-6 border-2 border-gray-100 shadow-sm space-y-4">
-            <div className="flex gap-4">
-              <Lightbulb className="w-8 h-8 text-sunshine-yellow shrink-0" />
-              <h2 className="font-fredoka font-bold text-xl">Ejemplo guiado</h2>
-            </div>
-            {exampleHtml && <div dangerouslySetInnerHTML={{ __html: exampleHtml }} />}
-            <p className="text-gray-600 text-lg">{lesson.guided_example.explanation}</p>
-          </section>
-        )}
-
         {isCountingLesson
-          ? <CountingExample example={lesson.guided_example} renderPractice={practiceButton} />
-          : practiceButton()}
+          ? <CountingExample example={lesson.guided_example} renderPractice={canPractice ? practiceButton : () => null} />
+          : <GuidedExample key={lesson.id} example={lesson.guided_example} />}
+        {!canPractice && <p className="text-center text-gray-600">La práctica de esta lección todavía no está disponible.</p>}
+        {canPractice && !isCountingLesson && practiceButton()}
       </div>
-    </div>
+    </main>
   );
 }

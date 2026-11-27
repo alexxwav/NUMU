@@ -1,0 +1,550 @@
+{
+  "id": "la-balanza-de-numu",
+  "course_id": "algebra",
+  "title": "La balanza de NUMU",
+  "position": 2,
+  "base_level": 1,
+  "published": false,
+  "objective": "Comprender la igualdad al comparar cantidades y completar lo que falta para que ambos lados valgan lo mismo.",
+  "explanation": "Una balanza queda pareja cuando los dos platos tienen el mismo peso. Si todas las fichas pesan lo mismo, puedes comprobarlo contando fichas. El signo igual dice que los dos lados valen lo mismo. Los montones se pueden acomodar de distintas maneras y seguir pesando igual.",
+  "guided_example": {
+    "mode": "interactive",
+    "visual": {
+      "type": "balance_model",
+      "left": [
+        6
+      ],
+      "right": [
+        4,
+        null
+      ],
+      "display": "objects"
+    },
+    "explanation": "El plato izquierdo tiene seis fichas. En el derecho ya hay cuatro. Añade fichas al derecho hasta que los dos platos tengan lo mismo.",
+    "interaction": {
+      "type": "balance_objects",
+      "instructions": [
+        "Cuenta las fichas de cada plato.",
+        "Añade una ficha al montón vacío del plato derecho y revisa la balanza.",
+        "Cuando ambos platos queden parejos, cuenta cuánto agregaste."
+      ],
+      "feedback_on_complete": "¡La balanza quedó pareja! Agregaste dos fichas. Cuatro más dos da seis, lo mismo que hay en el otro plato.",
+      "restart_label": "Volver a empezar"
+    }
+  },
+  "levels": {
+    "1": {
+      "exercise_types": [
+        "reconocer-equivalencia"
+      ],
+      "exercises": [
+        {
+          "id": "la-balanza-de-numu-n1-01",
+          "type": "reconocer-equivalencia",
+          "prompt": "Mira el plato izquierdo. ¿Qué combinación deja la balanza equilibrada?",
+          "visual": {
+            "type": "balance_model",
+            "left": [
+              2,
+              3
+            ],
+            "right": null,
+            "display": "objects"
+          },
+          "options": [
+            "2 + 2",
+            "3 + 3",
+            "1 + 4",
+            "2 + 4"
+          ],
+          "correct_answer": "1 + 4",
+          "answer_index": 2,
+          "hint": "Cuenta todas las fichas de un plato antes de mirar las opciones.",
+          "feedback_correct": "¡Es 1 + 4! Los dos platos tienen 5 fichas.",
+          "feedback_incorrect": "La combinación del otro plato puede verse diferente. Compara los totales."
+        },
+        {
+          "id": "la-balanza-de-numu-n1-02",
+          "type": "reconocer-equivalencia",
+          "prompt": "¿Qué dos grupos de fichas puedes poner a la derecha para que ambos platos pesen igual?",
+          "visual": {
+            "type": "balance_model",
+            "left": [
+              4,
+              2
+            ],
+            "right": null,
+            "display": "objects"
+          },
+          "options": [
+            "3 + 3",
+            "3 + 2",
+            "4 + 3",
+            "1 + 4"
+          ],
+          "correct_answer": "3 + 3",
+          "answer_index": 0,
+          "hint": "Junta mentalmente los grupos del plato izquierdo. Busca esa misma cantidad a la derecha.",
+          "feedback_correct": "¡Es 3 + 3! Los dos platos tienen 6 fichas.",
+          "feedback_incorrect": "Revisa la suma de los dos grupos que elegiste. Debe coincidir con todo el plato izquierdo."
+        },
+        {
+          "id": "la-balanza-de-numu-n1-03",
+          "type": "reconocer-equivalencia",
+          "prompt": "¿Qué combinación pesa igual que las fichas del plato izquierdo?",
+          "visual": {
+            "type": "balance_model",
+            "left": [
+              2,
+              2,
+              3
+            ],
+            "right": null,
+            "display": "objects"
+          },
+          "options": [
+            "2 + 4",
+            "2 + 3",
+            "4 + 4",
+            "3 + 4"
+          ],
+          "correct_answer": "3 + 4",
+          "answer_index": 3,
+          "hint": "Un plato puede tener más montones. Cuenta las fichas de todos los montones juntos.",
+          "feedback_correct": "¡Es 3 + 4! Los dos platos tienen 7 fichas.",
+          "feedback_incorrect": "Cuenta fichas y no montones. Compara el total de ambos platos."
+        },
+        {
+          "id": "la-balanza-de-numu-n1-04",
+          "type": "reconocer-equivalencia",
+          "prompt": "¿Qué pondrías en el plato vacío para que la balanza quede pareja?",
+          "visual": {
+            "type": "balance_model",
+            "left": [
+              5,
+              3
+            ],
+            "right": null,
+            "display": "objects"
+          },
+          "options": [
+            "4 + 3",
+            "4 + 4",
+            "5 + 4",
+            "5 + 2"
+          ],
+          "correct_answer": "4 + 4",
+          "answer_index": 1,
+          "hint": "Imagina que juntas las fichas de la izquierda en un solo montón. ¿Qué opción forma un montón igual?",
+          "feedback_correct": "¡Es 4 + 4! Los dos platos tienen 8 fichas.",
+          "feedback_incorrect": "Suma todo lo que hay en el plato lleno. Luego prueba la combinación que elegiste."
+        },
+        {
+          "id": "la-balanza-de-numu-n1-05",
+          "type": "reconocer-equivalencia",
+          "prompt": "¿Con cuál de estas sumas queda igual la cantidad de fichas a ambos lados?",
+          "visual": {
+            "type": "balance_model",
+            "left": [
+              6,
+              3
+            ],
+            "right": null,
+            "display": "objects"
+          },
+          "options": [
+            "4 + 4",
+            "5 + 5",
+            "4 + 5",
+            "6 + 2"
+          ],
+          "correct_answer": "4 + 5",
+          "answer_index": 2,
+          "hint": "Compara lo que dan las sumas. Busca la misma cantidad que ya está en la balanza.",
+          "feedback_correct": "¡Es 4 + 5! Los dos platos tienen 9 fichas.",
+          "feedback_incorrect": "Vuelve a sumar los grupos a la izquierda. Tu opción debe dar exactamente ese total."
+        },
+        {
+          "id": "la-balanza-de-numu-n1-06",
+          "type": "reconocer-equivalencia",
+          "prompt": "¿Qué combinación de la derecha iguala a los tres grupos de la izquierda?",
+          "visual": {
+            "type": "balance_model",
+            "left": [
+              3,
+              4,
+              3
+            ],
+            "right": null,
+            "display": "objects"
+          },
+          "options": [
+            "4 + 5",
+            "5 + 5",
+            "6 + 5",
+            "4 + 4"
+          ],
+          "correct_answer": "5 + 5",
+          "answer_index": 1,
+          "hint": "Puedes juntar primero dos grupos del plato izquierdo y agregar el que falta.",
+          "feedback_correct": "¡Es 5 + 5! Los dos platos tienen 10 fichas.",
+          "feedback_incorrect": "Al contar la izquierda, incluye todos los grupos antes de comparar."
+        }
+      ]
+    },
+    "2": {
+      "exercise_types": [
+        "completar-balanza"
+      ],
+      "exercises": [
+        {
+          "id": "la-balanza-de-numu-n2-01",
+          "type": "completar-balanza",
+          "prompt": "¿Cuántas fichas faltan en el plato izquierdo para que los dos lados queden iguales?",
+          "visual": {
+            "type": "balance_model",
+            "left": [
+              2,
+              null
+            ],
+            "right": [
+              6
+            ],
+            "display": "objects"
+          },
+          "options": [
+            2,
+            3,
+            4,
+            6
+          ],
+          "correct_answer": 4,
+          "answer_index": 2,
+          "hint": "Compara lo que ya tiene la izquierda con el total de la derecha.",
+          "feedback_correct": "¡Va el 4! Al ponerlo en la caja, cada lado suma 6.",
+          "feedback_incorrect": "Agrega fichas a la izquierda de una en una hasta alcanzar el total del otro lado."
+        },
+        {
+          "id": "la-balanza-de-numu-n2-02",
+          "type": "completar-balanza",
+          "prompt": "¿Qué cantidad debes agregar a la derecha para equilibrar la balanza?",
+          "visual": {
+            "type": "balance_model",
+            "left": [
+              8
+            ],
+            "right": [
+              3,
+              null
+            ],
+            "display": "objects"
+          },
+          "options": [
+            5,
+            3,
+            4,
+            8
+          ],
+          "correct_answer": 5,
+          "answer_index": 0,
+          "hint": "Empieza con las fichas que ya ves a la derecha y cuenta hasta el total de la izquierda.",
+          "feedback_correct": "¡Va el 5! Al ponerlo en la caja, cada lado suma 8.",
+          "feedback_incorrect": "Elige lo que falta agregar. El total del plato incluye las fichas que ya estaban allí."
+        },
+        {
+          "id": "la-balanza-de-numu-n2-03",
+          "type": "completar-balanza",
+          "prompt": "¿Cuántas fichas debe haber en la caja de la izquierda para lograr el equilibrio?",
+          "visual": {
+            "type": "balance_model",
+            "left": [
+              null,
+              3
+            ],
+            "right": [
+              4,
+              3
+            ],
+            "display": "objects"
+          },
+          "options": [
+            2,
+            4,
+            3,
+            7
+          ],
+          "correct_answer": 4,
+          "answer_index": 1,
+          "hint": "Hay grupos iguales en los dos platos. Compara lo que queda si apartas esos grupos.",
+          "feedback_correct": "¡Va el 4! Al ponerlo en la caja, cada lado suma 7.",
+          "feedback_incorrect": "Tapa con la vista los montones iguales. Después mira qué cantidad deberá igualar la caja."
+        },
+        {
+          "id": "la-balanza-de-numu-n2-04",
+          "type": "completar-balanza",
+          "prompt": "¿Cuántas fichas faltan en la caja del plato derecho?",
+          "visual": {
+            "type": "balance_model",
+            "left": [
+              2,
+              2
+            ],
+            "right": [
+              null,
+              1
+            ],
+            "display": "objects"
+          },
+          "options": [
+            1,
+            2,
+            4,
+            3
+          ],
+          "correct_answer": 3,
+          "answer_index": 3,
+          "hint": "Suma los dos grupos de la izquierda. Después mira qué parte de esa cantidad ya está a la derecha.",
+          "feedback_correct": "¡Va el 3! Al ponerlo en la caja, cada lado suma 4.",
+          "feedback_incorrect": "Prueba tu número junto con la ficha que ya está a la derecha. Ambos lados deben sumar lo mismo."
+        },
+        {
+          "id": "la-balanza-de-numu-n2-05",
+          "type": "completar-balanza",
+          "prompt": "¿Qué cantidad completa el plato izquierdo sin inclinar la balanza?",
+          "visual": {
+            "type": "balance_model",
+            "left": [
+              null,
+              4
+            ],
+            "right": [
+              9
+            ],
+            "display": "objects"
+          },
+          "options": [
+            4,
+            5,
+            6,
+            9
+          ],
+          "correct_answer": 5,
+          "answer_index": 1,
+          "hint": "Cuenta desde la cantidad visible de la izquierda hasta el total del otro plato.",
+          "feedback_correct": "¡Va el 5! Al ponerlo en la caja, cada lado suma 9.",
+          "feedback_incorrect": "Vuelve a sumar lo que elegiste con las fichas que ya están del mismo lado."
+        },
+        {
+          "id": "la-balanza-de-numu-n2-06",
+          "type": "completar-balanza",
+          "prompt": "¿Qué número completa el plato derecho para que tenga tantas fichas como el izquierdo?",
+          "visual": {
+            "type": "balance_model",
+            "left": [
+              3,
+              5
+            ],
+            "right": [
+              2,
+              null
+            ],
+            "display": "objects"
+          },
+          "options": [
+            2,
+            5,
+            6,
+            8
+          ],
+          "correct_answer": 6,
+          "answer_index": 2,
+          "hint": "Junta los grupos de la izquierda antes de calcular cuánto le falta a la derecha.",
+          "feedback_correct": "¡Va el 6! Al ponerlo en la caja, cada lado suma 8.",
+          "feedback_incorrect": "Busca cuánto falta a las fichas visibles de la derecha para llegar al total de la izquierda."
+        }
+      ]
+    },
+    "3": {
+      "exercise_types": [
+        "resolver-igualdad"
+      ],
+      "exercises": [
+        {
+          "id": "la-balanza-de-numu-n3-01",
+          "type": "resolver-igualdad",
+          "prompt": "¿Qué número representa la caja para que esta igualdad se cumpla?",
+          "visual": {
+            "type": "balance_model",
+            "left": [
+              null,
+              4,
+              2
+            ],
+            "right": [
+              5,
+              4
+            ],
+            "display": "symbols"
+          },
+          "options": [
+            2,
+            3,
+            5,
+            6
+          ],
+          "correct_answer": 3,
+          "answer_index": 1,
+          "hint": "Suma los números conocidos de cada lado por separado. Uno de los lados aún necesita la caja.",
+          "feedback_correct": "¡Va el 3! Al ponerlo en la caja, cada lado suma 9.",
+          "feedback_incorrect": "Sustituye la caja por tu número y suma cada lado para ver si coinciden."
+        },
+        {
+          "id": "la-balanza-de-numu-n3-02",
+          "type": "resolver-igualdad",
+          "prompt": "¿Qué número debe ir en la caja de la derecha para que ambos lados valgan lo mismo?",
+          "visual": {
+            "type": "balance_model",
+            "left": [
+              7,
+              2
+            ],
+            "right": [
+              null,
+              5,
+              1
+            ],
+            "display": "symbols"
+          },
+          "options": [
+            2,
+            4,
+            3,
+            6
+          ],
+          "correct_answer": 3,
+          "answer_index": 2,
+          "hint": "Averigua cuánto vale todo el lado izquierdo y cuánto tienes ya en el derecho.",
+          "feedback_correct": "¡Va el 3! Al ponerlo en la caja, cada lado suma 9.",
+          "feedback_incorrect": "Recuerda agregar a tu número los dos números visibles que lo acompañan."
+        },
+        {
+          "id": "la-balanza-de-numu-n3-03",
+          "type": "resolver-igualdad",
+          "prompt": "¿Qué número hace verdadera esta igualdad aunque la caja esté entre dos números?",
+          "visual": {
+            "type": "balance_model",
+            "left": [
+              2,
+              null,
+              3
+            ],
+            "right": [
+              6,
+              4
+            ],
+            "display": "symbols"
+          },
+          "options": [
+            3,
+            4,
+            10,
+            5
+          ],
+          "correct_answer": 5,
+          "answer_index": 3,
+          "hint": "Suma los números visibles que están del lado de la caja. Lo que falta completa el total del lado opuesto.",
+          "feedback_correct": "¡Va el 5! Al ponerlo en la caja, cada lado suma 10.",
+          "feedback_incorrect": "La caja cuenta una sola vez. Suma tu elección con los otros números de su lado."
+        },
+        {
+          "id": "la-balanza-de-numu-n3-04",
+          "type": "resolver-igualdad",
+          "prompt": "¿Qué número permite que esta igualdad quede equilibrada?",
+          "visual": {
+            "type": "balance_model",
+            "left": [
+              8,
+              4
+            ],
+            "right": [
+              4,
+              null,
+              2
+            ],
+            "display": "symbols"
+          },
+          "options": [
+            6,
+            4,
+            5,
+            8
+          ],
+          "correct_answer": 6,
+          "answer_index": 0,
+          "hint": "Puedes quitar la misma cantidad a los dos lados. Eso deja una comparación más corta.",
+          "feedback_correct": "¡Va el 6! Al ponerlo en la caja, cada lado suma 12.",
+          "feedback_incorrect": "Compara el total de la izquierda con el de la derecha después de poner el número elegido."
+        },
+        {
+          "id": "la-balanza-de-numu-n3-05",
+          "type": "resolver-igualdad",
+          "prompt": "¿Qué número en la caja hace que las dos sumas tengan el mismo resultado?",
+          "visual": {
+            "type": "balance_model",
+            "left": [
+              null,
+              6
+            ],
+            "right": [
+              4,
+              3,
+              2
+            ],
+            "display": "symbols"
+          },
+          "options": [
+            2,
+            4,
+            3,
+            9
+          ],
+          "correct_answer": 3,
+          "answer_index": 2,
+          "hint": "Calcula primero el lado que tiene todos sus números. Luego piensa qué cantidad le falta al otro.",
+          "feedback_correct": "¡Va el 3! Al ponerlo en la caja, cada lado suma 9.",
+          "feedback_incorrect": "Toma el total del lado completo como meta. Completa el otro lado hasta ese total."
+        },
+        {
+          "id": "la-balanza-de-numu-n3-06",
+          "type": "resolver-igualdad",
+          "prompt": "¿Qué número falta para que las dos expresiones a ambos lados valgan lo mismo?",
+          "visual": {
+            "type": "balance_model",
+            "left": [
+              5,
+              5,
+              2
+            ],
+            "right": [
+              3,
+              4,
+              null
+            ],
+            "display": "symbols"
+          },
+          "options": [
+            3,
+            5,
+            4,
+            7
+          ],
+          "correct_answer": 5,
+          "answer_index": 1,
+          "hint": "Usa el total del lado sin caja y después averigua cuánto aportan los números visibles del otro.",
+          "feedback_correct": "¡Va el 5! Al ponerlo en la caja, cada lado suma 12.",
+          "feedback_incorrect": "Da una vuelta más por la cuenta. Comprueba que tu elección complete justo lo que falta."
+        }
+      ]
+    }
+  }
+}

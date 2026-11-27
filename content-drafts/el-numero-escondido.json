@@ -1,0 +1,515 @@
+{
+  "id": "el-numero-escondido",
+  "course_id": "algebra",
+  "title": "El número escondido",
+  "position": 3,
+  "base_level": 1,
+  "published": false,
+  "objective": "Encontrar un número desconocido usando lo que ya sabemos de una suma, una resta o una historia.",
+  "explanation": "A veces una caja tapa un número. Mira qué números siguen visibles y qué pasó con ellos. Si falta una parte de una suma, puedes quitar del total la parte que conoces. Si sabes cuánto quedó y cuánto salió, junta las partes para saber cuánto había antes. Comprueba tu idea poniendo tu número dentro de la caja.",
+  "guided_example": {
+    "mode": "visual",
+    "visual": {
+      "type": "unknown_number",
+      "operator": "+",
+      "operands": [
+        null,
+        3
+      ],
+      "result": 8,
+      "display": "box"
+    },
+    "explanation": "La caja esconde algunas conchas. Al agregar tres hay ocho. Si apartas tres del grupo final, puedes contar lo que había en la caja. Son cinco conchas."
+  },
+  "levels": {
+    "1": {
+      "exercise_types": [
+        "completar-suma-con-caja"
+      ],
+      "exercises": [
+        {
+          "id": "el-numero-escondido-n1-01",
+          "type": "completar-suma-con-caja",
+          "prompt": "¿Qué número se esconde en la caja de esta suma?",
+          "visual": {
+            "type": "unknown_number",
+            "operator": "+",
+            "operands": [
+              3,
+              null
+            ],
+            "result": 7,
+            "display": "box"
+          },
+          "options": [
+            2,
+            4,
+            3,
+            5
+          ],
+          "correct_answer": 4,
+          "answer_index": 1,
+          "hint": "Empieza en el número visible y cuenta hacia adelante hasta el resultado.",
+          "feedback_correct": "¡El número escondido es 4! Puedes comprobarlo así. 3 + 4 = 7.",
+          "feedback_incorrect": "Prueba tu número en la caja. La suma debe dar lo que está después del signo igual."
+        },
+        {
+          "id": "el-numero-escondido-n1-02",
+          "type": "completar-suma-con-caja",
+          "prompt": "¿Qué número falta al principio de la suma?",
+          "visual": {
+            "type": "unknown_number",
+            "operator": "+",
+            "operands": [
+              null,
+              2
+            ],
+            "result": 8,
+            "display": "box"
+          },
+          "options": [
+            6,
+            4,
+            5,
+            8
+          ],
+          "correct_answer": 6,
+          "answer_index": 0,
+          "hint": "Busca un número que llegue al total cuando le agregas lo que está visible.",
+          "feedback_correct": "¡El número escondido es 6! Puedes comprobarlo así. 6 + 2 = 8.",
+          "feedback_incorrect": "Empieza desde el total y vuelve hacia atrás lo que ya conoces."
+        },
+        {
+          "id": "el-numero-escondido-n1-03",
+          "type": "completar-suma-con-caja",
+          "prompt": "¿Cuánto hay dentro de la caja para completar esta suma?",
+          "visual": {
+            "type": "unknown_number",
+            "operator": "+",
+            "operands": [
+              5,
+              null
+            ],
+            "result": 8,
+            "display": "box"
+          },
+          "options": [
+            2,
+            4,
+            5,
+            3
+          ],
+          "correct_answer": 3,
+          "answer_index": 3,
+          "hint": "Mira cuántos pasos faltan desde el número conocido hasta el total.",
+          "feedback_correct": "¡El número escondido es 3! Puedes comprobarlo así. 5 + 3 = 8.",
+          "feedback_incorrect": "Cuenta los pasos que das. El número de partida todavía no cuenta como paso."
+        },
+        {
+          "id": "el-numero-escondido-n1-04",
+          "type": "completar-suma-con-caja",
+          "prompt": "¿Qué número va antes del signo más?",
+          "visual": {
+            "type": "unknown_number",
+            "operator": "+",
+            "operands": [
+              null,
+              4
+            ],
+            "result": 9,
+            "display": "box"
+          },
+          "options": [
+            3,
+            4,
+            5,
+            9
+          ],
+          "correct_answer": 5,
+          "answer_index": 2,
+          "hint": "Imagina que apartas del total las fichas que ya muestra la suma.",
+          "feedback_correct": "¡El número escondido es 5! Puedes comprobarlo así. 5 + 4 = 9.",
+          "feedback_incorrect": "Vuelve a juntar lo que elegiste con el número visible y comprueba el total."
+        },
+        {
+          "id": "el-numero-escondido-n1-05",
+          "type": "completar-suma-con-caja",
+          "prompt": "¿Cuánto se agrega al número visible para llegar al resultado?",
+          "visual": {
+            "type": "unknown_number",
+            "operator": "+",
+            "operands": [
+              6,
+              null
+            ],
+            "result": 8,
+            "display": "box"
+          },
+          "options": [
+            1,
+            2,
+            3,
+            6
+          ],
+          "correct_answer": 2,
+          "answer_index": 1,
+          "hint": "Dibuja el grupo que ya tienes. Añade fichas hasta completar el total.",
+          "feedback_correct": "¡El número escondido es 2! Puedes comprobarlo así. 6 + 2 = 8.",
+          "feedback_incorrect": "Cuenta solo las fichas nuevas que agregaste al dibujo."
+        },
+        {
+          "id": "el-numero-escondido-n1-06",
+          "type": "completar-suma-con-caja",
+          "prompt": "¿Qué número debes poner en la caja para que la suma sea verdadera?",
+          "visual": {
+            "type": "unknown_number",
+            "operator": "+",
+            "operands": [
+              null,
+              5
+            ],
+            "result": 12,
+            "display": "box"
+          },
+          "options": [
+            7,
+            5,
+            6,
+            8
+          ],
+          "correct_answer": 7,
+          "answer_index": 0,
+          "hint": "Parte del total y quita la parte que ya muestra la suma.",
+          "feedback_correct": "¡El número escondido es 7! Puedes comprobarlo así. 7 + 5 = 12.",
+          "feedback_incorrect": "Si tu elección deja el total más grande o más pequeño, ajusta lo que va en la caja."
+        }
+      ]
+    },
+    "2": {
+      "exercise_types": [
+        "resolver-operacion-con-caja"
+      ],
+      "exercises": [
+        {
+          "id": "el-numero-escondido-n2-01",
+          "type": "resolver-operacion-con-caja",
+          "prompt": "¿Cuánto tienes que quitar para que quede lo que muestra la resta?",
+          "visual": {
+            "type": "unknown_number",
+            "operator": "-",
+            "operands": [
+              12,
+              null
+            ],
+            "result": 5,
+            "display": "box"
+          },
+          "options": [
+            5,
+            6,
+            7,
+            8
+          ],
+          "correct_answer": 7,
+          "answer_index": 2,
+          "hint": "Cuenta cuántos pasos separan el resultado del número inicial.",
+          "feedback_correct": "¡El número escondido es 7! Puedes comprobarlo así. 12 − 7 = 5.",
+          "feedback_incorrect": "Prueba quitar tu cantidad del número inicial y revisa qué queda."
+        },
+        {
+          "id": "el-numero-escondido-n2-02",
+          "type": "resolver-operacion-con-caja",
+          "prompt": "¿Qué número iba al comienzo de esta resta?",
+          "visual": {
+            "type": "unknown_number",
+            "operator": "-",
+            "operands": [
+              null,
+              3
+            ],
+            "result": 8,
+            "display": "box"
+          },
+          "options": [
+            11,
+            8,
+            10,
+            12
+          ],
+          "correct_answer": 11,
+          "answer_index": 0,
+          "hint": "Si ya sabes cuánto quedó y cuánto salió, puedes volver a juntar las dos partes.",
+          "feedback_correct": "¡El número escondido es 11! Puedes comprobarlo así. 11 − 3 = 8.",
+          "feedback_incorrect": "Añade de nuevo lo que salió para reconstruir el grupo del principio."
+        },
+        {
+          "id": "el-numero-escondido-n2-03",
+          "type": "resolver-operacion-con-caja",
+          "prompt": "¿Cuánto falta del lado izquierdo para que la suma llegue al total?",
+          "visual": {
+            "type": "unknown_number",
+            "operator": "+",
+            "operands": [
+              null,
+              6
+            ],
+            "result": 15,
+            "display": "box"
+          },
+          "options": [
+            6,
+            9,
+            8,
+            10
+          ],
+          "correct_answer": 9,
+          "answer_index": 1,
+          "hint": "Puedes volver hacia atrás desde el total la cantidad que ya conoces.",
+          "feedback_correct": "¡El número escondido es 9! Puedes comprobarlo así. 9 + 6 = 15.",
+          "feedback_incorrect": "Pon tu respuesta en la caja y suma para comprobar el resultado."
+        },
+        {
+          "id": "el-numero-escondido-n2-04",
+          "type": "resolver-operacion-con-caja",
+          "prompt": "¿Qué número ocupa la caja después del signo menos?",
+          "visual": {
+            "type": "unknown_number",
+            "operator": "-",
+            "operands": [
+              16,
+              null
+            ],
+            "result": 10,
+            "display": "box"
+          },
+          "options": [
+            5,
+            7,
+            10,
+            6
+          ],
+          "correct_answer": 6,
+          "answer_index": 3,
+          "hint": "Separa la cantidad inicial de lo que quedó. La distancia entre las dos te dice cuánto salió.",
+          "feedback_correct": "¡El número escondido es 6! Puedes comprobarlo así. 16 − 6 = 10.",
+          "feedback_incorrect": "Si elegiste lo que quedó, busca ahora la cantidad que quitaste."
+        },
+        {
+          "id": "el-numero-escondido-n2-05",
+          "type": "resolver-operacion-con-caja",
+          "prompt": "¿Qué número falta justo antes del signo igual?",
+          "visual": {
+            "type": "unknown_number",
+            "operator": "+",
+            "operands": [
+              7,
+              null
+            ],
+            "result": 18,
+            "display": "box"
+          },
+          "options": [
+            10,
+            11,
+            12,
+            18
+          ],
+          "correct_answer": 11,
+          "answer_index": 1,
+          "hint": "Cuenta hacia adelante desde el número conocido hasta el total, o piensa en la resta que lo deshace.",
+          "feedback_correct": "¡El número escondido es 11! Puedes comprobarlo así. 7 + 11 = 18.",
+          "feedback_incorrect": "Suma el número elegido al que aparece antes de la caja para comprobar la cuenta."
+        },
+        {
+          "id": "el-numero-escondido-n2-06",
+          "type": "resolver-operacion-con-caja",
+          "prompt": "¿Qué número en la caja deja el resultado que muestra la resta?",
+          "visual": {
+            "type": "unknown_number",
+            "operator": "-",
+            "operands": [
+              null,
+              8
+            ],
+            "result": 6,
+            "display": "box"
+          },
+          "options": [
+            2,
+            8,
+            14,
+            13
+          ],
+          "correct_answer": 14,
+          "answer_index": 2,
+          "hint": "Junta lo que se quitó con lo que queda. Así tendrás el número de partida.",
+          "feedback_correct": "¡El número escondido es 14! Puedes comprobarlo así. 14 − 8 = 6.",
+          "feedback_incorrect": "Comprueba que, al quitar la cantidad indicada de tu elección, obtienes lo que pide."
+        }
+      ]
+    },
+    "3": {
+      "exercise_types": [
+        "resolver-problema-con-incognita"
+      ],
+      "exercises": [
+        {
+          "id": "el-numero-escondido-n3-01",
+          "type": "resolver-problema-con-incognita",
+          "prompt": "NUMU tenía algunas conchas. Encontró 3 más y ahora tiene 10. ¿Cuántas conchas tenía al principio?",
+          "visual": {
+            "type": "unknown_number",
+            "operator": "+",
+            "operands": [
+              null,
+              3
+            ],
+            "result": 10,
+            "display": "story"
+          },
+          "options": [
+            6,
+            7,
+            8,
+            10
+          ],
+          "correct_answer": 7,
+          "answer_index": 1,
+          "hint": "Aparta del total lo que NUMU acaba de encontrar.",
+          "feedback_correct": "¡El número escondido es 7! Puedes comprobarlo así. 7 + 3 = 10.",
+          "feedback_incorrect": "Las conchas nuevas ya están dentro del total. Quita ese grupo para recuperar el del principio."
+        },
+        {
+          "id": "el-numero-escondido-n3-02",
+          "type": "resolver-problema-con-incognita",
+          "prompt": "Sara tenía 6 estampas y recibió más hasta juntar 14. ¿Cuántas estampas recibió?",
+          "visual": {
+            "type": "unknown_number",
+            "operator": "+",
+            "operands": [
+              6,
+              null
+            ],
+            "result": 14,
+            "display": "story"
+          },
+          "options": [
+            6,
+            9,
+            14,
+            8
+          ],
+          "correct_answer": 8,
+          "answer_index": 3,
+          "hint": "Dibuja las estampas que tenía primero. Completa el dibujo hasta alcanzar el grupo final.",
+          "feedback_correct": "¡El número escondido es 8! Puedes comprobarlo así. 6 + 8 = 14.",
+          "feedback_incorrect": "La pregunta pide solo las nuevas. Cuenta lo que agregaste al dibujo."
+        },
+        {
+          "id": "el-numero-escondido-n3-03",
+          "type": "resolver-problema-con-incognita",
+          "prompt": "Había 12 peces a la vista. Algunos se escondieron y quedaron 7. ¿Cuántos peces se escondieron?",
+          "visual": {
+            "type": "unknown_number",
+            "operator": "-",
+            "operands": [
+              12,
+              null
+            ],
+            "result": 7,
+            "display": "story"
+          },
+          "options": [
+            5,
+            4,
+            6,
+            7
+          ],
+          "correct_answer": 5,
+          "answer_index": 0,
+          "hint": "Compara lo que se veía al principio con lo que todavía se ve.",
+          "feedback_correct": "¡El número escondido es 5! Puedes comprobarlo así. 12 − 5 = 7.",
+          "feedback_incorrect": "Separa las dos partes. El total inicial incluye los peces visibles y los escondidos."
+        },
+        {
+          "id": "el-numero-escondido-n3-04",
+          "type": "resolver-problema-con-incognita",
+          "prompt": "NUMU regaló 4 globos y le quedaron 9. ¿Cuántos globos tenía antes de regalar?",
+          "visual": {
+            "type": "unknown_number",
+            "operator": "-",
+            "operands": [
+              null,
+              4
+            ],
+            "result": 9,
+            "display": "story"
+          },
+          "options": [
+            9,
+            12,
+            13,
+            14
+          ],
+          "correct_answer": 13,
+          "answer_index": 2,
+          "hint": "Imagina que recuperas los globos que regaló. Júntalos con los que quedaron.",
+          "feedback_correct": "¡El número escondido es 13! Puedes comprobarlo así. 13 − 4 = 9.",
+          "feedback_incorrect": "Las dos cantidades eran parte del grupo inicial. Únelas para reconstruirlo."
+        },
+        {
+          "id": "el-numero-escondido-n3-05",
+          "type": "resolver-problema-con-incognita",
+          "prompt": "En una bandeja había estrellas. Pusiste 5 más y ahora hay 16. ¿Cuántas había antes de añadirlas?",
+          "visual": {
+            "type": "unknown_number",
+            "operator": "+",
+            "operands": [
+              null,
+              5
+            ],
+            "result": 16,
+            "display": "story"
+          },
+          "options": [
+            10,
+            11,
+            12,
+            16
+          ],
+          "correct_answer": 11,
+          "answer_index": 1,
+          "hint": "Busca la parte que ya estaba allí. El dibujo final incluye todas las estrellas nuevas.",
+          "feedback_correct": "¡El número escondido es 11! Puedes comprobarlo así. 11 + 5 = 16.",
+          "feedback_incorrect": "Quita las estrellas que agregaste para volver a ver el grupo inicial."
+        },
+        {
+          "id": "el-numero-escondido-n3-06",
+          "type": "resolver-problema-con-incognita",
+          "prompt": "Había 19 pelotas fuera de una caja. Después de guardar algunas, siguen fuera 13. ¿Cuántas guardaste?",
+          "visual": {
+            "type": "unknown_number",
+            "operator": "-",
+            "operands": [
+              19,
+              null
+            ],
+            "result": 13,
+            "display": "story"
+          },
+          "options": [
+            5,
+            7,
+            13,
+            6
+          ],
+          "correct_answer": 6,
+          "answer_index": 3,
+          "hint": "En tu dibujo, divide el grupo inicial entre las pelotas de afuera y las de adentro.",
+          "feedback_correct": "¡El número escondido es 6! Puedes comprobarlo así. 19 − 6 = 13.",
+          "feedback_incorrect": "Cuenta las que van a la caja, dejando fuera de esa cuenta las que todavía ves."
+        }
+      ]
+    }
+  }
+}

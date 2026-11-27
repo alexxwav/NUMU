@@ -1,0 +1,595 @@
+{
+  "id": "la-maquina-de-reglas",
+  "course_id": "algebra",
+  "title": "La máquina de reglas",
+  "position": 4,
+  "base_level": 1,
+  "published": false,
+  "objective": "Identificar relaciones entre números de entrada y salida y aplicar reglas en orden.",
+  "explanation": "Una máquina de números cambia cada entrada con una regla. Si duplicas, haces dos grupos del tamaño de la entrada. Si sumas o restas, agregas o quitas siempre la cantidad indicada. Compara varias entradas con sus salidas para descubrir una regla. Cuando hay dos talleres, la salida del primero se vuelve la entrada del segundo.",
+  "guided_example": {
+    "mode": "interactive",
+    "visual": {
+      "type": "rule_machine",
+      "inputs": [
+        2,
+        3,
+        5
+      ],
+      "operations": [
+        {
+          "operator": "×",
+          "value": 2
+        }
+      ]
+    },
+    "explanation": "Prueba las tarjetas de dos, tres y cinco en una máquina que hace el doble. Predice cada salida antes de verla.",
+    "interaction": {
+      "type": "try_rule_machine",
+      "instructions": [
+        "Elige una tarjeta para que entre en la máquina.",
+        "Imagina dos grupos del tamaño de esa tarjeta y predice la salida.",
+        "Abre la bandeja de salida y compara. Repite con otra tarjeta."
+      ],
+      "feedback_on_complete": "¡Descubriste el doble! La tarjeta de dos dio cuatro, la de tres dio seis y la de cinco dio diez.",
+      "restart_label": "Volver a empezar"
+    }
+  },
+  "levels": {
+    "1": {
+      "exercise_types": [
+        "aplicar-regla-simple"
+      ],
+      "exercises": [
+        {
+          "id": "la-maquina-de-reglas-n1-01",
+          "type": "aplicar-regla-simple",
+          "prompt": "¿Qué número sale al poner esta tarjeta en la máquina?",
+          "visual": {
+            "type": "rule_machine",
+            "input": 4,
+            "operations": [
+              {
+                "operator": "+",
+                "value": 2
+              }
+            ]
+          },
+          "options": [
+            6,
+            4,
+            5,
+            7
+          ],
+          "correct_answer": 6,
+          "answer_index": 0,
+          "hint": "Empieza con la tarjeta de entrada y agrega la cantidad que marca la regla.",
+          "feedback_correct": "¡Sale 6! Entra 4 y la máquina aplica la regla de sumar 2.",
+          "feedback_incorrect": "La máquina cambia el número. Sigue la regla antes de escoger la salida."
+        },
+        {
+          "id": "la-maquina-de-reglas-n1-02",
+          "type": "aplicar-regla-simple",
+          "prompt": "¿Qué tarjeta sale cuando la máquina quita lo que indica?",
+          "visual": {
+            "type": "rule_machine",
+            "input": 9,
+            "operations": [
+              {
+                "operator": "-",
+                "value": 3
+              }
+            ]
+          },
+          "options": [
+            3,
+            5,
+            6,
+            8
+          ],
+          "correct_answer": 6,
+          "answer_index": 2,
+          "hint": "Cuenta hacia atrás desde la entrada el número de pasos que indica la regla.",
+          "feedback_correct": "¡Sale 6! Entra 9 y la máquina aplica la regla de restar 3.",
+          "feedback_incorrect": "Si la regla quita, la salida queda por debajo de la entrada. Cuenta cada paso hacia atrás."
+        },
+        {
+          "id": "la-maquina-de-reglas-n1-03",
+          "type": "aplicar-regla-simple",
+          "prompt": "¿Qué número sale de la máquina que hace el doble?",
+          "visual": {
+            "type": "rule_machine",
+            "input": 5,
+            "operations": [
+              {
+                "operator": "×",
+                "value": 2
+              }
+            ]
+          },
+          "options": [
+            5,
+            10,
+            7,
+            12
+          ],
+          "correct_answer": 10,
+          "answer_index": 1,
+          "hint": "Imagina dos montones del mismo tamaño que el número de entrada.",
+          "feedback_correct": "¡Sale 10! Entra 5 y la máquina aplica la regla de multiplicar por 2.",
+          "feedback_incorrect": "La máquina usa la misma cantidad dos veces. Junta los dos grupos."
+        },
+        {
+          "id": "la-maquina-de-reglas-n1-04",
+          "type": "aplicar-regla-simple",
+          "prompt": "¿Qué salida muestra la máquina con esta regla de sumar?",
+          "visual": {
+            "type": "rule_machine",
+            "input": 7,
+            "operations": [
+              {
+                "operator": "+",
+                "value": 4
+              }
+            ]
+          },
+          "options": [
+            3,
+            10,
+            12,
+            11
+          ],
+          "correct_answer": 11,
+          "answer_index": 3,
+          "hint": "Cuenta hacia adelante desde la tarjeta que entra.",
+          "feedback_correct": "¡Sale 11! Entra 7 y la máquina aplica la regla de sumar 4.",
+          "feedback_incorrect": "Suma a la entrada la cantidad indicada. Comprueba el total."
+        },
+        {
+          "id": "la-maquina-de-reglas-n1-05",
+          "type": "aplicar-regla-simple",
+          "prompt": "¿Qué número queda cuando la máquina aplica esta resta?",
+          "visual": {
+            "type": "rule_machine",
+            "input": 12,
+            "operations": [
+              {
+                "operator": "-",
+                "value": 5
+              }
+            ]
+          },
+          "options": [
+            5,
+            7,
+            6,
+            8
+          ],
+          "correct_answer": 7,
+          "answer_index": 1,
+          "hint": "Piensa en un grupo con tantas fichas como la entrada. Retira las que pide la regla.",
+          "feedback_correct": "¡Sale 7! Entra 12 y la máquina aplica la regla de restar 5.",
+          "feedback_incorrect": "La tarjeta que sale indica las fichas que quedan, después de quitar parte del grupo."
+        },
+        {
+          "id": "la-maquina-de-reglas-n1-06",
+          "type": "aplicar-regla-simple",
+          "prompt": "¿Qué número obtienes al repetir la entrada tantas veces como pide la máquina?",
+          "visual": {
+            "type": "rule_machine",
+            "input": 4,
+            "operations": [
+              {
+                "operator": "×",
+                "value": 3
+              }
+            ]
+          },
+          "options": [
+            7,
+            8,
+            12,
+            16
+          ],
+          "correct_answer": 12,
+          "answer_index": 2,
+          "hint": "Usa la entrada como tamaño de cada grupo. La regla te dice cuántos grupos hacer.",
+          "feedback_correct": "¡Sale 12! Entra 4 y la máquina aplica la regla de multiplicar por 3.",
+          "feedback_incorrect": "Haz grupos de la misma cantidad y júntalos para hallar la salida."
+        }
+      ]
+    },
+    "2": {
+      "exercise_types": [
+        "descubrir-regla-simple"
+      ],
+      "exercises": [
+        {
+          "id": "la-maquina-de-reglas-n2-01",
+          "type": "descubrir-regla-simple",
+          "prompt": "¿Qué regla de las opciones funciona para todas estas entradas y salidas?",
+          "visual": {
+            "type": "rule_machine",
+            "examples": [
+              {
+                "input": 2,
+                "output": 5
+              },
+              {
+                "input": 5,
+                "output": 8
+              },
+              {
+                "input": 8,
+                "output": 11
+              }
+            ]
+          },
+          "options": [
+            "Sumar 2",
+            "Sumar 3",
+            "Restar 3",
+            "Multiplicar por 2"
+          ],
+          "correct_answer": "Sumar 3",
+          "answer_index": 1,
+          "hint": "Compara una entrada con su salida y prueba ese mismo cambio en las otras filas.",
+          "feedback_correct": "¡Es sumar 3! La misma regla produce la salida de cada fila.",
+          "feedback_incorrect": "Una regla tiene que funcionar en todas las filas, incluso cuando cambia la entrada."
+        },
+        {
+          "id": "la-maquina-de-reglas-n2-02",
+          "type": "descubrir-regla-simple",
+          "prompt": "¿Cuál de estas reglas puede explicar las salidas más pequeñas?",
+          "visual": {
+            "type": "rule_machine",
+            "examples": [
+              {
+                "input": 6,
+                "output": 4
+              },
+              {
+                "input": 9,
+                "output": 7
+              },
+              {
+                "input": 12,
+                "output": 10
+              }
+            ]
+          },
+          "options": [
+            "Sumar 2",
+            "Restar 3",
+            "Multiplicar por 2",
+            "Restar 2"
+          ],
+          "correct_answer": "Restar 2",
+          "answer_index": 3,
+          "hint": "Averigua cuánto se quitó en una fila. Comprueba si ocurrió lo mismo en las demás.",
+          "feedback_correct": "¡Es restar 2! La misma regla produce la salida de cada fila.",
+          "feedback_incorrect": "Compara cada salida con la tarjeta que la produjo. Busca lo que todas las filas tienen en común."
+        },
+        {
+          "id": "la-maquina-de-reglas-n2-03",
+          "type": "descubrir-regla-simple",
+          "prompt": "¿Qué regla de las tarjetas explica estos pares de números?",
+          "visual": {
+            "type": "rule_machine",
+            "examples": [
+              {
+                "input": 1,
+                "output": 3
+              },
+              {
+                "input": 3,
+                "output": 9
+              },
+              {
+                "input": 5,
+                "output": 15
+              }
+            ]
+          },
+          "options": [
+            "Multiplicar por 3",
+            "Sumar 3",
+            "Multiplicar por 2",
+            "Restar 3"
+          ],
+          "correct_answer": "Multiplicar por 3",
+          "answer_index": 0,
+          "hint": "Prueba hacer grupos iguales con el número de entrada. Busca cuántos grupos dan cada salida.",
+          "feedback_correct": "¡Es multiplicar por 3! La misma regla produce la salida de cada fila.",
+          "feedback_incorrect": "Una suma puede coincidir en una fila. Usa las demás para confirmar qué regla se repite."
+        },
+        {
+          "id": "la-maquina-de-reglas-n2-04",
+          "type": "descubrir-regla-simple",
+          "prompt": "¿Cuál de las reglas mantiene la misma relación en las tres filas?",
+          "visual": {
+            "type": "rule_machine",
+            "examples": [
+              {
+                "input": 4,
+                "output": 9
+              },
+              {
+                "input": 7,
+                "output": 12
+              },
+              {
+                "input": 10,
+                "output": 15
+              }
+            ]
+          },
+          "options": [
+            "Sumar 4",
+            "Restar 5",
+            "Sumar 5",
+            "Multiplicar por 2"
+          ],
+          "correct_answer": "Sumar 5",
+          "answer_index": 2,
+          "hint": "Mide cuánto sube en cada fila, desde la entrada hasta la salida.",
+          "feedback_correct": "¡Es sumar 5! La misma regla produce la salida de cada fila.",
+          "feedback_incorrect": "Elige un cambio y comprueba que se repita igual en la fila de la entrada más grande."
+        },
+        {
+          "id": "la-maquina-de-reglas-n2-05",
+          "type": "descubrir-regla-simple",
+          "prompt": "¿Qué regla de las opciones cambió las tres tarjetas?",
+          "visual": {
+            "type": "rule_machine",
+            "examples": [
+              {
+                "input": 8,
+                "output": 4
+              },
+              {
+                "input": 11,
+                "output": 7
+              },
+              {
+                "input": 14,
+                "output": 10
+              }
+            ]
+          },
+          "options": [
+            "Restar 4",
+            "Sumar 4",
+            "Restar 2",
+            "Restar 5"
+          ],
+          "correct_answer": "Restar 4",
+          "answer_index": 0,
+          "hint": "En cada fila, cuenta hacia atrás desde la entrada hasta su salida.",
+          "feedback_correct": "¡Es restar 4! La misma regla produce la salida de cada fila.",
+          "feedback_incorrect": "Si el número de pasos cambia de una fila a otra, prueba otra regla."
+        },
+        {
+          "id": "la-maquina-de-reglas-n2-06",
+          "type": "descubrir-regla-simple",
+          "prompt": "¿Qué regla de estas opciones usa la máquina con todas las entradas?",
+          "visual": {
+            "type": "rule_machine",
+            "examples": [
+              {
+                "input": 2,
+                "output": 4
+              },
+              {
+                "input": 4,
+                "output": 8
+              },
+              {
+                "input": 7,
+                "output": 14
+              }
+            ]
+          },
+          "options": [
+            "Sumar 2",
+            "Restar 2",
+            "Multiplicar por 2",
+            "Multiplicar por 3"
+          ],
+          "correct_answer": "Multiplicar por 2",
+          "answer_index": 2,
+          "hint": "Mira si la salida se puede dividir en grupos iguales del tamaño de la entrada.",
+          "feedback_correct": "¡Es multiplicar por 2! La misma regla produce la salida de cada fila.",
+          "feedback_incorrect": "Comprueba tu regla con la entrada de abajo. Así sabrás si también funciona fuera de la primera fila."
+        }
+      ]
+    },
+    "3": {
+      "exercise_types": [
+        "aplicar-reglas-consecutivas"
+      ],
+      "exercises": [
+        {
+          "id": "la-maquina-de-reglas-n3-01",
+          "type": "aplicar-reglas-consecutivas",
+          "prompt": "La tarjeta pasa por dos talleres. ¿Qué número sale al final?",
+          "visual": {
+            "type": "rule_machine",
+            "input": 3,
+            "operations": [
+              {
+                "operator": "+",
+                "value": 2
+              },
+              {
+                "operator": "×",
+                "value": 2
+              }
+            ]
+          },
+          "options": [
+            7,
+            8,
+            10,
+            12
+          ],
+          "correct_answer": 10,
+          "answer_index": 2,
+          "hint": "Usa la salida del primer taller como entrada del segundo.",
+          "feedback_correct": "¡La salida es 10! La entrada 3 pasa a 5 en el primer taller y a 10 en el segundo.",
+          "feedback_incorrect": "Haz primero la operación de la izquierda. Aplica la de la derecha al número nuevo."
+        },
+        {
+          "id": "la-maquina-de-reglas-n3-02",
+          "type": "aplicar-reglas-consecutivas",
+          "prompt": "¿Qué salida obtienes al seguir las dos reglas de izquierda a derecha?",
+          "visual": {
+            "type": "rule_machine",
+            "input": 4,
+            "operations": [
+              {
+                "operator": "×",
+                "value": 2
+              },
+              {
+                "operator": "+",
+                "value": 3
+              }
+            ]
+          },
+          "options": [
+            8,
+            11,
+            10,
+            14
+          ],
+          "correct_answer": 11,
+          "answer_index": 1,
+          "hint": "Anota el número que queda entre los dos talleres y sigue desde allí.",
+          "feedback_correct": "¡La salida es 11! La entrada 4 pasa a 8 en el primer taller y a 11 en el segundo.",
+          "feedback_incorrect": "Si solo duplicaste, todavía falta el último cambio. Usa el número que produjo el primer taller."
+        },
+        {
+          "id": "la-maquina-de-reglas-n3-03",
+          "type": "aplicar-reglas-consecutivas",
+          "prompt": "¿Qué número queda en la bandeja de salida después de las dos reglas?",
+          "visual": {
+            "type": "rule_machine",
+            "input": 9,
+            "operations": [
+              {
+                "operator": "-",
+                "value": 4
+              },
+              {
+                "operator": "+",
+                "value": 2
+              }
+            ]
+          },
+          "options": [
+            5,
+            9,
+            11,
+            7
+          ],
+          "correct_answer": 7,
+          "answer_index": 3,
+          "hint": "Imagina la tarjeta cambiando una vez en cada taller.",
+          "feedback_correct": "¡La salida es 7! La entrada 9 pasa a 5 en el primer taller y a 7 en el segundo.",
+          "feedback_incorrect": "Revisa qué regla sucede primero. Después mueve tu resultado al siguiente taller."
+        },
+        {
+          "id": "la-maquina-de-reglas-n3-04",
+          "type": "aplicar-reglas-consecutivas",
+          "prompt": "La primera parte hace grupos y la segunda quita. ¿Qué número sale al final?",
+          "visual": {
+            "type": "rule_machine",
+            "input": 5,
+            "operations": [
+              {
+                "operator": "×",
+                "value": 3
+              },
+              {
+                "operator": "-",
+                "value": 4
+              }
+            ]
+          },
+          "options": [
+            11,
+            1,
+            12,
+            15
+          ],
+          "correct_answer": 11,
+          "answer_index": 0,
+          "hint": "Junta los grupos del primer taller antes de quitar fichas.",
+          "feedback_correct": "¡La salida es 11! La entrada 5 pasa a 15 en el primer taller y a 11 en el segundo.",
+          "feedback_incorrect": "Si solo quitaste a la tarjeta inicial, vuelve al primer taller y forma los grupos."
+        },
+        {
+          "id": "la-maquina-de-reglas-n3-05",
+          "type": "aplicar-reglas-consecutivas",
+          "prompt": "¿Qué número aparece al final de esta máquina de dos pasos?",
+          "visual": {
+            "type": "rule_machine",
+            "input": 8,
+            "operations": [
+              {
+                "operator": "-",
+                "value": 3
+              },
+              {
+                "operator": "×",
+                "value": 2
+              }
+            ]
+          },
+          "options": [
+            5,
+            13,
+            10,
+            16
+          ],
+          "correct_answer": 10,
+          "answer_index": 2,
+          "hint": "Termina la resta antes de usar el taller que duplica.",
+          "feedback_correct": "¡La salida es 10! La entrada 8 pasa a 5 en el primer taller y a 10 en el segundo.",
+          "feedback_incorrect": "Vuelve a leer las reglas en el orden de las flechas. Duplica el resultado de la resta."
+        },
+        {
+          "id": "la-maquina-de-reglas-n3-06",
+          "type": "aplicar-reglas-consecutivas",
+          "prompt": "¿Cuál es la salida si cada taller cambia una vez la tarjeta?",
+          "visual": {
+            "type": "rule_machine",
+            "input": 6,
+            "operations": [
+              {
+                "operator": "+",
+                "value": 3
+              },
+              {
+                "operator": "-",
+                "value": 2
+              }
+            ]
+          },
+          "options": [
+            4,
+            7,
+            8,
+            9
+          ],
+          "correct_answer": 7,
+          "answer_index": 1,
+          "hint": "Cuenta primero lo que se agrega. Usa ese grupo para decidir qué queda después de quitar.",
+          "feedback_correct": "¡La salida es 7! La entrada 6 pasa a 9 en el primer taller y a 7 en el segundo.",
+          "feedback_incorrect": "El número del primer taller todavía va a cambiar. Aplica también la segunda regla."
+        }
+      ]
+    }
+  }
+}

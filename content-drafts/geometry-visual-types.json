@@ -1,0 +1,112 @@
+{
+  "scope": "Propuesta de datos para los tres borradores de Geometría. La aplicación aún no consume estos tipos.",
+  "coordinates": {
+    "order": [
+      "row",
+      "column"
+    ],
+    "index_start": 1,
+    "rule": "Las filas se cuentan desde arriba y las columnas desde la izquierda. Cada par identifica una casilla única dentro de la cuadrícula."
+  },
+  "visuals": {
+    "reflection_grid": {
+      "required": [
+        "type",
+        "rows",
+        "columns",
+        "axis"
+      ],
+      "axis": {
+        "required": [
+          "direction",
+          "after"
+        ],
+        "direction": [
+          "vertical",
+          "horizontal"
+        ],
+        "rule": "after indica la fila o columna después de la cual pasa el eje. El eje separa dos mitades del mismo tamaño."
+      },
+      "fields": {
+        "source_cells": "Fichas de la mitad de arriba o de la izquierda que se deben reflejar.",
+        "placed_cells": "Fichas ya colocadas en la mitad opuesta. Forman un subconjunto del reflejo correcto.",
+        "filled_cells": "Fichas de las dos mitades para la actividad de identificar una ficha sin reflejo.",
+        "choices": "Cuatro tarjetas con label y cells. Sus etiquetas coinciden con options. Las coordenadas de cada tarjeta indican las fichas que propone colocar o la ficha que propone retirar."
+      },
+      "by_exercise": {
+        "elegir-reflejo": [
+          "source_cells",
+          "choices"
+        ],
+        "completar-reflejo": [
+          "source_cells",
+          "placed_cells",
+          "choices"
+        ],
+        "identificar-ficha-sin-reflejo": [
+          "filled_cells",
+          "choices"
+        ]
+      },
+      "rules": [
+        "Para reflejar una casilla, conservar la coordenada paralela al eje. En la otra coordenada, restar el número de la casilla de dos veces after más uno.",
+        "Distinguir el eje y si una casilla está ocupada mediante trazos o marcas además del color.",
+        "En la descripción accesible, identificar cada mitad y tarjeta por separado y ofrecer sus coordenadas. Reservar la indicación de cuál tarjeta es correcta para la retroalimentación."
+      ]
+    },
+    "measurement_grid": {
+      "required": [
+        "type",
+        "mode",
+        "figures"
+      ],
+      "mode": [
+        "perimeter",
+        "area"
+      ],
+      "figure": {
+        "required": [
+          "label",
+          "rows",
+          "columns",
+          "cells"
+        ],
+        "counts": [
+          1,
+          2,
+          4
+        ],
+        "rule": "Cada figura tiene su propia cuadrícula. cells indica las casillas ocupadas y debe formar una sola figura conectada por lados."
+      },
+      "optional": [
+        "show_dimensions"
+      ],
+      "rules": [
+        "En perimeter, resaltar únicamente los segmentos de una casilla que quedan expuestos. Los segmentos compartidos entre dos casillas no forman parte del borde. Cada segmento expuesto vale una unidad de longitud.",
+        "En area, rellenar las casillas ocupadas. Cada casilla representa una baldosa de una unidad cuadrada.",
+        "show_dimensions se usa en rectángulos completos de perímetro. Rotular ancho y alto por separado, a partir de las columnas y filas, sin anunciar el perímetro total.",
+        "Para comparar figuras, conservar las letras de las tarjetas y ofrecer datos separados por figura. En los ejercicios de conteo, describir las casillas o los segmentos sin anunciar el total."
+      ]
+    }
+  },
+  "interactions": {
+    "place_reflection_cells": {
+      "required": [
+        "type",
+        "instructions",
+        "feedback_on_complete",
+        "restart_label"
+      ],
+      "rule": "Usar source_cells como modelo y placed_cells como estado inicial. Permitir colocar una ficha por casilla con teclado o puntero. Completar al obtener exactamente el reflejo y reiniciar al estado inicial."
+    },
+    "place_tiles": {
+      "required": [
+        "type",
+        "instructions",
+        "feedback_on_complete",
+        "restart_label"
+      ],
+      "rule": "Usar cells como superficie objetivo y empezar con las casillas vacías. Permitir una baldosa por casilla usando teclado o puntero. Completar al cubrir todas las casillas objetivo y reiniciar con la superficie vacía."
+    }
+  }
+}

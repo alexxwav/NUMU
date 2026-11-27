@@ -1,0 +1,588 @@
+{
+  "lesson_id": "figuras",
+  "published": false,
+  "levels": {
+    "1": {
+      "exercise_types": [
+        "emparejar-figura",
+        "contar-lados-sin-marcar",
+        "elegir-por-lados"
+      ],
+      "exercises": [
+        {
+          "id": "figuras-n1-01",
+          "type": "emparejar-figura",
+          "prompt": "¿Qué tarjeta tiene la misma figura que el modelo?",
+          "visual": {
+            "type": "shape_set",
+            "figures": [
+              {
+                "label": "A",
+                "shape": "triangle"
+              },
+              {
+                "label": "B",
+                "shape": "pentagon"
+              },
+              {
+                "label": "C",
+                "shape": "square",
+                "rotation_degrees": 45,
+                "size": "small"
+              },
+              {
+                "label": "D",
+                "shape": "triangle",
+                "rotation_degrees": 60
+              }
+            ],
+            "reference": {
+              "shape": "square"
+            }
+          },
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ],
+          "correct_answer": "C",
+          "answer_index": 2,
+          "hint": "Recorre el borde del modelo con el dedo y busca una tarjeta con los mismos lados.",
+          "feedback_correct": "¡Es la tarjeta C! Los dos dibujos son cuadrados. Al girar y hacerse más pequeño, el cuadrado conserva sus cuatro lados.",
+          "feedback_incorrect": "Vuelve a contar los lados del modelo. Busca esa misma cantidad en las tarjetas."
+        },
+        {
+          "id": "figuras-n1-02",
+          "type": "contar-lados-sin-marcar",
+          "prompt": "Un lado ya tiene una marca. ¿Cuántos lados faltan por marcar?",
+          "visual": {
+            "type": "shape",
+            "shape": "triangle",
+            "marked_sides": [
+              0
+            ]
+          },
+          "options": [
+            1,
+            3,
+            0,
+            2
+          ],
+          "correct_answer": 2,
+          "answer_index": 3,
+          "hint": "Empieza al final del lado marcado y señala solo los tramos que todavía no tienen marca.",
+          "feedback_correct": "¡Faltan dos lados! El triángulo tiene tres y uno ya estaba marcado.",
+          "feedback_incorrect": "Mira el borde del triángulo otra vez. Deja fuera el lado que ya tiene una marca."
+        },
+        {
+          "id": "figuras-n1-03",
+          "type": "elegir-por-lados",
+          "prompt": "¿En qué tarjeta está la figura de cinco lados?",
+          "visual": {
+            "type": "shape_set",
+            "figures": [
+              {
+                "label": "A",
+                "shape": "square"
+              },
+              {
+                "label": "B",
+                "shape": "pentagon"
+              },
+              {
+                "label": "C",
+                "shape": "square",
+                "rotation_degrees": 45
+              },
+              {
+                "label": "D",
+                "shape": "triangle",
+                "size": "small"
+              }
+            ],
+            "target_sides": 5
+          },
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ],
+          "correct_answer": "B",
+          "answer_index": 1,
+          "hint": "Elige una esquina para empezar. Cuenta los lados de una tarjeta y luego pasa a la siguiente.",
+          "feedback_correct": "¡Es la tarjeta B! Su figura tiene cinco lados y se llama pentágono.",
+          "feedback_incorrect": "Cuenta cada tramo recto del borde una sola vez. Compara la cantidad con la que pide la pregunta."
+        }
+      ]
+    },
+    "2": {
+      "exercise_types": [
+        "nombrar-figura",
+        "elegir-por-lados",
+        "emparejar-figura",
+        "contar-lados-sin-marcar",
+        "encontrar-par-con-iguales-lados",
+        "elegir-menos-lados"
+      ],
+      "exercises": [
+        {
+          "id": "figuras-n2-01",
+          "type": "nombrar-figura",
+          "prompt": "¿Cómo se llama esta figura aunque esté girada?",
+          "visual": {
+            "type": "shape",
+            "shape": "triangle",
+            "rotation_degrees": 75
+          },
+          "options": [
+            "Cuadrado",
+            "Hexágono",
+            "Triángulo",
+            "Pentágono"
+          ],
+          "correct_answer": "Triángulo",
+          "answer_index": 2,
+          "hint": "Sigue el borde desde una esquina. Imagina la figura de pie.",
+          "feedback_correct": "¡Es un triángulo! Tiene tres lados aunque esté girado.",
+          "feedback_incorrect": "Cuenta los lados hasta volver a la esquina inicial y busca el nombre que corresponde."
+        },
+        {
+          "id": "figuras-n2-02",
+          "type": "elegir-por-lados",
+          "prompt": "¿En qué tarjeta está la figura de seis lados?",
+          "visual": {
+            "type": "shape_set",
+            "figures": [
+              {
+                "label": "A",
+                "shape": "square",
+                "rotation_degrees": 20
+              },
+              {
+                "label": "B",
+                "shape": "hexagon",
+                "rotation_degrees": 20
+              },
+              {
+                "label": "C",
+                "shape": "triangle",
+                "rotation_degrees": 20
+              },
+              {
+                "label": "D",
+                "shape": "pentagon",
+                "rotation_degrees": 20
+              }
+            ],
+            "target_sides": 6
+          },
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ],
+          "correct_answer": "B",
+          "answer_index": 1,
+          "hint": "Cuenta los lados de una tarjeta a la vez. Vuelve al punto donde empezaste antes de elegir.",
+          "feedback_correct": "¡La tarjeta B! La figura tiene seis lados y es un hexágono.",
+          "feedback_incorrect": "Recorre el borde de cada figura. Cuenta un tramo por cada lado recto."
+        },
+        {
+          "id": "figuras-n2-03",
+          "type": "emparejar-figura",
+          "prompt": "¿Qué tarjeta tiene la misma figura que el modelo?",
+          "visual": {
+            "type": "shape_set",
+            "figures": [
+              {
+                "label": "A",
+                "shape": "triangle"
+              },
+              {
+                "label": "B",
+                "shape": "pentagon"
+              },
+              {
+                "label": "C",
+                "shape": "hexagon"
+              },
+              {
+                "label": "D",
+                "shape": "square",
+                "rotation_degrees": 20,
+                "size": "small"
+              }
+            ],
+            "reference": {
+              "shape": "square",
+              "rotation_degrees": 70
+            }
+          },
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ],
+          "correct_answer": "D",
+          "answer_index": 3,
+          "hint": "Compara el contorno con el modelo. El tamaño y la dirección pueden cambiar.",
+          "feedback_correct": "¡La tarjeta D! Los dos dibujos son cuadrados aunque uno es más pequeño y está girado.",
+          "feedback_incorrect": "Recorre el borde del modelo y busca los mismos lados y esquinas en una tarjeta."
+        },
+        {
+          "id": "figuras-n2-04",
+          "type": "contar-lados-sin-marcar",
+          "prompt": "¿Cuántos lados faltan por marcar para recorrer todo el borde?",
+          "visual": {
+            "type": "shape",
+            "shape": "pentagon",
+            "rotation_degrees": 15,
+            "size": "normal",
+            "marked_sides": [
+              0,
+              1
+            ]
+          },
+          "options": [
+            4,
+            3,
+            2,
+            5
+          ],
+          "correct_answer": 3,
+          "answer_index": 1,
+          "hint": "Empieza donde terminan las marcas y cuenta los tramos que todavía están sin marcar.",
+          "feedback_correct": "¡Faltan tres lados! Ya había dos marcados y el pentágono tiene cinco.",
+          "feedback_incorrect": "Recorre el borde sin contar otra vez los tramos que ya tienen una marca."
+        },
+        {
+          "id": "figuras-n2-05",
+          "type": "encontrar-par-con-iguales-lados",
+          "prompt": "¿Qué dos tarjetas tienen figuras con el mismo número de lados?",
+          "visual": {
+            "type": "shape_set",
+            "figures": [
+              {
+                "label": "A",
+                "shape": "square"
+              },
+              {
+                "label": "B",
+                "shape": "hexagon",
+                "rotation_degrees": 30
+              },
+              {
+                "label": "C",
+                "shape": "square",
+                "rotation_degrees": 35,
+                "size": "small"
+              },
+              {
+                "label": "D",
+                "shape": "pentagon",
+                "rotation_degrees": 10
+              }
+            ]
+          },
+          "options": [
+            "A y B",
+            "B y D",
+            "A y D",
+            "A y C"
+          ],
+          "correct_answer": "A y C",
+          "answer_index": 3,
+          "hint": "Cuenta cada borde por separado. Un dibujo más grande puede tener los mismos lados.",
+          "feedback_correct": "¡A y C! Ambas figuras tienen cuatro lados aunque son de distinto tamaño.",
+          "feedback_incorrect": "Compara dos tarjetas a la vez. Recorre sus bordes antes de decidir si hacen pareja."
+        },
+        {
+          "id": "figuras-n2-06",
+          "type": "elegir-menos-lados",
+          "prompt": "¿En qué tarjeta está la figura con menos lados?",
+          "visual": {
+            "type": "shape_set",
+            "figures": [
+              {
+                "label": "A",
+                "shape": "triangle",
+                "rotation_degrees": 80
+              },
+              {
+                "label": "B",
+                "shape": "pentagon",
+                "rotation_degrees": 15
+              },
+              {
+                "label": "C",
+                "shape": "square",
+                "rotation_degrees": 5,
+                "size": "small"
+              },
+              {
+                "label": "D",
+                "shape": "hexagon"
+              }
+            ]
+          },
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ],
+          "correct_answer": "A",
+          "answer_index": 0,
+          "hint": "Busca la figura que necesita menos tramos rectos para cerrar su borde.",
+          "feedback_correct": "¡La tarjeta A! El triángulo tiene tres lados y las otras figuras tienen más.",
+          "feedback_incorrect": "Compara la cantidad de lados de cada tarjeta. El tamaño del dibujo puede despistarte."
+        }
+      ]
+    },
+    "3": {
+      "exercise_types": [
+        "nombrar-figura",
+        "elegir-por-lados",
+        "emparejar-figura",
+        "detectar-figura-distinta",
+        "elegir-mas-lados",
+        "sumar-lados"
+      ],
+      "exercises": [
+        {
+          "id": "figuras-n3-01",
+          "type": "nombrar-figura",
+          "prompt": "¿Cómo se llama esta figura pequeña y girada?",
+          "visual": {
+            "type": "shape",
+            "shape": "pentagon",
+            "rotation_degrees": 140,
+            "size": "small"
+          },
+          "options": [
+            "Triángulo",
+            "Cuadrado",
+            "Pentágono",
+            "Hexágono"
+          ],
+          "correct_answer": "Pentágono",
+          "answer_index": 2,
+          "hint": "Busca una esquina como punto de partida y revisa el contorno antes de elegir el nombre.",
+          "feedback_correct": "¡Es un pentágono! Aunque sea pequeño y esté girado conserva sus cinco lados.",
+          "feedback_incorrect": "Cuenta cada tramo recto entre dos esquinas. Elige el nombre que corresponde a esa cantidad."
+        },
+        {
+          "id": "figuras-n3-02",
+          "type": "elegir-por-lados",
+          "prompt": "¿En qué tarjeta está la figura de cinco lados?",
+          "visual": {
+            "type": "shape_set",
+            "figures": [
+              {
+                "label": "A",
+                "shape": "hexagon",
+                "rotation_degrees": 35,
+                "size": "small"
+              },
+              {
+                "label": "B",
+                "shape": "square",
+                "rotation_degrees": 40
+              },
+              {
+                "label": "C",
+                "shape": "triangle",
+                "rotation_degrees": 120
+              },
+              {
+                "label": "D",
+                "shape": "pentagon",
+                "rotation_degrees": 100,
+                "size": "small"
+              }
+            ],
+            "target_sides": 5
+          },
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ],
+          "correct_answer": "D",
+          "answer_index": 3,
+          "hint": "En cada tarjeta empieza en una esquina y detente al completar el contorno.",
+          "feedback_correct": "¡La tarjeta D! El borde tiene cinco lados aunque la figura está girada.",
+          "feedback_incorrect": "Si una figura se ve pequeña o inclinada, recorre su borde igual que en las demás."
+        },
+        {
+          "id": "figuras-n3-03",
+          "type": "emparejar-figura",
+          "prompt": "¿Qué tarjeta muestra la misma figura que el modelo, aunque haya cambiado de tamaño?",
+          "visual": {
+            "type": "shape_set",
+            "figures": [
+              {
+                "label": "A",
+                "shape": "pentagon",
+                "rotation_degrees": 90
+              },
+              {
+                "label": "B",
+                "shape": "hexagon",
+                "rotation_degrees": 50,
+                "size": "small"
+              },
+              {
+                "label": "C",
+                "shape": "triangle",
+                "rotation_degrees": 45,
+                "size": "small"
+              },
+              {
+                "label": "D",
+                "shape": "square",
+                "rotation_degrees": 30
+              }
+            ],
+            "reference": {
+              "shape": "hexagon",
+              "rotation_degrees": 0
+            }
+          },
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ],
+          "correct_answer": "B",
+          "answer_index": 1,
+          "hint": "El modelo y la tarjeta pueden apuntar en direcciones distintas. Compara sus lados y esquinas.",
+          "feedback_correct": "¡La tarjeta B! Los dos dibujos son hexágonos y cada uno tiene seis lados.",
+          "feedback_incorrect": "Recorre el contorno del modelo primero. Después busca la tarjeta que conserve esa cantidad de lados."
+        },
+        {
+          "id": "figuras-n3-04",
+          "type": "detectar-figura-distinta",
+          "prompt": "¿Qué tarjeta tiene una figura con un número de lados distinto al de las otras tres?",
+          "visual": {
+            "type": "shape_set",
+            "figures": [
+              {
+                "label": "A",
+                "shape": "square",
+                "rotation_degrees": 10
+              },
+              {
+                "label": "B",
+                "shape": "square",
+                "rotation_degrees": 45,
+                "size": "small"
+              },
+              {
+                "label": "C",
+                "shape": "pentagon",
+                "rotation_degrees": 50
+              },
+              {
+                "label": "D",
+                "shape": "square",
+                "rotation_degrees": 105
+              }
+            ]
+          },
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ],
+          "correct_answer": "C",
+          "answer_index": 2,
+          "hint": "Busca primero las tarjetas que coinciden cuando cuentas sus lados.",
+          "feedback_correct": "¡La tarjeta C! Tiene cinco lados y las otras tres tienen cuatro.",
+          "feedback_incorrect": "Cuenta los lados de cada tarjeta. Dos figuras que se ven distintas pueden pertenecer al mismo grupo."
+        },
+        {
+          "id": "figuras-n3-05",
+          "type": "elegir-mas-lados",
+          "prompt": "¿En qué tarjeta está la figura con más lados?",
+          "visual": {
+            "type": "shape_set",
+            "figures": [
+              {
+                "label": "A",
+                "shape": "triangle",
+                "rotation_degrees": 15
+              },
+              {
+                "label": "B",
+                "shape": "pentagon",
+                "rotation_degrees": 110
+              },
+              {
+                "label": "C",
+                "shape": "hexagon",
+                "rotation_degrees": 30,
+                "size": "small"
+              },
+              {
+                "label": "D",
+                "shape": "square",
+                "rotation_degrees": 45
+              }
+            ]
+          },
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ],
+          "correct_answer": "C",
+          "answer_index": 2,
+          "hint": "Compara el número de tramos del borde. Una figura pequeña también puede tener muchos lados.",
+          "feedback_correct": "¡La tarjeta C! El hexágono tiene seis lados y las otras figuras tienen menos.",
+          "feedback_incorrect": "Cuenta los lados entre una esquina y la siguiente. Elige la tarjeta con la cantidad mayor."
+        },
+        {
+          "id": "figuras-n3-06",
+          "type": "sumar-lados",
+          "prompt": "¿Cuántos lados tienen en total las figuras A y B?",
+          "visual": {
+            "type": "shape_set",
+            "figures": [
+              {
+                "label": "A",
+                "shape": "triangle",
+                "rotation_degrees": 160,
+                "size": "small"
+              },
+              {
+                "label": "B",
+                "shape": "hexagon",
+                "rotation_degrees": 125
+              }
+            ]
+          },
+          "options": [
+            8,
+            10,
+            9,
+            11
+          ],
+          "correct_answer": 9,
+          "answer_index": 2,
+          "hint": "Recorre los dos bordes por separado y junta las dos cantidades.",
+          "feedback_correct": "¡Nueve lados! El triángulo aporta tres y el hexágono aporta seis.",
+          "feedback_incorrect": "Cuenta primero todos los lados de A y luego todos los de B. Al terminar, suma ambas cantidades."
+        }
+      ]
+    }
+  }
+}

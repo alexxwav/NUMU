@@ -1,0 +1,513 @@
+{
+  "id": "escaleras-de-numeros",
+  "course_id": "algebra",
+  "title": "Escaleras de números",
+  "position": 1,
+  "base_level": 1,
+  "published": false,
+  "objective": "Reconocer secuencias y descubrir cómo cambian los números de un paso a otro.",
+  "explanation": "Los números pueden subir o bajar como si fueran escalones. Compara dos escalones vecinos. Si el cambio se repite, encontraste la regla. Puedes seguirla para completar un hueco o imaginar escalones que aún no se ven.",
+  "guided_example": {
+    "mode": "visual",
+    "visual": {
+      "type": "number_staircase",
+      "steps": [
+        2,
+        4,
+        6,
+        8
+      ],
+      "query_position": 5
+    },
+    "explanation": "En el dibujo se leen 2, 4, 6 y 8. Al pasar al siguiente escalón se suman dos unidades. Si sigues esa regla, después del ocho viene el diez."
+  },
+  "levels": {
+    "1": {
+      "exercise_types": [
+        "completar-escalera"
+      ],
+      "exercises": [
+        {
+          "id": "escaleras-de-numeros-n1-01",
+          "type": "completar-escalera",
+          "prompt": "¿Qué número sigue en el último escalón?",
+          "visual": {
+            "type": "number_staircase",
+            "steps": [
+              1,
+              2,
+              3,
+              4,
+              null
+            ],
+            "query_position": 5
+          },
+          "options": [
+            4,
+            6,
+            5,
+            7
+          ],
+          "correct_answer": 5,
+          "answer_index": 2,
+          "hint": "Compara los primeros escalones para ver cuánto crece cada salto.",
+          "feedback_correct": "¡Va el 5! Cada vez que avanzas un escalón, el número aumenta 1.",
+          "feedback_incorrect": "Todos los aumentos son iguales. Repite el salto del penúltimo escalón."
+        },
+        {
+          "id": "escaleras-de-numeros-n1-02",
+          "type": "completar-escalera",
+          "prompt": "¿Qué número falta entre los dos escalones que ya tienen número?",
+          "visual": {
+            "type": "number_staircase",
+            "steps": [
+              2,
+              4,
+              6,
+              null,
+              10
+            ],
+            "query_position": 4
+          },
+          "options": [
+            6,
+            8,
+            7,
+            9
+          ],
+          "correct_answer": 8,
+          "answer_index": 1,
+          "hint": "Mide el salto entre dos escalones vecinos que sí se ven.",
+          "feedback_correct": "¡Va el 8! Cada vez que avanzas un escalón, el número aumenta 2.",
+          "feedback_incorrect": "Prueba tu número entre sus vecinos. Los saltos a ambos lados deben ser iguales."
+        },
+        {
+          "id": "escaleras-de-numeros-n1-03",
+          "type": "completar-escalera",
+          "prompt": "¿Qué número pondrías en el escalón del centro?",
+          "visual": {
+            "type": "number_staircase",
+            "steps": [
+              4,
+              7,
+              null,
+              13,
+              16
+            ],
+            "query_position": 3
+          },
+          "options": [
+            8,
+            9,
+            11,
+            10
+          ],
+          "correct_answer": 10,
+          "answer_index": 3,
+          "hint": "Busca cuánto cambia la escalera cuando avanzas un solo escalón.",
+          "feedback_correct": "¡Va el 10! Cada vez que avanzas un escalón, el número aumenta 3.",
+          "feedback_incorrect": "Usa el mismo aumento antes y después del espacio vacío."
+        },
+        {
+          "id": "escaleras-de-numeros-n1-04",
+          "type": "completar-escalera",
+          "prompt": "¿Qué número completa la escalera al final?",
+          "visual": {
+            "type": "number_staircase",
+            "steps": [
+              5,
+              7,
+              9,
+              11,
+              13,
+              null
+            ],
+            "query_position": 6
+          },
+          "options": [
+            15,
+            13,
+            14,
+            17
+          ],
+          "correct_answer": 15,
+          "answer_index": 0,
+          "hint": "Mira desde el primer escalón y cuenta de cuánto en cuánto sube.",
+          "feedback_correct": "¡Va el 15! Cada vez que avanzas un escalón, el número aumenta 2.",
+          "feedback_incorrect": "Encuentra el último número visible y haz otro salto igual al anterior."
+        },
+        {
+          "id": "escaleras-de-numeros-n1-05",
+          "type": "completar-escalera",
+          "prompt": "¿Qué número falta justo después del primer escalón?",
+          "visual": {
+            "type": "number_staircase",
+            "steps": [
+              7,
+              null,
+              15,
+              19
+            ],
+            "query_position": 2
+          },
+          "options": [
+            8,
+            10,
+            11,
+            12
+          ],
+          "correct_answer": 11,
+          "answer_index": 2,
+          "hint": "Usa los dos últimos escalones para encontrar el tamaño del salto.",
+          "feedback_correct": "¡Va el 11! Cada vez que avanzas un escalón, el número aumenta 4.",
+          "feedback_incorrect": "Avanza desde el primero con ese salto y comprueba que puedas llegar al siguiente."
+        },
+        {
+          "id": "escaleras-de-numeros-n1-06",
+          "type": "completar-escalera",
+          "prompt": "¿Con qué número empezó esta escalera?",
+          "visual": {
+            "type": "number_staircase",
+            "steps": [
+              null,
+              4,
+              5,
+              6,
+              7
+            ],
+            "query_position": 1
+          },
+          "options": [
+            1,
+            2,
+            4,
+            3
+          ],
+          "correct_answer": 3,
+          "answer_index": 3,
+          "hint": "Observa lo que aumenta al avanzar. Para ir hacia el inicio, haz el salto hacia atrás.",
+          "feedback_correct": "¡Va el 3! Cada vez que avanzas un escalón, el número aumenta 1.",
+          "feedback_incorrect": "Empieza en el siguiente escalón y vuelve un paso con la misma distancia."
+        }
+      ]
+    },
+    "2": {
+      "exercise_types": [
+        "identificar-regla-de-escalera"
+      ],
+      "exercises": [
+        {
+          "id": "escaleras-de-numeros-n2-01",
+          "type": "identificar-regla-de-escalera",
+          "prompt": "¿Qué regla transforma cada número en el del siguiente escalón?",
+          "visual": {
+            "type": "number_staircase",
+            "steps": [
+              3,
+              5,
+              7,
+              9
+            ]
+          },
+          "options": [
+            "Sumar 2",
+            "Sumar 3",
+            "Restar 2",
+            "Restar 1"
+          ],
+          "correct_answer": "Sumar 2",
+          "answer_index": 0,
+          "hint": "Compara una pareja vecina y fíjate si el número crece.",
+          "feedback_correct": "¡La regla es sumar 2! El mismo cambio lleva de cada escalón al siguiente.",
+          "feedback_incorrect": "Mira cuánto aumentó en un salto y comprueba los demás."
+        },
+        {
+          "id": "escaleras-de-numeros-n2-02",
+          "type": "identificar-regla-de-escalera",
+          "prompt": "¿Qué regla hace bajar los números de esta escalera?",
+          "visual": {
+            "type": "number_staircase",
+            "steps": [
+              15,
+              12,
+              9,
+              6
+            ]
+          },
+          "options": [
+            "Sumar 3",
+            "Restar 2",
+            "Restar 3",
+            "Restar 4"
+          ],
+          "correct_answer": "Restar 3",
+          "answer_index": 2,
+          "hint": "Observa cuántas unidades pierde cada número al dar el salto.",
+          "feedback_correct": "¡La regla es restar 3! El mismo cambio lleva de cada escalón al siguiente.",
+          "feedback_incorrect": "Revisa que la regla haga bajar todos los números la misma cantidad."
+        },
+        {
+          "id": "escaleras-de-numeros-n2-03",
+          "type": "identificar-regla-de-escalera",
+          "prompt": "¿Qué regla se repite en estos escalones?",
+          "visual": {
+            "type": "number_staircase",
+            "steps": [
+              4,
+              9,
+              14,
+              19
+            ]
+          },
+          "options": [
+            "Sumar 4",
+            "Sumar 5",
+            "Restar 5",
+            "Sumar 6"
+          ],
+          "correct_answer": "Sumar 5",
+          "answer_index": 1,
+          "hint": "Calcula la diferencia de dos escalones seguidos.",
+          "feedback_correct": "¡La regla es sumar 5! El mismo cambio lleva de cada escalón al siguiente.",
+          "feedback_incorrect": "Prueba tu regla con otro par. Ambos saltos deben tener el mismo tamaño."
+        },
+        {
+          "id": "escaleras-de-numeros-n2-04",
+          "type": "identificar-regla-de-escalera",
+          "prompt": "¿Qué cambio ves cada vez que avanzas?",
+          "visual": {
+            "type": "number_staircase",
+            "steps": [
+              24,
+              20,
+              16,
+              12
+            ]
+          },
+          "options": [
+            "Sumar 4",
+            "Restar 3",
+            "Restar 6",
+            "Restar 4"
+          ],
+          "correct_answer": "Restar 4",
+          "answer_index": 3,
+          "hint": "Piensa en cuántas unidades debes quitar para llegar al siguiente número.",
+          "feedback_correct": "¡La regla es restar 4! El mismo cambio lleva de cada escalón al siguiente.",
+          "feedback_incorrect": "Empieza por un par vecino. Luego comprueba que el mismo cambio se repita hasta el final."
+        },
+        {
+          "id": "escaleras-de-numeros-n2-05",
+          "type": "identificar-regla-de-escalera",
+          "prompt": "¿Cuál de estas reglas funciona para toda la escalera?",
+          "visual": {
+            "type": "number_staircase",
+            "steps": [
+              6,
+              9,
+              12,
+              15
+            ]
+          },
+          "options": [
+            "Sumar 2",
+            "Sumar 6",
+            "Sumar 3",
+            "Restar 3"
+          ],
+          "correct_answer": "Sumar 3",
+          "answer_index": 2,
+          "hint": "Cuenta cuánto debes agregar en cada paso, no solo cuánto avanzas del primero al último.",
+          "feedback_correct": "¡La regla es sumar 3! El mismo cambio lleva de cada escalón al siguiente.",
+          "feedback_incorrect": "Aplica tu regla a un escalón de en medio y comprueba que produzca el que sigue."
+        },
+        {
+          "id": "escaleras-de-numeros-n2-06",
+          "type": "identificar-regla-de-escalera",
+          "prompt": "¿Qué regla explica la bajada de estos números?",
+          "visual": {
+            "type": "number_staircase",
+            "steps": [
+              32,
+              27,
+              22,
+              17
+            ]
+          },
+          "options": [
+            "Sumar 5",
+            "Restar 5",
+            "Restar 4",
+            "Restar 7"
+          ],
+          "correct_answer": "Restar 5",
+          "answer_index": 1,
+          "hint": "Fíjate si cada número es mayor o menor que el anterior. Después mide el salto.",
+          "feedback_correct": "¡La regla es restar 5! El mismo cambio lleva de cada escalón al siguiente.",
+          "feedback_incorrect": "Si la regla suma, el número subiría. Busca cuánto debes quitar para que baje como en el dibujo."
+        }
+      ]
+    },
+    "3": {
+      "exercise_types": [
+        "predecir-escalon"
+      ],
+      "exercises": [
+        {
+          "id": "escaleras-de-numeros-n3-01",
+          "type": "predecir-escalon",
+          "prompt": "Si la escalera sigue igual, ¿qué número habrá en el escalón 6?",
+          "visual": {
+            "type": "number_staircase",
+            "steps": [
+              2,
+              5,
+              8,
+              11
+            ],
+            "query_position": 6
+          },
+          "options": [
+            17,
+            14,
+            18,
+            20
+          ],
+          "correct_answer": 17,
+          "answer_index": 0,
+          "hint": "Encuentra el cambio entre dos escalones. Repite ese salto hasta llegar al escalón que te piden.",
+          "feedback_correct": "¡El escalón 6 lleva el 17! En cada salto debes sumar 3.",
+          "feedback_incorrect": "Marca cuántos pasos faltan desde el último escalón dibujado para llegar al que se pide."
+        },
+        {
+          "id": "escaleras-de-numeros-n3-02",
+          "type": "predecir-escalon",
+          "prompt": "Descubre la regla. ¿Qué número toca en el escalón 7?",
+          "visual": {
+            "type": "number_staircase",
+            "steps": [
+              23,
+              20,
+              17,
+              14
+            ],
+            "query_position": 7
+          },
+          "options": [
+            2,
+            8,
+            5,
+            11
+          ],
+          "correct_answer": 5,
+          "answer_index": 2,
+          "hint": "Averigua cuánto baja en cada paso. Después continúa desde el último número que se ve.",
+          "feedback_correct": "¡El escalón 7 lleva el 5! En cada salto debes restar 3.",
+          "feedback_incorrect": "El número sigue bajando cuando avanzas. Repite el mismo descenso hasta el escalón pedido."
+        },
+        {
+          "id": "escaleras-de-numeros-n3-03",
+          "type": "predecir-escalon",
+          "prompt": "Con estos primeros números, ¿qué valor puedes predecir para el escalón 5?",
+          "visual": {
+            "type": "number_staircase",
+            "steps": [
+              1,
+              5,
+              9
+            ],
+            "query_position": 5
+          },
+          "options": [
+            13,
+            16,
+            21,
+            17
+          ],
+          "correct_answer": 17,
+          "answer_index": 3,
+          "hint": "Escribe la distancia entre vecinos y úsala en todos los pasos que aún faltan.",
+          "feedback_correct": "¡El escalón 5 lleva el 17! En cada salto debes sumar 4.",
+          "feedback_incorrect": "Dibuja los escalones que no aparecen y haz un salto por cada uno."
+        },
+        {
+          "id": "escaleras-de-numeros-n3-04",
+          "type": "predecir-escalon",
+          "prompt": "¿Qué número quedará en el escalón 6 si se repite el cambio que muestra el dibujo?",
+          "visual": {
+            "type": "number_staircase",
+            "steps": [
+              30,
+              26,
+              22,
+              18
+            ],
+            "query_position": 6
+          },
+          "options": [
+            6,
+            10,
+            12,
+            14
+          ],
+          "correct_answer": 10,
+          "answer_index": 1,
+          "hint": "Primero decide si hay que sumar o restar. Aplica la regla hasta llegar a la posición pedida.",
+          "feedback_correct": "¡El escalón 6 lleva el 10! En cada salto debes restar 4.",
+          "feedback_incorrect": "Después del último escalón visible todavía debes aplicar la regla más de una vez."
+        },
+        {
+          "id": "escaleras-de-numeros-n3-05",
+          "type": "predecir-escalon",
+          "prompt": "La escalera sigue más allá del dibujo. ¿Qué número va en el escalón 6?",
+          "visual": {
+            "type": "number_staircase",
+            "steps": [
+              4,
+              9,
+              14
+            ],
+            "query_position": 6
+          },
+          "options": [
+            29,
+            19,
+            24,
+            34
+          ],
+          "correct_answer": 29,
+          "answer_index": 0,
+          "hint": "Busca el tamaño de un salto. Luego marca los escalones que faltan y repítelo en cada uno.",
+          "feedback_correct": "¡El escalón 6 lleva el 29! En cada salto debes sumar 5.",
+          "feedback_incorrect": "Si tu número queda en un escalón anterior, sigue avanzando con el mismo aumento."
+        },
+        {
+          "id": "escaleras-de-numeros-n3-06",
+          "type": "predecir-escalon",
+          "prompt": "¿Qué número alcanza la escalera en el escalón 8?",
+          "visual": {
+            "type": "number_staircase",
+            "steps": [
+              10,
+              12,
+              14,
+              16
+            ],
+            "query_position": 8
+          },
+          "options": [
+            20,
+            22,
+            24,
+            26
+          ],
+          "correct_answer": 24,
+          "answer_index": 2,
+          "hint": "Separa la posición del número escrito. La regla cambia el número cada vez que avanzas una posición.",
+          "feedback_correct": "¡El escalón 8 lleva el 24! En cada salto debes sumar 2.",
+          "feedback_incorrect": "Sigue la regla hasta el escalón pedido. Cuenta los saltos y no los números dibujados."
+        }
+      ]
+    }
+  }
+}

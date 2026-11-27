@@ -1,0 +1,453 @@
+{
+  "id": "grupos-iguales",
+  "course_id": "aritmetica",
+  "title": "Grupos iguales",
+  "position": 4,
+  "base_level": 1,
+  "published": false,
+  "objective": "Reconocer grupos con la misma cantidad, hallar su total con una suma repetida y relacionar los arreglos de filas y columnas con la multiplicación.",
+  "explanation": "Si todas las peceras tienen la misma cantidad de peces, tenemos grupos iguales. Para saber cuántos peces hay en total, suma la cantidad de una pecera una vez por cada pecera. Eso se llama suma repetida. También puedes acomodar objetos en filas y columnas. Para hallar el total, multiplica cuántas filas hay por cuántos objetos hay en cada fila.",
+  "guided_example": {
+    "mode": "visual",
+    "visual": {
+      "type": "equal_groups",
+      "icon": "fish",
+      "container": "fish_tank",
+      "group_count": 3,
+      "items_per_group": 2
+    },
+    "explanation": "Mira las tres peceras. En cada una hay dos peces. Cuenta los peces de una pecera a la vez. Dos más dos más dos son seis. Puedes escribirlo como 2 + 2 + 2 = 6 o como 3 × 2 = 6."
+  },
+  "levels": {
+    "1": {
+      "exercise_types": [
+        "contar-grupos"
+      ],
+      "exercises": [
+        {
+          "id": "grupos-iguales-n1-01",
+          "type": "contar-grupos",
+          "prompt": "¿Cuántos grupos de peces hay? Cuenta una pecera por grupo.",
+          "visual": {
+            "type": "equal_groups",
+            "icon": "fish",
+            "container": "fish_tank",
+            "group_count": 2,
+            "items_per_group": 3
+          },
+          "options": [
+            3,
+            2,
+            6,
+            4
+          ],
+          "correct_answer": 2,
+          "answer_index": 1,
+          "hint": "Marca con el dedo cada pecera una sola vez.",
+          "feedback_correct": "¡Hay 2 grupos! Cada pecera forma un grupo de tres peces.",
+          "feedback_incorrect": "Cuenta las peceras completas. Los peces que están juntos dentro de una forman un solo grupo."
+        },
+        {
+          "id": "grupos-iguales-n1-02",
+          "type": "contar-grupos",
+          "prompt": "¿Cuántos grupos de pelotas ves? Cada canasta es un grupo.",
+          "visual": {
+            "type": "equal_groups",
+            "icon": "ball",
+            "container": "basket",
+            "group_count": 3,
+            "items_per_group": 2
+          },
+          "options": [
+            6,
+            2,
+            4,
+            3
+          ],
+          "correct_answer": 3,
+          "answer_index": 3,
+          "hint": "Señala las canastas de izquierda a derecha mientras cuentas.",
+          "feedback_correct": "¡Hay 3 grupos! Cada canasta tiene dos pelotas.",
+          "feedback_incorrect": "Mira primero los bordes de las canastas. Cuenta una vez cada canasta."
+        },
+        {
+          "id": "grupos-iguales-n1-03",
+          "type": "contar-grupos",
+          "prompt": "¿Cuántos grupos de estrellas hay? Cuenta cada bandeja una vez.",
+          "visual": {
+            "type": "equal_groups",
+            "icon": "star",
+            "container": "tray",
+            "group_count": 4,
+            "items_per_group": 2
+          },
+          "options": [
+            4,
+            2,
+            8,
+            5
+          ],
+          "correct_answer": 4,
+          "answer_index": 0,
+          "hint": "Pasa de una bandeja a la siguiente sin contar las estrellas por separado.",
+          "feedback_correct": "¡Hay 4 grupos! En cada bandeja hay dos estrellas.",
+          "feedback_incorrect": "Si contaste todas las estrellas, vuelve a mirar cuántas bandejas las reúnen."
+        },
+        {
+          "id": "grupos-iguales-n1-04",
+          "type": "contar-grupos",
+          "prompt": "¿Cuántos grupos de peces están dibujados? Hay un grupo dentro de cada pecera.",
+          "visual": {
+            "type": "equal_groups",
+            "icon": "fish",
+            "container": "fish_tank",
+            "group_count": 5,
+            "items_per_group": 2
+          },
+          "options": [
+            2,
+            4,
+            5,
+            10
+          ],
+          "correct_answer": 5,
+          "answer_index": 2,
+          "hint": "Empieza en un extremo y señala cada pecera una sola vez.",
+          "feedback_correct": "¡Hay 5 grupos! Todas las peceras tienen la misma cantidad de peces.",
+          "feedback_incorrect": "Sigue el borde de cada pecera para verla como un grupo completo."
+        },
+        {
+          "id": "grupos-iguales-n1-05",
+          "type": "contar-grupos",
+          "prompt": "Hay tarjetas de corazón en cajas. ¿Cuántos grupos hay si cada caja es un grupo?",
+          "visual": {
+            "type": "equal_groups",
+            "icon": "heart",
+            "container": "box",
+            "group_count": 2,
+            "items_per_group": 4
+          },
+          "options": [
+            4,
+            8,
+            3,
+            2
+          ],
+          "correct_answer": 2,
+          "answer_index": 3,
+          "hint": "Fíjate en las cajas. Dentro de cada una hay varias tarjetas juntas.",
+          "feedback_correct": "¡Hay 2 grupos! Cada caja guarda cuatro tarjetas de corazón.",
+          "feedback_incorrect": "Cuenta las cajas primero. Después puedes comprobar que todas tienen la misma cantidad de corazones."
+        },
+        {
+          "id": "grupos-iguales-n1-06",
+          "type": "contar-grupos",
+          "prompt": "Cada canasta tiene la misma cantidad de pelotas. ¿Cuántos grupos de pelotas hay?",
+          "visual": {
+            "type": "equal_groups",
+            "icon": "ball",
+            "container": "basket",
+            "group_count": 3,
+            "items_per_group": 4
+          },
+          "options": [
+            4,
+            3,
+            5,
+            12
+          ],
+          "correct_answer": 3,
+          "answer_index": 1,
+          "hint": "Recorre las canastas con el dedo y cuenta solo cuando pases a otra.",
+          "feedback_correct": "¡Hay 3 grupos! Cada uno tiene cuatro pelotas.",
+          "feedback_incorrect": "La pregunta se refiere a grupos enteros. Haz una pausa al pasar de una canasta a la siguiente."
+        }
+      ]
+    },
+    "2": {
+      "exercise_types": [
+        "identificar-suma-repetida"
+      ],
+      "exercises": [
+        {
+          "id": "grupos-iguales-n2-01",
+          "type": "identificar-suma-repetida",
+          "prompt": "¿Qué suma muestra cuántos peces hay en cada pecera, con un número por pecera?",
+          "visual": {
+            "type": "equal_groups",
+            "icon": "fish",
+            "container": "fish_tank",
+            "group_count": 2,
+            "items_per_group": 3
+          },
+          "options": [
+            "2 + 2 + 2",
+            "3 + 3",
+            "3 + 2",
+            "6 + 6"
+          ],
+          "correct_answer": "3 + 3",
+          "answer_index": 1,
+          "hint": "Toma una pecera a la vez y escribe cuántos peces tiene.",
+          "feedback_correct": "¡Es 3 + 3! Hay dos peceras y cada una aporta tres peces.",
+          "feedback_incorrect": "Comprueba que haya tantos números en la suma como peceras. Cada número debe decir cuántos peces hay en esa pecera."
+        },
+        {
+          "id": "grupos-iguales-n2-02",
+          "type": "identificar-suma-repetida",
+          "prompt": "¿Qué suma cuenta los corazones con un número por caja?",
+          "visual": {
+            "type": "equal_groups",
+            "icon": "heart",
+            "container": "box",
+            "group_count": 3,
+            "items_per_group": 2
+          },
+          "options": [
+            "3 + 3",
+            "2 + 3",
+            "2 + 2",
+            "2 + 2 + 2"
+          ],
+          "correct_answer": "2 + 2 + 2",
+          "answer_index": 3,
+          "hint": "Cuenta los corazones de una caja y escribe esa cantidad cada vez que pases a otra.",
+          "feedback_correct": "¡Es 2 + 2 + 2! Cada una de las tres cajas aporta dos corazones.",
+          "feedback_incorrect": "Separa la cantidad de cajas de la cantidad de corazones que hay dentro de cada una."
+        },
+        {
+          "id": "grupos-iguales-n2-03",
+          "type": "identificar-suma-repetida",
+          "prompt": "¿Qué suma representa las pelotas usando un número por canasta?",
+          "visual": {
+            "type": "equal_groups",
+            "icon": "ball",
+            "container": "basket",
+            "group_count": 2,
+            "items_per_group": 4
+          },
+          "options": [
+            "4 + 4",
+            "2 + 2 + 2 + 2",
+            "4 + 2",
+            "4 + 4 + 4"
+          ],
+          "correct_answer": "4 + 4",
+          "answer_index": 0,
+          "hint": "Mira cuántas pelotas hay dentro de una canasta. Esa cantidad se repite por cada canasta.",
+          "feedback_correct": "¡Es 4 + 4! Cada canasta aporta cuatro pelotas.",
+          "feedback_incorrect": "Señala cada canasta y anota una cantidad. Revisa cuántas cantidades escribiste."
+        },
+        {
+          "id": "grupos-iguales-n2-04",
+          "type": "identificar-suma-repetida",
+          "prompt": "¿Qué suma cuenta las estrellas con un número por bandeja?",
+          "visual": {
+            "type": "equal_groups",
+            "icon": "star",
+            "container": "tray",
+            "group_count": 4,
+            "items_per_group": 2
+          },
+          "options": [
+            "4 + 4",
+            "2 + 2 + 2",
+            "2 + 2 + 2 + 2",
+            "4 + 2"
+          ],
+          "correct_answer": "2 + 2 + 2 + 2",
+          "answer_index": 2,
+          "hint": "Empieza con una bandeja y repite su cantidad una vez por cada bandeja que veas.",
+          "feedback_correct": "¡Es 2 + 2 + 2 + 2! Hay cuatro bandejas con dos estrellas en cada una.",
+          "feedback_incorrect": "Empareja cada número de la suma con una bandeja. Si queda una bandeja sola, falta un número."
+        },
+        {
+          "id": "grupos-iguales-n2-05",
+          "type": "identificar-suma-repetida",
+          "prompt": "¿Qué suma muestra los grupos de pelotas con un número por canasta?",
+          "visual": {
+            "type": "equal_groups",
+            "icon": "ball",
+            "container": "basket",
+            "group_count": 3,
+            "items_per_group": 4
+          },
+          "options": [
+            "3 + 3 + 3 + 3",
+            "4 + 4 + 4",
+            "4 + 3",
+            "4 + 4"
+          ],
+          "correct_answer": "4 + 4 + 4",
+          "answer_index": 1,
+          "hint": "Fíjate en lo que hay dentro de una canasta. Después cuenta cuántas veces aparece ese grupo.",
+          "feedback_correct": "¡Es 4 + 4 + 4! Las tres canastas aportan cuatro pelotas cada una.",
+          "feedback_incorrect": "Una suma puede dar el mismo total y describir otros grupos. Revisa que cada número represente una canasta del dibujo."
+        },
+        {
+          "id": "grupos-iguales-n2-06",
+          "type": "identificar-suma-repetida",
+          "prompt": "¿Qué suma representa estas peceras con un número por pecera?",
+          "visual": {
+            "type": "equal_groups",
+            "icon": "fish",
+            "container": "fish_tank",
+            "group_count": 5,
+            "items_per_group": 3
+          },
+          "options": [
+            "3 + 3 + 3 + 3",
+            "5 + 5 + 5",
+            "5 + 3",
+            "3 + 3 + 3 + 3 + 3"
+          ],
+          "correct_answer": "3 + 3 + 3 + 3 + 3",
+          "answer_index": 3,
+          "hint": "Al pasar a otra pecera, vuelve a escribir la cantidad que hay dentro de ella.",
+          "feedback_correct": "¡Es 3 + 3 + 3 + 3 + 3! Cada una de las cinco peceras aporta tres peces.",
+          "feedback_incorrect": "Señala cada pecera mientras lees los números de la suma. Cada pecera debe tener su propio número."
+        }
+      ]
+    },
+    "3": {
+      "exercise_types": [
+        "representar-multiplicacion",
+        "calcular-total-del-arreglo"
+      ],
+      "exercises": [
+        {
+          "id": "grupos-iguales-n3-01",
+          "type": "representar-multiplicacion",
+          "prompt": "¿Qué multiplicación escribe primero las filas y después cuántos peces hay en cada fila?",
+          "visual": {
+            "type": "rectangular_array",
+            "icon": "fish",
+            "rows": 2,
+            "columns": 4
+          },
+          "options": [
+            "4 × 2",
+            "2 × 2",
+            "2 × 4",
+            "2 × 5"
+          ],
+          "correct_answer": "2 × 4",
+          "answer_index": 2,
+          "hint": "Cuenta primero las filas de arriba a abajo. Después cuenta los peces que hay en una sola fila.",
+          "feedback_correct": "¡Es 2 × 4! Son dos filas con cuatro peces en cada una.",
+          "feedback_incorrect": "Vuelve a contar las filas antes de contar lo que hay dentro de una. Escribe las cantidades en ese orden."
+        },
+        {
+          "id": "grupos-iguales-n3-02",
+          "type": "calcular-total-del-arreglo",
+          "prompt": "¿Cuántas estrellas hay en total? Usa las filas y cuántas estrellas hay en cada fila.",
+          "visual": {
+            "type": "rectangular_array",
+            "icon": "star",
+            "rows": 3,
+            "columns": 3
+          },
+          "options": [
+            9,
+            6,
+            3,
+            12
+          ],
+          "correct_answer": 9,
+          "answer_index": 0,
+          "hint": "Todas las filas tienen la misma cantidad. Usa esa cantidad una vez por cada fila.",
+          "feedback_correct": "¡Hay 9 estrellas! Tres filas de tres dan 3 × 3 = 9.",
+          "feedback_incorrect": "Si contaste una sola fila, todavía faltan las demás. Suma una cantidad por cada fila."
+        },
+        {
+          "id": "grupos-iguales-n3-03",
+          "type": "representar-multiplicacion",
+          "prompt": "¿Qué multiplicación escribe primero las filas y después cuántas pelotas hay en cada fila?",
+          "visual": {
+            "type": "rectangular_array",
+            "icon": "ball",
+            "rows": 4,
+            "columns": 3
+          },
+          "options": [
+            "3 × 4",
+            "4 × 3",
+            "4 × 4",
+            "3 × 3"
+          ],
+          "correct_answer": "4 × 3",
+          "answer_index": 1,
+          "hint": "Pon el dedo al inicio de cada fila para contarlas. Luego cuenta las pelotas de una fila.",
+          "feedback_correct": "¡Es 4 × 3! Hay cuatro filas de tres pelotas.",
+          "feedback_incorrect": "Revisa el orden de los números. Primero va la cantidad de filas."
+        },
+        {
+          "id": "grupos-iguales-n3-04",
+          "type": "calcular-total-del-arreglo",
+          "prompt": "¿Cuántos corazones hay en total? Multiplica las filas por cuántos corazones hay en una fila.",
+          "visual": {
+            "type": "rectangular_array",
+            "icon": "heart",
+            "rows": 3,
+            "columns": 5
+          },
+          "options": [
+            12,
+            8,
+            10,
+            15
+          ],
+          "correct_answer": 15,
+          "answer_index": 3,
+          "hint": "Mira una fila completa y repite esa cantidad por cada fila del dibujo.",
+          "feedback_correct": "¡Hay 15 corazones! Tres filas de cinco dan 3 × 5 = 15.",
+          "feedback_incorrect": "Cuenta los objetos de una fila y repite esa cantidad por cada fila. Después junta todas las cantidades."
+        },
+        {
+          "id": "grupos-iguales-n3-05",
+          "type": "representar-multiplicacion",
+          "prompt": "¿Qué multiplicación cuenta las estrellas si escribes las filas primero y las estrellas de cada fila después?",
+          "visual": {
+            "type": "rectangular_array",
+            "icon": "star",
+            "rows": 5,
+            "columns": 2
+          },
+          "options": [
+            "5 × 2",
+            "2 × 5",
+            "5 × 3",
+            "5 × 5"
+          ],
+          "correct_answer": "5 × 2",
+          "answer_index": 0,
+          "hint": "Cuenta los comienzos de fila. Luego recorre una fila de izquierda a derecha.",
+          "feedback_correct": "¡Es 5 × 2! Hay cinco filas y cada fila tiene dos estrellas.",
+          "feedback_incorrect": "Si la primera cantidad es la de dentro de una fila, intercambia el orden. La consigna pide las filas primero."
+        },
+        {
+          "id": "grupos-iguales-n3-06",
+          "type": "calcular-total-del-arreglo",
+          "prompt": "¿Cuántas pelotas hay en total? Usa una multiplicación para contar las filas completas.",
+          "visual": {
+            "type": "rectangular_array",
+            "icon": "ball",
+            "rows": 2,
+            "columns": 6
+          },
+          "options": [
+            6,
+            8,
+            12,
+            14
+          ],
+          "correct_answer": 12,
+          "answer_index": 2,
+          "hint": "Cuenta las pelotas de la primera fila. Cada fila del arreglo tiene la misma cantidad.",
+          "feedback_correct": "¡Hay 12 pelotas! Dos filas de seis dan 2 × 6 = 12.",
+          "feedback_incorrect": "Comprueba que incluiste todas las filas. Puedes escribir una suma con un número por fila."
+        }
+      ]
+    }
+  }
+}

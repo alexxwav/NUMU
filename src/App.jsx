@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useParams } from "react-router-dom";
 
 import Register from './views/user/Register';
 import Login from './views/user/Login';
@@ -12,6 +12,10 @@ import SettingsView from './views/SettingsView';
 import CoursesView from './views/CoursesView';
 import CourseView from './views/CourseView';
 import LessonView from './views/LessonView';
+import CourseTheoryIndex from './components/lessonExamples/CourseTheoryIndex.jsx';
+import catalog from './data/lessonContent.json';
+import { normalizeModuleId } from './data/subjects.js';
+import { getLessonById, isLessonPublished } from './utils/lessonContent.js';
 import { useAuth } from './hooks/useAuth.jsx';
 import { ROUTES } from './services/startRoute.js';
 
@@ -28,6 +32,18 @@ function RequireAccount({ children, onboarding = false }) {
     if (onboarding && done) return <Navigate to={ROUTES.home} replace />;
     if (!onboarding && !done) return <Navigate to={ROUTES.onboarding} replace />;
     return children;
+}
+
+function PracticeEntry() {
+    const { lessonId, nivel } = useParams();
+    const found = getLessonById(catalog, lessonId ?? nivel);
+    if (found && !isLessonPublished(found.lesson)) {
+        return <Navigate to={`/lecciones/${found.lesson.id}`} replace />;
+    }
+    if ((lessonId && !found) || (nivel && !normalizeModuleId(nivel))) {
+        return <Navigate to="/cursos" replace />;
+    }
+    return <Game key={lessonId ?? nivel} />;
 }
 
 export default function App() {
@@ -49,11 +65,11 @@ export default function App() {
 
             {/* Cursos y lecciones */}
             <Route path="/cursos" element={<RequireAccount><CoursesView /></RequireAccount>} />
-            <Route path="/cursos/:courseId" element={<RequireAccount><CourseView /></RequireAccount>} />
+            <Route path="/cursos/:courseId" element={<RequireAccount><CourseTheoryIndex><CourseView /></CourseTheoryIndex></RequireAccount>} />
             <Route path="/lecciones/:lessonId" element={<RequireAccount><LessonView /></RequireAccount>} />
-            <Route path="/lecciones/:lessonId/jugar" element={<RequireAccount><Game /></RequireAccount>} />
+            <Route path="/lecciones/:lessonId/jugar" element={<RequireAccount><PracticeEntry /></RequireAccount>} />
 
-            <Route path="/jugar/:nivel" element={<RequireAccount><Game /></RequireAccount>} />
+            <Route path="/jugar/:nivel" element={<RequireAccount><PracticeEntry /></RequireAccount>} />
             <Route path="/jugar" element={<RequireAccount><Game /></RequireAccount>} />
 
             <Route path="/tienda" element={<RequireAccount><ShopView /></RequireAccount>} />
