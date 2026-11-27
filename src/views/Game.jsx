@@ -9,7 +9,7 @@ import { buildLessonRound, QUESTIONS_PER_ROUND } from '../utils/lessonRound.js';
 import { sfx, speak } from '../utils/audio.js';
 import { useAuth } from '../hooks/useAuth.jsx';
 import { useLessonProgress } from '../hooks/useLessonProgress.js';
-import { needsReinforcement, starsForRound } from '../utils/stars.js';
+import { academicStarsFor, needsReinforcement, starsForRound } from '../utils/stars.js';
 import { ROUTES } from '../services/startRoute.js';
 import { normalizeModuleId, courseSlugForModule } from '../data/subjects.js';
 import lessonCatalog from '../data/lessonContent.json';
@@ -191,7 +191,10 @@ export default function Game() {
     if (finishedLessonId) {
       const result = levelAfterRound({ level: lessonLevel, stars, livesDepleted });
       setLevelResult(result);
-      saveLessonResult({ lessonId: finishedLessonId, stars, level: result.level }).then(({ error }) => {
+      // Estrellas académicas: 0 si se agotaron las vidas en la ronda (aunque se recargaran).
+      // Las recompensas de arriba siguen usando `stars`; la mejor marca guardada no baja.
+      const academicStars = academicStarsFor({ roundStars: stars, livesDepleted });
+      saveLessonResult({ lessonId: finishedLessonId, stars: academicStars, level: result.level }).then(({ error }) => {
         if (error) console.warn('No se pudo guardar el progreso de la lección:', error);
       });
     }

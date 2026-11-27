@@ -44,6 +44,18 @@ export function hasFinishedRound(state = {}) {
   return earned(state.lessonStars) || earned(state.starsByLevel);
 }
 
+/**
+ * Estrellas ACADÉMICAS de una ronda (contrato v1.1 §5): si en algún momento de la ronda se
+ * agotaron las vidas, valen 0 aunque luego se recargaran; si no, son las de la ronda.
+ * Solo se usan para el progreso por lección (mejor/última puntuación y T2). Las estrellas de
+ * recompensa, las gemas y la XP siguen usando starsForRound sin cambios, y R7–R10 no cambian.
+ * @param {{roundStars: number, livesDepleted?: boolean}} input
+ * @returns {number} Estrellas académicas entre 0 y 3.
+ */
+export function academicStarsFor({ roundStars, livesDepleted = false } = {}) {
+  return livesDepleted ? 0 : clampStars(roundStars);
+}
+
 /** Estrellas de una lección con valores seguros (0 a 3). */
 export function clampStars(stars) {
   return Math.max(0, Math.min(3, Math.round(Number(stars) || 0)));
