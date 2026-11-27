@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, User, Volume2, Shield, Lock } from 'lucide-react';
-import { ROUTES } from '../services/startRoute.js';
+import { User, Volume2, Shield, Lock } from 'lucide-react';
+import NavBar from '../components/NavBar.jsx';
 import { store, getTotalModuleStars } from '../state/store.js';
 import { sfx } from '../utils/audio.js';
 import { flameOn, flameOff } from '../components/iconAssets.js';
@@ -29,14 +29,6 @@ function Toggle({ label, description, checked, onChange }) {
 export default function SettingsView() {
   const navigate = useNavigate();
   
-  const handleBack = () => {
-  sfx.tap();
-  if (window.history.length > 1) {
-    navigate(-1);
-  } else {
-    navigate(ROUTES.home);
-  }
-};
 
   // Estado local sincronizado con el store
   const [state, setState] = useState(() => store.get());
@@ -84,17 +76,10 @@ export default function SettingsView() {
   const AVATARS = ['👾', '🐱', '🐶', '🦊', '🚀', '⭐'];
 
   return (
-    <div className="p-6 md:p-10 max-w-4xl mx-auto space-y-8 font-poppins min-h-screen">
+    <div className="p-6 md:p-10 pt-0 md:pt-0 max-w-4xl mx-auto space-y-8 font-poppins min-h-screen">
+      <NavBar />
       
       <header className="flex items-center gap-4 mb-8">
-  <button
-    type="button"
-    onClick={handleBack}
-    aria-label="Regresar"
-    className="w-14 h-14 shrink-0 grid place-items-center rounded-full bg-white border-2 border-gray-100 shadow-sm hover:scale-105 transition-transform text-numu-deep-indigo"
-  >
-    <ArrowLeft className="w-7 h-7" />
-  </button>
   <div>
     <h1 className="font-fredoka font-bold text-3xl md:text-4xl text-text-dark">
       Configuración y Preferencias

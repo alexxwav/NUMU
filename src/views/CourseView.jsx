@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Check, Lock } from 'lucide-react';
+import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { Check, Lock } from 'lucide-react';
 import catalog from '../data/lessonContent.json';
 import { getCourseById, getLessonsForCourse } from '../utils/lessonContent.js';
 import { sfx } from '../utils/audio.js';
@@ -9,10 +9,11 @@ import { normalizeModuleId } from '../data/subjects.js';
 import { lessonLevelFromState, MAX_LESSON_LEVEL } from '../utils/lessonLevel.js';
 import { COURSE_STYLE } from './CoursesView.jsx';
 import OceanMap from '../components/OceanMap.jsx';
+import LessonRouteMap from '../components/LessonRouteMap.jsx';
+import NavBar from '../components/NavBar.jsx';
 import { starIcon } from '../components/iconAssets.js';
 import { getMapModel } from '../utils/areaProgress.js';
 
-const TOTAL_LEVELS = 10;
 // Tema visual (decoraciones ya existentes de OceanMap) para el mapa de 5 lecciones de cada área.
 const AREA_THEME = { aritmetica: 'aritmetica', 'geometria-patrones': 'geometria', algebra: 'patrones' };
 
@@ -48,8 +49,6 @@ export default function CourseView() {
   const style = COURSE_STYLE[course.id] ?? COURSE_STYLE.aritmetica;
   const courseStars = lessons.reduce((total, lesson) => total + getModuleStars(state, lesson.module_id), 0);
   const activeLesson = lessons.find((lesson) => lesson.module_id === activeModuleId);
-  const moduleLevel = state.levelByModule?.[activeModuleId] ?? 1;
-  const moduleStars = state.starsByModuleLevel?.[activeModuleId] ?? {};
   const activeStars = getModuleStars(state, activeModuleId);
   // Mapa de 15 lecciones (getMapModel): las 5 paradas de esta área por lessonId.
   const areaMap = getMapModel({ catalog, state }).areas.find((area) => area.areaId === course.id) ?? null;
@@ -73,12 +72,9 @@ export default function CourseView() {
   };
 
   return (
-    <div className="min-h-screen bg-soft-lavender font-poppins text-text-dark p-6 md:p-10">
+    <div className="min-h-screen bg-soft-lavender font-poppins text-text-dark p-6 md:p-10 pt-0 md:pt-0">
+      <NavBar backTo="/cursos">{course.title}</NavBar>
       <header className="max-w-4xl mx-auto mb-10">
-        <Link to="/inicio" onClick={() => sfx.tap()}
-          className="inline-flex items-center gap-2 mb-6 font-fredoka font-bold text-numu-purple hover:text-text-dark">
-          <ArrowLeft className="w-5 h-5" /> Volver al inicio
-        </Link>
         <div className={`${style.bg} ${style.shadow} rounded-card p-8 text-white flex flex-col sm:flex-row items-start sm:items-center gap-6`}>
           <div className="w-20 h-20 shrink-0 rounded-full bg-white/20 grid place-items-center">
             <style.Icon className="w-10 h-10" strokeWidth={2.5} />
@@ -140,10 +136,10 @@ export default function CourseView() {
           <section aria-labelledby="ruta-titulo">
             <div className="mb-4">
               <h2 id="ruta-titulo" className="text-2xl font-fredoka font-bold text-text-dark">
-                Historial de tu ruta: {activeLesson?.title ?? course.title}
+                Mapa por lección: {activeLesson?.title ?? course.title}
               </h2>
               <p className="mt-1 text-base text-gray-600">
-                Cada vez que terminas una ronda, avanzas una parada. Toca la parada de NUMU para jugar.
+                Cada lección tiene su propio mapa: al terminar una ronda avanzas una parada. Toca «Iniciar parada» o la parada de NUMU.
               </p>
             </div>
 
@@ -183,30 +179,14 @@ export default function CourseView() {
               </div>
             </div>
 
-            <ul className="mb-4 flex flex-wrap gap-x-5 gap-y-2 text-sm font-bold text-text-dark" aria-label="Cómo leer el mapa">
-              <li className="inline-flex items-center gap-2">
-                <span className="w-6 h-6 rounded-full bg-mint-success border-2 border-white shadow-sm grid place-items-center text-white" aria-hidden="true"><Check className="w-4 h-4" strokeWidth={3} /></span>
-                Completada
-              </li>
-              <li className="inline-flex items-center gap-2">
-                <span className="w-6 h-6 rounded-full bg-numu-purple border-2 border-white shadow-sm" aria-hidden="true" />
-                Estás aquí
-              </li>
-              <li className="inline-flex items-center gap-2">
-                <span className="w-6 h-6 rounded-full bg-gray-200 border-2 border-white shadow-sm grid place-items-center text-gray-400" aria-hidden="true"><Lock className="w-3.5 h-3.5" /></span>
-                Bloqueada: termina la parada anterior
-              </li>
-            </ul>
-
-            <OceanMap
-              totalLevels={TOTAL_LEVELS}
-              currentLevel={moduleLevel}
-              starsByLevel={moduleStars}
-              activityTitle={activeLesson?.title ?? course.title}
-              moduleId={activeModuleId}
-              onPlayLevel={handlePlayLevel}
-              reduceMotion={Boolean(state.settings?.reduceMotion)}
-            />
+            <div className="rounded-card border-2 border-gray-100 bg-white p-5 shadow-sm">
+              <LessonRouteMap
+                state={state}
+                moduleId={activeModuleId}
+                title={activeLesson?.title ?? course.title}
+                onPlayLevel={handlePlayLevel}
+              />
+            </div>
           </section>
         )}
       </main>

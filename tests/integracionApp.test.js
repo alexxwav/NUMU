@@ -34,7 +34,7 @@ test('CourseView y OceanMap usan getMapModel y abren theoryPath/playPath (sin ?p
   assert.match(view, /getMapModel\(\{ catalog, state \}\)/);
   assert.match(view, /<OceanMap\s+stops=\{areaMap\.stops\}/);
   assert.match(view, /const openLessonStop = \(path\) => \{\s*sfx\.tap\(\);\s*navigate\(path\);/);
-  assert.match(view, /Historial de tu ruta/, 'el mapa antiguo se conserva como historial');
+  assert.match(view, /<LessonRouteMap/, 'el mapa por lección (10 paradas) se conserva en la vista del curso');
   assert.match(map, /open\(stop\.playPath\)/);
   assert.match(map, /open\(stop\.theoryPath\)/);
   assert.match(map, /if \(!stop\.published \|\| !stop\.playPath\)/, 'no publicada: candado y solo teoría');

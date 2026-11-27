@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Calculator, Shapes, ChevronRight } from 'lucide-react';
+import { Calculator, Shapes, ChevronRight } from 'lucide-react';
+import NavBar from '../components/NavBar.jsx';
 import catalog from '../data/lessonContent.json';
 import { sfx } from '../utils/audio.js';
 
@@ -13,12 +14,9 @@ export default function CoursesView() {
   const courses = [...catalog.courses].sort((a, b) => a.position - b.position);
 
   return (
-    <div className="min-h-screen bg-soft-lavender font-poppins text-text-dark p-6 md:p-10">
+    <div className="min-h-screen bg-soft-lavender font-poppins text-text-dark p-6 md:p-10 pt-0 md:pt-0">
+      <NavBar />
       <header className="max-w-5xl mx-auto flex items-center gap-4 mb-10">
-        <Link to="/inicio" onClick={() => sfx.tap()} aria-label="Volver al inicio"
-          className="w-14 h-14 shrink-0 grid place-items-center rounded-full bg-white border-2 border-gray-100 shadow-sm hover:scale-105 transition-transform text-numu-deep-indigo">
-          <ArrowLeft className="w-7 h-7" />
-        </Link>
         <div>
           <h1 className="text-3xl md:text-4xl font-fredoka font-bold text-numu-deep-indigo">Cursos</h1>
           <p className="text-gray-500">Elige un curso para ver sus lecciones.</p>

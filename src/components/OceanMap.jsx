@@ -398,7 +398,7 @@ export default function OceanMap({ totalLevels, currentLevel, starsByLevel = {},
                     <img src={mascotUrl} alt="" className="w-full h-full object-contain" />
                   </span>
                   <span className="absolute -bottom-9 whitespace-nowrap font-poppins font-bold text-sm text-numu-purple bg-white px-3 py-1 rounded-full shadow-sm border border-gray-100">
-                    Siguiente lección
+                    Estás aquí
                   </span>
                 </button>
               )}

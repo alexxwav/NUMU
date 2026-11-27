@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowLeft, Medal, Gem, Trophy, Crown } from 'lucide-react';
+import { Medal, Gem, Trophy, Crown } from 'lucide-react';
+import NavBar from '../components/NavBar.jsx';
 import { store, getTotalModuleStars } from '../state/store.js';
-import { sfx } from '../utils/audio.js';
-import { ROUTES } from '../services/startRoute.js';
 import { hasFinishedRound } from '../utils/stars.js';
 import { flameOn, flameOff, starIcon } from '../components/iconAssets.js';
 import numuMorado from '../assets/brand/mascot/numu-morado.png';
@@ -43,18 +41,11 @@ export default function Achievements() {
   const unlocked = BADGES.filter((b) => b.test(state)).length;
 
   return (
-    <div className="p-6 md:p-10 max-w-5xl mx-auto space-y-8 font-poppins min-h-screen">
+    <div className="p-6 md:p-10 pt-0 md:pt-0 max-w-5xl mx-auto space-y-8 font-poppins min-h-screen">
+      <NavBar />
       
       {/* Encabezado con botón de regreso */}
       <header className="flex items-center gap-4 mb-8">
-        <Link
-          to={ROUTES.home}
-          onClick={() => sfx.tap()}
-          aria-label="Volver al inicio"
-          className="w-14 h-14 shrink-0 grid place-items-center rounded-full bg-white border-2 border-gray-100 shadow-sm hover:scale-105 transition-transform text-numu-deep-indigo"
-        >
-          <ArrowLeft className="w-7 h-7" />
-        </Link>
         <div>
           <h1 className="font-fredoka font-bold text-3xl md:text-4xl text-text-dark">
             Tu progreso

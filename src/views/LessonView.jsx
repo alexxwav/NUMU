@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Target, Volume2, VolumeX } from 'lucide-react';
+import { Navigate, useNavigate, useParams } from 'react-router-dom';
+import { Target, Volume2, VolumeX } from 'lucide-react';
+import NavBar from '../components/NavBar.jsx';
 import catalog from '../data/lessonContent.json';
 import { getLessonById, isLessonPublished } from '../utils/lessonContent.js';
 import { sfx, speak, stopSpeech } from '../utils/audio.js';
@@ -58,12 +59,9 @@ export default function LessonView() {
   );
 
   return (
-    <main className="min-h-screen bg-soft-lavender font-poppins text-text-dark p-6 md:p-10 pb-24">
+    <main className="min-h-screen bg-soft-lavender font-poppins text-text-dark p-6 md:p-10 pt-0 md:pt-0 pb-24">
+      <NavBar backTo={`/cursos/${course.id}`}>{course.title}</NavBar>
       <div className="max-w-3xl mx-auto space-y-8">
-        <Link to={`/cursos/${course.id}`} onClick={() => sfx.tap()}
-          className="inline-flex items-center gap-2 font-fredoka font-bold text-gray-500 hover:text-text-dark">
-          <ArrowLeft aria-hidden="true" className="w-5 h-5" /> {course.title}
-        </Link>
 
         <header className="flex items-center gap-5">
           <span aria-hidden="true" className={`w-16 h-16 shrink-0 rounded-full ${style.bg} text-white font-fredoka font-bold text-3xl grid place-items-center`}>

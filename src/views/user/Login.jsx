@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { resolveStartRoute, ROUTES } from '../../services/startRoute.js';
 import logo from '../../assets/brand/mascot/logo-mascota-morado.png';
@@ -43,6 +44,10 @@ export default function Login() {
 
       {/* Formulario */}
       <div className="w-full md:w-1/2 flex flex-col items-center justify-center p-6 md:p-12">
+        {/* Regresar a la bienvenida (sin sesión todavía no hay pantalla de inicio). */}
+        <Link to={ROUTES.welcome} className="self-start mb-4 min-h-touch px-4 inline-flex items-center gap-2 rounded-btn bg-white border-2 border-border-gray text-numu-deep-indigo font-fredoka font-bold text-lg shadow-3d-white active:translate-y-1 active:shadow-none transition-all">
+          <ArrowLeft className="w-6 h-6" aria-hidden="true" /> Regresar
+        </Link>
         <div className="bg-white w-full max-w-md p-8 md:p-10 rounded-card shadow-lg border-2 border-gray-100 flex flex-col items-center">
 
           <img src={logo} alt="Logo Numu" className="w-20 h-20 object-contain mb-6" />

@@ -49,9 +49,18 @@ export default function Game() {
   const playedLevel = Math.max(1, Math.floor(fromMap || store.get().levelByModule?.[moduleId] || 1));
   // Las rondas del mapa vuelven a la vista del curso con la ruta activa; las de lección, a su ficha.
   const courseId = lessonEntry?.course?.id ?? courseSlugForModule(moduleId);
+  // Una parada abierta desde el mapa del inicio (?desde=inicio) vuelve al inicio, donde está ese mapa.
+  const fromHome = !lessonId && searchParams.get('desde') === 'inicio';
   const exitTo = lessonId && lessonEntry
     ? `/lecciones/${lessonEntry.lesson.id}`
+    : fromHome ? ROUTES.home
     : courseId ? `/cursos/${courseId}?modulo=${moduleId}` : ROUTES.home;
+  // Texto de los botones de salida según su destino real.
+  const exitLabel = exitTo === ROUTES.home ? 'Volver al inicio'
+    : lessonId ? 'Volver a la lección' : 'Volver al mapa';
+  // Salir de la ronda reemplaza la entrada del juego: «Regresar» en la pantalla siguiente no
+  // vuelve a abrir una ronda terminada.
+  const leaveTo = (path) => { sfx.tap(); navigate(path, { replace: true }); };
 
   // Nivel ACADÉMICO de esta lección (1 a 3): el guardado o el inicial del diagnóstico (R1–R3).
   // Es independiente del nivel general (state.level), que solo es gamificación.
@@ -288,12 +297,21 @@ export default function Game() {
           <p className="mt-2 text-base text-text-dark/70">
             Esta práctica todavía se está preparando. Vuelve pronto o elige otra lección.
           </p>
+          {lessonEntry && isLessonPublished(lessonEntry.lesson) && exitTo !== ROUTES.home && (
+            <button
+              type="button"
+              onClick={() => leaveTo(exitTo)}
+              className="mt-6 w-full min-h-[64px] rounded-btn bg-numu-purple text-white font-fredoka font-bold text-xl shadow-3d-primary active:translate-y-1 active:shadow-none transition-all"
+            >
+              {exitLabel}
+            </button>
+          )}
           <button
             type="button"
-            onClick={() => { sfx.tap(); navigate(lessonEntry && isLessonPublished(lessonEntry.lesson) ? exitTo : ROUTES.home); }}
-            className="mt-6 w-full min-h-[64px] rounded-btn bg-numu-purple text-white font-fredoka font-bold text-xl shadow-3d-primary active:translate-y-1 active:shadow-none transition-all"
+            onClick={() => leaveTo(ROUTES.home)}
+            className="mt-4 w-full min-h-[64px] rounded-btn bg-white border-2 border-border-gray text-numu-purple font-fredoka font-bold text-xl shadow-3d-white active:translate-y-1 active:shadow-none transition-all inline-flex items-center justify-center gap-2"
           >
-            Volver
+            <Home className="w-6 h-6" aria-hidden="true" /> Volver al inicio
           </button>
         </div>
       </div>
@@ -308,7 +326,7 @@ export default function Game() {
         <div className="absolute -top-20 -right-20 w-72 h-72 rounded-full bg-white/5" aria-hidden="true"></div>
         <div className="absolute -bottom-24 -left-16 w-80 h-80 rounded-full bg-white/5" aria-hidden="true"></div>
 
-        <p className="font-fredoka font-bold text-4xl sm:text-5xl mb-6 relative z-10">¡LO LOGRASTE!</p>
+        <p className="font-fredoka font-bold text-4xl sm:text-5xl mb-6 relative z-10">{stars > 0 ? '¡LO LOGRASTE!' : '¡BUEN INTENTO!'}</p>
 
         <div className="flex gap-4 mb-7 relative z-10">
           {[0, 1, 2].map((i) => (
@@ -344,17 +362,19 @@ export default function Game() {
           </div>
         )}
 
+        {/* El progreso ya se guardó en finishRound; estos botones solo navegan. */}
         <div className="flex flex-col sm:flex-row gap-4 relative z-10 w-full max-w-md">
-          <button onClick={() => { sfx.tap(); navigate(exitTo); }} className="flex-1 bg-mint-success text-white font-fredoka font-bold text-xl py-4 rounded-btn shadow-3d-primary hover:translate-y-1 hover:shadow-none transition-all">
-            CONTINUAR
-          </button>
-          <button onClick={() => { sfx.tap(); window.location.reload(); }} className="flex-1 bg-cyan-ocean text-white font-fredoka font-bold text-xl py-4 rounded-btn shadow-3d-primary hover:translate-y-1 hover:shadow-none transition-all">
-            REPETIR
+          {exitTo !== ROUTES.home && (
+            <button type="button" onClick={() => leaveTo(exitTo)} className="flex-1 min-h-[64px] bg-mint-success text-white font-fredoka font-bold text-xl py-4 rounded-btn shadow-3d-success hover:translate-y-1 hover:shadow-none transition-all">
+              {exitLabel}
+            </button>
+          )}
+          <button type="button" onClick={() => { sfx.tap(); window.location.reload(); }} className="flex-1 min-h-[64px] bg-cyan-ocean text-white font-fredoka font-bold text-xl py-4 rounded-btn shadow-3d-cyan hover:translate-y-1 hover:shadow-none transition-all">
+            Jugar otra vez
           </button>
         </div>
 
-        {/* El progreso ya se guardó en finishRound; este botón solo navega. */}
-        <button onClick={() => { sfx.tap(); navigate(ROUTES.home); }} className="relative z-10 mt-4 w-full max-w-md min-h-[64px] bg-white text-numu-purple font-fredoka font-bold text-xl py-4 rounded-btn shadow-3d-white hover:translate-y-1 hover:shadow-none transition-all inline-flex items-center justify-center gap-2">
+        <button type="button" onClick={() => leaveTo(ROUTES.home)} className="relative z-10 mt-4 w-full max-w-md min-h-[64px] bg-white text-numu-purple font-fredoka font-bold text-xl py-4 rounded-btn shadow-3d-white hover:translate-y-1 hover:shadow-none transition-all inline-flex items-center justify-center gap-2">
           <Home className="w-6 h-6" aria-hidden="true" /> Volver al inicio
         </button>
       </div>
@@ -367,9 +387,16 @@ export default function Game() {
       {/* Header */}
       <header className="sticky top-0 z-30 bg-white border-b-2 border-gray-100">
         <div className="mx-auto max-w-3xl px-4 py-4 flex items-center gap-4">
-          <button onClick={() => { sfx.tap(); navigate(exitTo); }} className="w-12 h-12 shrink-0 grid place-items-center rounded-full bg-coral-alert text-white shadow-sm hover:scale-105 transition-transform">
-            <X className="w-7 h-7" />
+          <button type="button" onClick={() => leaveTo(exitTo)} aria-label={`Salir de la ronda: ${exitLabel.toLowerCase()}`} title="Salir"
+            className="w-14 h-14 shrink-0 grid place-items-center rounded-full bg-coral-alert text-white shadow-3d-coral active:translate-y-1 active:shadow-none hover:scale-105 transition-transform">
+            <X className="w-7 h-7" aria-hidden="true" />
           </button>
+          {exitTo !== ROUTES.home && (
+            <button type="button" onClick={() => leaveTo(ROUTES.home)} aria-label="Volver al inicio" title="Inicio"
+              className="w-14 h-14 shrink-0 grid place-items-center rounded-full bg-white border-2 border-border-gray text-numu-purple shadow-3d-white active:translate-y-1 active:shadow-none hover:scale-105 transition-transform">
+              <Home className="w-7 h-7" aria-hidden="true" />
+            </button>
+          )}
           
           {lessonLevel && (
             <span className="shrink-0 rounded-full bg-soft-lavender text-numu-purple font-fredoka font-bold text-sm px-3 py-1" title={`Nivel de ${lessonEntry.lesson.title}`}>
@@ -401,7 +428,7 @@ export default function Game() {
         <section className="space-y-6">
           <div className="flex items-start justify-center gap-3">
             <h1 className="font-fredoka font-bold text-3xl md:text-4xl text-text-dark text-center flex-1">{currentQ?.prompt}</h1>
-            <button onClick={() => { sfx.tap(); speak(currentQ?.speakText); }} className="w-14 h-14 shrink-0 grid place-items-center rounded-full bg-numu-purple text-white shadow-3d-primary active:translate-y-1 transition-transform">
+            <button type="button" aria-label="Escuchar la pregunta" title="Escuchar" onClick={() => { sfx.tap(); speak(currentQ?.speakText); }} className="w-14 h-14 shrink-0 grid place-items-center rounded-full bg-numu-purple text-white shadow-3d-primary active:translate-y-1 transition-transform">
               <Volume2 className="w-7 h-7" />
             </button>
           </div>
@@ -465,7 +492,7 @@ export default function Game() {
               <div className="flex gap-3 shrink-0 w-full sm:w-auto mt-4 sm:mt-0">
                 {sheet.isGameOver ? (
                   <>
-                    <button onClick={() => navigate(exitTo)} className="flex-1 sm:flex-none bg-white/20 hover:bg-white/30 text-white font-fredoka font-bold text-xl py-3 px-6 rounded-btn transition-colors">
+                    <button type="button" onClick={() => leaveTo(exitTo)} className="flex-1 sm:flex-none min-h-[64px] bg-white/20 hover:bg-white/30 text-white font-fredoka font-bold text-xl py-3 px-6 rounded-btn transition-colors">
                       Salir
                     </button>
                     <button onClick={refillLives} className="flex-1 sm:flex-none bg-sunshine-yellow text-text-dark font-fredoka font-bold text-xl py-3 px-6 rounded-btn shadow-3d-yellow hover:translate-y-1 hover:shadow-none transition-all">
