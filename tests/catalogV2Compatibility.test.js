@@ -49,7 +49,7 @@ test('El catálogo de la aplicación reúne 15 lecciones en tres áreas con IDs 
   assert.equal(new Set(uniqueIds).size, uniqueIds.length);
 });
 
-for (const [area, expected] of [['aritmetica', 66], ['geometria-patrones', 81], ['algebra', 90]]) {
+for (const [area, expected] of [['aritmetica', 70], ['geometria-patrones', 81], ['algebra', 90]]) {
   test(area + ' adapta los ' + expected + ' ejercicios editoriales íntegros, con cuatro opciones', () => {
     const items = areaExercises.get(area);
     assert.equal(items.length, expected);
@@ -99,7 +99,7 @@ function generatedKeys(module, level) {
   }
 }
 
-test('El catálogo distingue cobertura editorial, capacidad del generador legado y faltantes reales', () => {
+test('Las 45 combinaciones alcanzan seis preguntas distintas sin alterar los generadores', () => {
   const missing = [];
   let checked = 0;
   for (const lesson of lessons) {
@@ -125,8 +125,7 @@ test('El catálogo distingue cobertura editorial, capacidad del generador legado
     }
   }
   assert.equal(checked, 45);
-  // Conteo deduplica por cantidad. Un icono diferente no añade otra operación de conteo.
-  assert.deepEqual(missing, [['conteo-basico', 1, 4], ['conteo-basico', 2, 5]]);
+  assert.deepEqual(missing, []);
 });
 
 test('Los diez tipos nuevos validan la respuesta matemática y dan una descripción accesible', () => {

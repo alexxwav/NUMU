@@ -148,7 +148,9 @@
           "levels": {
             "1": {
               "exercise_types": [
-                "contar-objetos"
+                "contar-objetos",
+                "elegir-grupo-por-cantidad",
+                "emparejar-grupo-por-cantidad"
               ],
               "exercises": [
                 {
@@ -230,15 +232,272 @@
                   "hint": "Pon un dedo sobre cada objeto al contarlo. Empieza en uno y pasa al siguiente sin repetir.",
                   "feedback_correct": "¡Muy bien! Hay 2 globos.",
                   "feedback_incorrect": "Puedes intentarlo otra vez. Señala cada globo una sola vez y cuenta del 1 al 2."
+                },
+                {
+                  "id": "C-N1-07",
+                  "type": "elegir-grupo-por-cantidad",
+                  "prompt": "¿Qué grupo tiene exactamente tres peces?",
+                  "visual": {
+                    "type": "object_groups",
+                    "icon": "fish",
+                    "groups": [
+                      {
+                        "label": "A",
+                        "count": 4
+                      },
+                      {
+                        "label": "B",
+                        "count": 3
+                      },
+                      {
+                        "label": "C",
+                        "count": 5
+                      },
+                      {
+                        "label": "D",
+                        "count": 2
+                      }
+                    ],
+                    "target_count": 3
+                  },
+                  "options": [
+                    "A",
+                    "B",
+                    "C",
+                    "D"
+                  ],
+                  "answer_index": 1,
+                  "correct_answer": "B",
+                  "hint": "Toca cada pez al contarlo. Mira en qué grupo tu último número coincide con el que se pide.",
+                  "feedback_correct": "El grupo B tiene tres peces. Al tocar cada pez una vez, terminas de contar en tres.",
+                  "feedback_incorrect": "Cuenta los peces de la tarjeta que elegiste. Después compara tu último número con el que se pide."
+                },
+                {
+                  "id": "C-N1-08",
+                  "type": "emparejar-grupo-por-cantidad",
+                  "prompt": "¿Qué grupo tiene tantos globos como el modelo?",
+                  "visual": {
+                    "type": "object_groups",
+                    "icon": "balloon",
+                    "groups": [
+                      {
+                        "label": "A",
+                        "count": 2
+                      },
+                      {
+                        "label": "B",
+                        "count": 5
+                      },
+                      {
+                        "label": "C",
+                        "count": 4
+                      },
+                      {
+                        "label": "D",
+                        "count": 3
+                      }
+                    ],
+                    "model_count": 4
+                  },
+                  "options": [
+                    "A",
+                    "B",
+                    "C",
+                    "D"
+                  ],
+                  "answer_index": 2,
+                  "correct_answer": "C",
+                  "hint": "Cuenta el modelo. Después imagina que colocas un globo de una tarjeta junto a cada globo del modelo.",
+                  "feedback_correct": "El grupo C tiene tantos globos como el modelo. Puedes formar parejas sin que sobre ningún globo.",
+                  "feedback_incorrect": "Cuando un grupo tiene la misma cantidad, cada globo del modelo puede tener una pareja y no sobra ninguno."
                 }
               ],
               "generator_key": "conteo"
             },
             "2": {
               "exercise_types": [
-                "contar-objetos"
+                "contar-objetos",
+                "elegir-grupo-con-mas-objetos",
+                "elegir-grupo-con-menos-objetos"
               ],
-              "exercises": [],
+              "exercises": [
+                {
+                  "id": "C01",
+                  "prompt": "¿Cuántas estrellas ves?",
+                  "visual": {
+                    "type": "objects",
+                    "icon": "star",
+                    "count": 4
+                  },
+                  "options": [
+                    3,
+                    4,
+                    5,
+                    6
+                  ],
+                  "answer_index": 1,
+                  "correct_answer": 4,
+                  "hint": "Pon un dedo sobre cada objeto al contarlo. Empieza en uno y pasa al siguiente sin repetir.",
+                  "feedback_correct": "¡Muy bien! Hay 4 estrellas.",
+                  "feedback_incorrect": "Puedes intentarlo otra vez. Señala cada estrella una sola vez y cuenta del 1 al 4."
+                },
+                {
+                  "id": "C02",
+                  "prompt": "¿Cuántas pelotas ves?",
+                  "visual": {
+                    "type": "objects",
+                    "icon": "ball",
+                    "count": 3
+                  },
+                  "options": [
+                    2,
+                    3,
+                    4,
+                    5
+                  ],
+                  "answer_index": 1,
+                  "correct_answer": 3,
+                  "hint": "Pon un dedo sobre cada objeto al contarlo. Empieza en uno y pasa al siguiente sin repetir.",
+                  "feedback_correct": "¡Muy bien! Hay 3 pelotas.",
+                  "feedback_incorrect": "Puedes intentarlo otra vez. Señala cada pelota una sola vez y cuenta del 1 al 3."
+                },
+                {
+                  "id": "C03",
+                  "prompt": "¿Cuántos peces ves?",
+                  "visual": {
+                    "type": "objects",
+                    "icon": "fish",
+                    "count": 5
+                  },
+                  "options": [
+                    4,
+                    5,
+                    6,
+                    7
+                  ],
+                  "answer_index": 1,
+                  "correct_answer": 5,
+                  "hint": "Pon un dedo sobre cada objeto al contarlo. Empieza en uno y pasa al siguiente sin repetir.",
+                  "feedback_correct": "¡Muy bien! Hay 5 peces.",
+                  "feedback_incorrect": "Puedes intentarlo otra vez. Señala cada pez una sola vez y cuenta del 1 al 5."
+                },
+                {
+                  "id": "C04",
+                  "prompt": "¿Cuántos globos ves?",
+                  "visual": {
+                    "type": "objects",
+                    "icon": "balloon",
+                    "count": 2
+                  },
+                  "options": [
+                    1,
+                    2,
+                    3,
+                    4
+                  ],
+                  "answer_index": 1,
+                  "correct_answer": 2,
+                  "hint": "Pon un dedo sobre cada objeto al contarlo. Empieza en uno y pasa al siguiente sin repetir.",
+                  "feedback_correct": "¡Muy bien! Hay 2 globos.",
+                  "feedback_incorrect": "Puedes intentarlo otra vez. Señala cada globo una sola vez y cuenta del 1 al 2."
+                },
+                {
+                  "id": "C05",
+                  "prompt": "¿Cuántos corazones ves?",
+                  "visual": {
+                    "type": "objects",
+                    "icon": "heart",
+                    "count": 6
+                  },
+                  "options": [
+                    5,
+                    6,
+                    7,
+                    8
+                  ],
+                  "answer_index": 1,
+                  "correct_answer": 6,
+                  "hint": "Pon un dedo sobre cada objeto al contarlo. Empieza en uno y pasa al siguiente sin repetir.",
+                  "feedback_correct": "¡Muy bien! Hay 6 corazones.",
+                  "feedback_incorrect": "Puedes intentarlo otra vez. Señala cada corazón una sola vez y cuenta del 1 al 6."
+                },
+                {
+                  "id": "C-N2-07",
+                  "type": "elegir-grupo-con-mas-objetos",
+                  "prompt": "¿Qué grupo tiene más estrellas?",
+                  "visual": {
+                    "type": "object_groups",
+                    "icon": "star",
+                    "groups": [
+                      {
+                        "label": "A",
+                        "count": 5
+                      },
+                      {
+                        "label": "B",
+                        "count": 2
+                      },
+                      {
+                        "label": "C",
+                        "count": 4
+                      },
+                      {
+                        "label": "D",
+                        "count": 6
+                      }
+                    ]
+                  },
+                  "options": [
+                    "A",
+                    "B",
+                    "C",
+                    "D"
+                  ],
+                  "answer_index": 3,
+                  "correct_answer": "D",
+                  "hint": "Cuenta cada tarjeta y recuerda su último número. Busca el número que va más adelante al contar.",
+                  "feedback_correct": "El grupo D tiene seis estrellas. Seis va después de las cantidades de las otras tarjetas.",
+                  "feedback_incorrect": "Compara la cantidad de tu tarjeta con las demás. Si otra tiene más estrellas, tu grupo aún no es el mayor."
+                },
+                {
+                  "id": "C-N2-08",
+                  "type": "elegir-grupo-con-menos-objetos",
+                  "prompt": "¿Qué grupo tiene menos pelotas?",
+                  "visual": {
+                    "type": "object_groups",
+                    "icon": "ball",
+                    "groups": [
+                      {
+                        "label": "A",
+                        "count": 2
+                      },
+                      {
+                        "label": "B",
+                        "count": 6
+                      },
+                      {
+                        "label": "C",
+                        "count": 3
+                      },
+                      {
+                        "label": "D",
+                        "count": 5
+                      }
+                    ]
+                  },
+                  "options": [
+                    "A",
+                    "B",
+                    "C",
+                    "D"
+                  ],
+                  "answer_index": 0,
+                  "correct_answer": "A",
+                  "hint": "Cuenta cada tarjeta. Busca la cantidad que dices primero cuando cuentas desde uno.",
+                  "feedback_correct": "El grupo A tiene dos pelotas. Dos se dice antes que las cantidades de los otros grupos.",
+                  "feedback_incorrect": "Cuenta las pelotas de tu tarjeta y de las otras. La cantidad menor aparece primero al contar desde uno."
+                }
+              ],
               "generator_key": "conteo"
             },
             "3": {
