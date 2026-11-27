@@ -8,6 +8,12 @@ const STORAGE_KEY = 'numu-state-v1';
 export const MODULE_IDS = ['conteo', 'aritmetica', 'geometria', 'patrones'];
 export const XP_PER_STAR = 50;
 
+/** Clave única de una recompensa de gemas (idempotencia en registrar_gemas_ronda). */
+function newRewardKey() {
+  const random = globalThis.crypto?.randomUUID?.() ?? `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+  return `ronda-${random}`;
+}
+
 const DEFAULT_STATE = {
   userId: null,
   lives: 5,
@@ -28,6 +34,10 @@ const DEFAULT_STATE = {
   // Última ronda y nivel académico por lección: { [lessonId]: { latestStars, level, at } }.
   lessonRounds: {},
   owned: [],
+  // Recompensas de gemas aún no confirmadas por la cuenta: [{ key, amount }].
+  gemsPending: [],
+  // Pendientes de cuentas que cerraron sesión sin confirmarlas: { [userId]: [{ key, amount }] }.
+  pendingGemsByUser: {},
   profile: {
     completed: false,
     name: '',
@@ -178,14 +188,22 @@ export const store = {
   startSession(userId, patch = {}) {
     if (state.userId !== userId) {
       const { settings } = state;
-      state = { ...structuredClone(DEFAULT_STATE), settings, userId };
+      // Recompensas que esta cuenta no alcanzó a subir antes de cerrar sesión: se recuperan para
+      // enviarlas (con su misma clave, sin duplicar). Las de otras cuentas se quedan guardadas.
+      const { [userId]: ownPending = [], ...othersPending } = state.pendingGemsByUser ?? {};
+      state = { ...structuredClone(DEFAULT_STATE), settings, userId, gemsPending: ownPending, pendingGemsByUser: othersPending };
     }
     return store.set(patch);
   },
 
   endSession() {
     const { settings } = state;
-    state = { ...structuredClone(DEFAULT_STATE), settings };
+    // No se pierden recompensas sin confirmar: se apartan por cuenta hasta su próximo inicio de sesión.
+    const pendingGemsByUser = { ...(state.pendingGemsByUser ?? {}) };
+    if (state.userId && state.gemsPending?.length) {
+      pendingGemsByUser[state.userId] = [...(pendingGemsByUser[state.userId] ?? []), ...state.gemsPending];
+    }
+    state = { ...structuredClone(DEFAULT_STATE), settings, pendingGemsByUser };
     persist();
     emit();
     return state;
@@ -205,9 +223,27 @@ export const store = {
 
   /* ---- Tienda / premios ---- */
 
+  /** Compra local (sin cuenta o sin la migración de gemas). Con cuenta: gemsService.purchaseItem. */
   purchase(itemId, price) {
     if (state.owned.includes(itemId) || state.gems < price) return state;
     return store.set({ gems: state.gems - price, owned: [...state.owned, itemId] });
+  },
+
+  /**
+   * Aplica el saldo que devolvió la cuenta (fuente de verdad). Quita las recompensas ya confirmadas
+   * y suma las que siguen pendientes en este dispositivo. Los artículos de la cuenta se agregan.
+   * @param {{balance: number, confirmedKeys?: string[], owned?: string[]|null}} account
+   */
+  applyAccountGems({ balance, confirmedKeys = [], owned = null } = {}) {
+    const confirmed = new Set(confirmedKeys);
+    const gemsPending = (state.gemsPending ?? []).filter((entry) => !confirmed.has(entry.key));
+    const pendingTotal = gemsPending.reduce((total, entry) => total + entry.amount, 0);
+    const safeBalance = Math.max(0, Math.floor(Number(balance) || 0));
+    return store.set({
+      gems: safeBalance + pendingTotal,
+      gemsPending,
+      owned: owned ? [...new Set([...state.owned, ...owned])] : state.owned,
+    });
   },
 
   /* ---- Acciones de gamificación ---- */
@@ -229,6 +265,9 @@ export const store = {
       gems: state.gems + gems,
       stars: state.stars + stars,
     };
+    // Las gemas de la ronda quedan pendientes (con una clave única) hasta que la cuenta las confirme:
+    // así un reintento o un segundo dispositivo no las suma dos veces (gemsService.syncPendingGems).
+    if (gems > 0) patch.gemsPending = [...(state.gemsPending ?? []), { key: newRewardKey(), amount: gems }];
     if (levelStars !== null) {
       patch.starsByLevel = { ...state.starsByLevel, [state.level]: Math.max(state.starsByLevel[state.level] ?? 0, levelStars) };
     }

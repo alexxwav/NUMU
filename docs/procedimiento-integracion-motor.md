@@ -127,3 +127,36 @@ lecciones nuevas), por eso ya no suma XP. Gemas y estrellas siguen igual.
 el dispositivo (`ShopView` → `store.purchase`, sin `saveProfile`) y `loadProfile` toma
 `max(gemas locales, gemas de la cuenta)`. Al iniciar sesión antes de terminar otra ronda, las gemas
 gastadas vuelven. Requiere decidir cómo sincronizar compras; no se inventó una regla.
+
+## 7. Gemas y compras transaccionales (Parte B, pendiente de revisión; NO aplicada)
+
+Causa del error: la compra solo cambiaba el dispositivo (`store.purchase`), `recordRound` escribía el
+saldo absoluto en `perfil_usuario.gemas` y `loadProfile` tomaba `max(local, cuenta)`.
+
+Solución: `supabase/propuesta_gemas_transaccional.sql` + `src/services/gemsService.js`.
+- El saldo de la cuenta manda. Las recompensas quedan pendientes en el dispositivo (`gemsPending`,
+  con clave única) hasta que `registrar_gemas_ronda` las confirma (una sola vez).
+- `comprar_articulo` bloquea el perfil (`FOR UPDATE`), cobra el precio del servidor una sola vez y
+  guarda el artículo en `compra_tienda`. Precios = `FRAMES` de `Avatar.js` (prueba que los compara).
+- Un trigger impide que la app cambie `gemas` directamente; el libro `movimiento_gemas` audita todo.
+
+Orden de despliegue (compatibilidad):
+1. Publicar la app (funciona sin la migración: compra local + guardado inmediato, sin `max()`).
+2. Verificar con las consultas de solo lectura del archivo y respaldar `perfil_usuario`.
+3. Aplicar `propuesta_xp_monotona.sql` y luego `propuesta_gemas_transaccional.sql` (son compatibles).
+4. Probar con una cuenta ficticia: compra, doble clic, cerrar/iniciar sesión, dos dispositivos.
+
+Pruebas: `tests/gemas.test.js` (15) y `node tests/db/gemas-transaccional.check.mjs` (40).
+
+Seguridad (revisión final):
+- Recompensas: solo 0, 5, 10 o 15 (regla vigente), clave `ronda-…` y máximo 60 por hora y usuario
+  (límite anti-abuso; las que lo superen quedan pendientes y se reintentan). **Riesgo pendiente:** el
+  servidor no puede comprobar que la ronda existió; un cliente modificado podría pedir hasta 900 gemas
+  por hora. Corrección completa propuesta: un ticket de ronda emitido por el servidor al empezar y
+  canjeable una vez al terminar (cambio mayor; no bloquea el cierre).
+- Compras: bloqueo `FOR UPDATE` + `UPDATE … WHERE gemas >= precio` + `CHECK (gemas >= 0)`.
+- Perfiles creados por la app empiezan en 0 gemas; la app no puede escribir el saldo ni los libros.
+- Cliente: una compra fallida no se muestra como exitosa (sin migración se deshace si la cuenta no
+  guarda el saldo); las recompensas sin confirmar se apartan por cuenta al cerrar sesión.
+Riesgos: una app vieja en caché no sube recompensas tras la migración; al crear el perfil, la app
+puede enviar un saldo inicial (no lo hace hoy: el cuestionario no envía gemas).

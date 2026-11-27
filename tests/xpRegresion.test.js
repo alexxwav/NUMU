@@ -90,7 +90,9 @@ test('CORREGIDO · secuencia real de Game.jsx: addRewards + recordModuleRound, s
 test('CORREGIDO · useAuth.jsx guarda y recupera la XP protegida (iniciar sesión y cada ronda)', () => {
   assert.doesNotMatch(useAuthSource, /xp: getTotalXp\(store\.get\(\)\)/, 'loadProfile ya no usa solo la derivada');
   assert.match(useAuthSource, /xp: reconcileXp\(\{ remoteXp: profile\.xp, localXp: local\.xp, derivedXp: getTotalXp\(local\) \}\)/);
-  assert.match(useAuthSource, /saveProfile\(\{ gems: state\.gems, xp: reconcileXp\(\{ localXp: state\.xp, derivedXp: getTotalXp\(state\) \}\) \}\)/);
+  // recordRound guarda la XP protegida (las gemas van por su RPC; sin migración, también el saldo).
+  assert.match(useAuthSource, /const xp = reconcileXp\(\{ localXp: state\.xp, derivedXp: getTotalXp\(state\) \}\);/);
+  assert.match(useAuthSource, /profileService\.saveProfile\(gems\.legacy \? \{ gems: state\.gems, xp \} : \{ xp \}\)/);
   assert.match(homeSource, /reconcileXp\(\{ localXp: state\.xp, derivedXp: getTotalXp\(state\) \}\)/, 'Home muestra la XP protegida');
 });
 
@@ -142,14 +144,12 @@ test('el mapa antiguo se conserva como historial de solo lectura', () => {
   assert.equal(JSON.stringify(STORED.starsByModuleLevel), before, 'el estado original no cambia');
 });
 
-test('CONTRADICCIÓN DOCUMENTADA (sin resolver) · una compra no se guarda en la cuenta y al iniciar sesión vuelve el máximo de gemas', () => {
-  // Regla aprobada: las compras pueden bajar gemas. Flujo actual: ShopView solo llama a store.purchase
-  // (local) y loadProfile toma max(gemas locales, gemas de la cuenta). No se inventa otra regla aquí.
+test('CONTRADICCIÓN RESUELTA · las compras ya no se pierden ni se devuelven al iniciar sesión (ver tests/gemas.test.js)', () => {
+  // Antes: ShopView → store.purchase (solo local) y loadProfile → max(gemas locales, gemas de la cuenta).
+  // Ahora: la tienda compra por useAuth.purchase (RPC transaccional) y el saldo de la cuenta manda.
   const shop = readFileSync(new URL('../src/views/ShopView.jsx', import.meta.url), 'utf8');
-  assert.doesNotMatch(shop, /saveProfile/, 'la compra no se envía a la cuenta en ese momento');
-  assert.match(useAuthSource, /gems: Math\.max\(local\.gems, profile\.gems\)/);
-  const remoteGems = 40; // cuenta antes de comprar
-  const afterPurchase = 15; // dispositivo tras comprar
-  assert.equal(Math.max(0, remoteGems), 40, 'otro dispositivo (o tras cerrar sesión) recupera 40: la compra se pierde');
-  assert.equal(Math.max(afterPurchase, remoteGems), 40, 'mismo dispositivo al volver a iniciar sesión: también 40');
+  assert.doesNotMatch(shop, /store\.purchase\(/, 'la tienda ya no compra solo en el dispositivo');
+  assert.match(shop, /await purchase\(item\)/);
+  assert.doesNotMatch(useAuthSource, /gems: Math\.max\(local\.gems, profile\.gems\)/, 'sin max() de gemas al iniciar sesión');
+  assert.match(useAuthSource, /reconcileAccountGems\(\{ service: gemsService, store, remoteGems: profile\.gems \}\)/);
 });

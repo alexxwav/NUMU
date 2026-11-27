@@ -8,6 +8,7 @@ import { moduleProgressService } from '../services/moduleProgressService.js';
 import { courseSlugForModule } from '../data/subjects.js';
 import { store, getTotalXp } from '../state/store.js';
 import { reconcileXp } from '../utils/xpProtection.js';
+import { gemsService, syncPendingGems, reconcileAccountGems, purchaseItem } from '../services/gemsService.js';
 
 const AuthContext = createContext(null);
 
@@ -29,12 +30,14 @@ async function loadProfile(userId) {
   if (!store.get().profile?.completed) store.completeOnboarding(storeProfile);
   else store.set({ profile: storeProfile });
 
-  // Recupera gemas y el nivel del curso actual. La XP nunca baja: el máximo entre la cuenta,
-  // este dispositivo y la derivada de las estrellas de las rutas (xpProtection.js).
+  // Gemas: el saldo de la cuenta manda (+ recompensas de este dispositivo aún sin confirmar). Ya no
+  // se toma el máximo con el saldo local: así volvían las gemas gastadas (gemsService.js).
+  await reconcileAccountGems({ service: gemsService, store, remoteGems: profile.gems });
+  // Nivel del curso actual. La XP nunca baja: el máximo entre la cuenta, este dispositivo y la
+  // derivada de las estrellas de las rutas (xpProtection.js).
   const local = store.get();
   const saved = progress?.[courseSlugForModule(local.module)];
   store.set({
-    gems: Math.max(local.gems, profile.gems),
     xp: reconcileXp({ remoteXp: profile.xp, localXp: local.xp, derivedXp: getTotalXp(local) }),
     ...(saved ? { level: Math.max(local.level, saved.nivel_actual ?? 1), streak: Math.max(local.streak, saved.racha_dias ?? 1) } : {}),
   });
@@ -97,6 +100,8 @@ export function AuthProvider({ children }) {
     },
 
     async signOut() {
+      // Antes de cerrar, sube las recompensas pendientes (si falla, se perderían al limpiar el dispositivo).
+      if (session) await syncPendingGems({ service: gemsService, store });
       const result = await authService.signOut();
       setSession(null);
       setProfile(null);
@@ -115,17 +120,36 @@ export function AuthProvider({ children }) {
     },
 
     // Guarda en la cuenta el resultado de una ronda ya aplicado en store.js (nivel, gemas, XP, racha).
+    // Gemas: se confirman las recompensas pendientes con su clave (una sola vez). Sin la migración de
+    // gemas, se guarda el saldo como antes y se dan por subidas.
     async recordRound({ stars }) {
       if (!session) return { error: null };
+      const gems = await syncPendingGems({ service: gemsService, store });
       const state = store.get();
       const courseSlug = courseSlugForModule(state.module);
+      const xp = reconcileXp({ localXp: state.xp, derivedXp: getTotalXp(state) });
       const [round, totals] = await Promise.all([
         courseSlug
           ? progressService.recordRound({ courseSlug, stars, nextLevel: state.level, streak: state.streak })
           : { error: null },
-        profileService.saveProfile({ gems: state.gems, xp: reconcileXp({ localXp: state.xp, derivedXp: getTotalXp(state) }) }),
+        profileService.saveProfile(gems.legacy ? { gems: state.gems, xp } : { xp }),
       ]);
-      return { error: round.error || totals.error };
+      if (gems.legacy && !totals.error) store.applyAccountGems({ balance: state.gems, confirmedKeys: (state.gemsPending ?? []).map((p) => p.key) }); // el saldo guardado ya incluye las pendientes
+      return { error: round.error || totals.error || (gems.legacy ? null : gems.error) };
+    },
+
+    // Compra en la tienda. Con cuenta la cobra el servidor (una sola vez, con su precio); sin la
+    // migración, compra en el dispositivo y guarda el saldo al momento (ya no espera a otra ronda).
+    async purchase(item) {
+      if (!session) {
+        const before = store.get().owned.length;
+        store.purchase(item.id, item.price);
+        return { purchased: store.get().owned.length > before, reason: null, error: null };
+      }
+      return purchaseItem({
+        service: gemsService, store, itemId: item.id, price: item.price,
+        saveLegacyGems: (gems) => profileService.saveProfile({ gems }),
+      });
     },
 
     // Guarda en la cuenta el avance de una sección del mapa (parada y estrellas).

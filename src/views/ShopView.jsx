@@ -1,13 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Gem } from 'lucide-react';
 import { store } from '../state/store.js';
 import { sfx } from '../utils/audio.js';
 import { ROUTES } from '../services/startRoute.js';
 import { FRAMES } from '../components/Avatar.js';
+import { useAuth } from '../hooks/useAuth.jsx';
 
 export default function ShopView() {
   const [state, setState] = useState(() => store.get());
+  const { purchase } = useAuth();
+  const buyingRef = useRef(false); // una compra a la vez: un doble clic no compra dos veces
 
   useEffect(() => {
     const unsubscribe = store.subscribe(() => {
@@ -17,15 +20,20 @@ export default function ShopView() {
   }, []);
 
   // --- Handlers de acciones ---
-  const handleBuy = (item) => {
-    const before = store.get().owned.length;
-    store.purchase(item.id, item.price);
-    
-    if (store.get().owned.length > before) {
-      store.set({ profile: { frame: item.id } });
-      if (sfx && sfx.win) sfx.win();
-    } else {
-      if (sfx && sfx.wrong) sfx.wrong();
+  // Con cuenta, la compra la cobra el servidor una sola vez (gemsService); sin cuenta, el dispositivo.
+  const handleBuy = async (item) => {
+    if (buyingRef.current) return;
+    buyingRef.current = true;
+    try {
+      const { purchased } = await purchase(item);
+      if (purchased) {
+        store.set({ profile: { frame: item.id } });
+        if (sfx && sfx.win) sfx.win();
+      } else {
+        if (sfx && sfx.wrong) sfx.wrong();
+      }
+    } finally {
+      buyingRef.current = false;
     }
   };
 
