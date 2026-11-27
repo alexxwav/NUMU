@@ -205,7 +205,8 @@ function mathematicalEvidence(exercise, type) {
       return [first, second];
     }
     default:
-      invalid('tipo visual no admitido');
+      if (typeof visual.type !== 'string' || !own(DRAFT_VISUALS, visual.type)) invalid('tipo visual no admitido');
+      return DRAFT_VISUALS[visual.type].evidence(exercise, type);
   }
 }
 
@@ -287,7 +288,8 @@ function renderVisual(visual) {
       const sequence = visual.sequence.map(color => `<span class="w-12 h-12 sm:w-14 sm:h-14 rounded-full border-4 border-white shadow-md" style="background:${COLORS[color]}"></span>`).join('');
       return `<div class="flex flex-wrap items-center justify-center gap-3 p-5 bg-white rounded-card border-2 border-border-gray" role="img" aria-label="${escapeHTML(visual.sequence.join(', '))}, ¿qué color sigue?">${sequence}<span class="w-12 h-12 sm:w-14 sm:h-14 rounded-full border-4 border-dashed border-text-dark/40 grid place-items-center font-fredoka font-bold text-h2 text-text-dark/50">?</span></div>`;
     }
-    default: invalid('tipo visual no admitido');
+    default:
+      return DRAFT_VISUALS[visual.type].render(visual);
   }
 }
 
@@ -301,7 +303,7 @@ export function adaptExerciseToGame(exercise) {
   return {
     ...metadata,
     semanticKey,
-    hint: buildQuestionHint(exercise, HINT_MODULE[visual.type]),
+    hint: buildQuestionHint(exercise, HINT_MODULE[visual.type] ?? DRAFT_VISUALS[visual.type]?.module),
     feedback_correct,
     feedback_incorrect,
     prompt: exercise.prompt,
@@ -315,3 +317,533 @@ export function adaptExerciseToGame(exercise) {
     answerIndex: answer_index,
   };
 }
+
+const sizeIsSafe = value => nonnegativeInteger(value) && value > 0 && value <= 32;
+const allNumeric = values => Array.isArray(values) && [...values].every(nonnegativeInteger);
+const totalOf = values => values.reduce((sum, value) => sum + value, 0);
+const cellKey = cell => cell.join(',');
+const sortedCellKeys = cells => cells.map(cellKey).sort();
+const sameCells = (a, b) => JSON.stringify(sortedCellKeys(a)) === JSON.stringify(sortedCellKeys(b));
+
+function validGrid({ rows, columns }) {
+  if (!sizeIsSafe(rows) || !sizeIsSafe(columns)) invalid('dimensiones de cuadrícula inválidas');
+}
+
+function validCells(cells, { rows, columns }) {
+  if (!Array.isArray(cells) || ![...cells].every(cell => Array.isArray(cell) && cell.length === 2
+      && cell.every(value => Number.isInteger(value) && value > 0) && cell[0] <= rows && cell[1] <= columns)
+      || new Set(cells.map(cellKey)).size !== cells.length) invalid('casillas inválidas o repetidas');
+}
+
+function validateChoiceAnswer(exercise, correctOptions) {
+  if (correctOptions.length !== 1 || correctOptions[0] !== exercise.correct_answer) {
+    invalid('la consigna no determina una respuesta única y coherente');
+  }
+}
+
+function reflectionEvidence(exercise, type) {
+  const { visual, options } = exercise;
+  const { axis, choices } = visual;
+  validGrid(visual);
+  const directions = { horizontal: 0, vertical: 1 };
+  if (!isRecord(axis) || !own(directions, axis.direction)) invalid('eje de simetría inválido');
+  const across = directions[axis.direction];
+  const along = 1 - across;
+  const size = across ? visual.columns : visual.rows;
+  const after = axis.after;
+  if (!Number.isInteger(after) || after * 2 !== size) invalid('el eje debe separar dos mitades');
+  const reflect = cell => cell.map((coordinate, index) => index === across ? size + 1 - coordinate : coordinate);
+
+  if (!Array.isArray(choices) || choices.length !== 4) invalid('se necesitan cuatro tarjetas de reflejo');
+  for (const card of choices) {
+    if (!isRecord(card) || !/^[A-Z]$/.test(card.label) || typeof card.label !== 'string') invalid('tarjeta de reflejo inválida');
+    validCells(card.cells, visual);
+  }
+  const labels = choices.map(card => card.label);
+  if (new Set(labels).size !== 4 || !options.every(option => labels.includes(option))
+      || new Set(choices.map(card => JSON.stringify(sortedCellKeys(card.cells)))).size !== 4) {
+    invalid('tarjetas y opciones de reflejo incoherentes');
+  }
+
+  if (type === 'identificar-ficha-sin-reflejo') {
+    const filled = visual.filled_cells;
+    validCells(filled, visual);
+    if (filled.length < 3) invalid('faltan fichas de referencia');
+    const keys = new Set(filled.map(cellKey));
+    if (choices.some(card => card.cells.length !== 1 || !keys.has(cellKey(card.cells[0])))) {
+      invalid('solo se puede retirar una ficha visible');
+    }
+    const unmatched = filled.filter(cell => !keys.has(cellKey(reflect(cell))));
+    if (unmatched.length !== 1) invalid('debe haber una sola ficha sin pareja');
+    validateChoiceAnswer(exercise, choices.filter(card => sameCells(card.cells, unmatched)).map(card => card.label));
+    return [axis.direction, relativeCells(filled, across, after, Math.min(...filled.map(cell => cell[along])))];
+  }
+
+  if (!['elegir-reflejo', 'completar-reflejo'].includes(type)) invalid('tipo de ejercicio de simetría inválido');
+  if (visual.filled_cells !== undefined) invalid('el ejercicio requiere fichas de origen y no un tablero terminado');
+  const { source_cells: source, placed_cells: placed = [] } = visual;
+  validCells(source, visual);
+  validCells(placed, visual);
+  if (!source.length || source.some(cell => cell[across] > after)
+      || (type === 'elegir-reflejo' ? placed.length !== 0 : placed.length === 0)) invalid('fichas de origen o de avance inválidas');
+  const mirrored = source.map(reflect);
+  const mirroredKeys = new Set(mirrored.map(cellKey));
+  if (placed.some(cell => !mirroredKeys.has(cellKey(cell)))) invalid('hay fichas colocadas fuera de su reflejo');
+  const placedKeys = new Set(placed.map(cellKey));
+  const missing = mirrored.filter(cell => !placedKeys.has(cellKey(cell)));
+  if (!missing.length || choices.some(card => card.cells.length !== missing.length
+      || card.cells.some(cell => cell[across] <= after || placedKeys.has(cellKey(cell))))) {
+    invalid('las opciones deben completar las casillas de la mitad opuesta');
+  }
+  validateChoiceAnswer(exercise, choices.filter(card => sameCells(card.cells, missing)).map(card => card.label));
+  const offset = Math.min(...source.map(cell => cell[along]));
+  return [axis.direction, relativeCells(source, across, after, offset), relativeCells(placed, across, after, offset)];
+}
+
+function relativeCells(cells, axis, after, offset) {
+  return sortedCellKeys(cells.map(cell => [cell[1 - axis] - offset, cell[axis] - after]));
+}
+
+function shapeEdges(cells) {
+  const filled = new Set(cells.map(cellKey));
+  return cells.flatMap(([r, c]) => [
+    [[r - 1, c], [r - 1, c - 1, r - 1, c]],
+    [[r + 1, c], [r, c - 1, r, c]],
+    [[r, c - 1], [r - 1, c - 1, r, c - 1]],
+    [[r, c + 1], [r - 1, c, r, c]],
+  ].filter(([neighbor]) => !filled.has(cellKey(neighbor))).map(([, edge]) => edge));
+}
+
+function connectedGrid(cells) {
+  const keys = new Set(cells.map(cellKey));
+  const pending = [cells[0]];
+  const visited = new Set();
+  while (pending.length) {
+    const [r, c] = pending.pop();
+    const key = cellKey([r, c]);
+    if (!keys.has(key) || visited.has(key)) continue;
+    visited.add(key);
+    pending.push([r - 1, c], [r + 1, c], [r, c - 1], [r, c + 1]);
+  }
+  return visited.size === keys.size;
+}
+
+function gridShapeKey(cells) {
+  const orientations = [];
+  for (const swap of [false, true]) {
+    for (const rSign of [-1, 1]) {
+      for (const cSign of [-1, 1]) {
+        const oriented = cells.map(([r, c]) => swap ? [c * rSign, r * cSign] : [r * rSign, c * cSign]);
+        const top = Math.min(...oriented.map(([r]) => r));
+        const left = Math.min(...oriented.map(([, c]) => c));
+        orientations.push(sortedCellKeys(oriented.map(([r, c]) => [r - top, c - left])).join(';'));
+      }
+    }
+  }
+  return orientations.sort()[0];
+}
+
+const MEASUREMENT_TASKS = {
+  'contar-tramos-del-borde': ['perimeter', 1],
+  'sumar-lados-de-rectangulo': ['perimeter', 1],
+  'comparar-perimetros': ['perimeter', 2],
+  'contar-baldosas': ['area', 1],
+  'calcular-area-de-rectangulo': ['area', 1],
+  'hallar-area-comun': ['area', 2],
+  'elegir-par-de-igual-area': ['area', 4],
+};
+
+function gridPairAnswer(exercise, figures) {
+  const normalize = option => {
+    if (typeof option !== 'string' || !/^[A-Z] y [A-Z]$/.test(option)) return '';
+    const pair = option.split(' y ').sort();
+    return pair[0] !== pair[1] && pair.every(label => figures.some(figure => figure.label === label)) ? pair.join(' y ') : '';
+  };
+  const options = exercise.options.map(normalize);
+  if (options.includes('') || new Set(options).size !== 4) invalid('opciones de pareja inválidas');
+  const pairs = figures.flatMap((first, i) => figures.slice(i + 1)
+    .filter(second => first.area === second.area).map(second => [first, second]));
+  if (pairs.length !== 1) invalid('debe haber una sola pareja de igual área');
+  const [[first, second]] = pairs;
+  if (first.perimeter === second.perimeter || normalize(exercise.correct_answer) !== normalize(first.label + ' y ' + second.label)) {
+    invalid('la pareja de igual área es incoherente');
+  }
+}
+
+function measurementEvidence(exercise, type) {
+  const { visual } = exercise;
+  const { figures, mode, show_dimensions: show = false } = visual;
+  if (!own(MEASUREMENT_TASKS, type)) invalid('medición no admitida');
+  const [expectedMode, count] = MEASUREMENT_TASKS[type];
+  if (mode !== expectedMode || !Array.isArray(figures) || figures.length !== count || typeof show !== 'boolean') {
+    invalid('modo, figuras o medidas inválidos');
+  }
+  const labels = new Set();
+  const measurements = Array.from(figures, figure => {
+    if (!isRecord(figure) || typeof figure.label !== 'string' || !/^[A-Z]$/.test(figure.label)
+        || labels.has(figure.label)) invalid('figura de medición inválida');
+    labels.add(figure.label);
+    validGrid(figure);
+    validCells(figure.cells, figure);
+    if (!figure.cells.length || !connectedGrid(figure.cells)) invalid('las casillas deben formar una figura conectada');
+    const rectangle = figure.cells.length === figure.rows * figure.columns;
+    if ((show && (mode !== 'perimeter' || !rectangle)) ||
+        (['sumar-lados-de-rectangulo', 'calcular-area-de-rectangulo'].includes(type) && !rectangle)) {
+      invalid('la consigna requiere un rectángulo completo y un modo coherente');
+    }
+    return { label: figure.label, area: figure.cells.length, perimeter: shapeEdges(figure.cells).length };
+  });
+  const [first, second] = measurements;
+  if (type === 'elegir-par-de-igual-area') {
+    gridPairAnswer(exercise, measurements);
+  } else {
+    let answer = first[mode];
+    if (type === 'comparar-perimetros') answer = Math.abs(first.perimeter - second.perimeter);
+    if (type === 'hallar-area-comun' && (first.area !== second.area || first.perimeter === second.perimeter)) {
+      invalid('se requieren áreas iguales con perímetros distintos');
+    }
+    validateNumericAnswer(exercise, answer);
+  }
+  return figures.map(({ cells }) => gridShapeKey(cells)).sort();
+}
+
+const signedRule = text => {
+  if (typeof text !== 'string') return null;
+  const match = text.match(/^(Sumar|Restar|Multiplicar por) ([1-9]\d*)$/);
+  if (!match || !nonnegativeInteger(Number(match[2]))) return null;
+  return [{ Sumar: '+', Restar: '-', 'Multiplicar por': '×' }[match[1]], Number(match[2])];
+};
+
+function staircaseEvidence(exercise, type) {
+  const { steps, query_position: position } = exercise.visual;
+  if (!Array.isArray(steps) || !sizeIsSafe(steps.length)
+      || ![...steps].every(step => step === null || nonnegativeInteger(step))) invalid('escalones inválidos');
+  const known = steps.flatMap((step, index) => step === null ? [] : [[index, step]]);
+  if (known.length < 3) invalid('faltan escalones para deducir la regla');
+  const [[firstIndex, first], [nextIndex, next]] = known;
+  const delta = (next - first) / (nextIndex - firstIndex);
+  const start = first - firstIndex * delta;
+  if (!Number.isSafeInteger(delta) || delta === 0 || !nonnegativeInteger(start)
+      || known.some(([index, step]) => step !== start + index * delta)) invalid('los cambios de la escalera no son constantes');
+  if (type === 'identificar-regla-de-escalera') {
+    if (position !== undefined || known.length !== steps.length) invalid('la regla requiere una escalera visible');
+    validateChoiceAnswer(exercise, exercise.options.filter(option => {
+      const rule = signedRule(option);
+      if (!rule || rule[0] === '×') invalid('opción de regla de escalera inválida');
+      const [op, value] = rule;
+      return (op === '+' ? value : -value) === delta;
+    }));
+  } else {
+    if (!['completar-escalera', 'predecir-escalon'].includes(type) || !sizeIsSafe(position)) invalid('posición de escalera inválida');
+    if (type === 'completar-escalera' ? delta <= 0 || known.length !== steps.length - 1 || steps[position - 1] !== null
+      : position <= steps.length || known.length !== steps.length) invalid('los escalones no corresponden a la consigna');
+    validateNumericAnswer(exercise, start + (position - 1) * delta);
+  }
+  return [start, delta, position ?? null];
+}
+
+function parseSum(text) {
+  if (typeof text !== 'string' || !/^\d+(?: \+ \d+)+$/.test(text)) invalid('opción de suma inválida');
+  const values = text.split(' + ').map(Number);
+  if (!allNumeric(values) || !nonnegativeInteger(totalOf(values))) invalid('sumandos fuera del rango');
+  return values;
+}
+
+function balanceEvidence(exercise, type) {
+  const { left, right, display } = exercise.visual;
+  const terms = side => Array.isArray(side) && sizeIsSafe(side.length)
+    && [...side].every(term => term === null || (nonnegativeInteger(term) && (display !== 'objects' || term <= 32)))
+    && nonnegativeInteger(totalOf(side.filter(nonnegativeInteger)));
+  if (!terms(left) || !['objects', 'symbols'].includes(display)) invalid('plato o representación de balanza inválidos');
+  const canonicalSide = side => [side.filter(term => term !== null).sort((a, b) => a - b), side.includes(null)];
+  if (type === 'reconocer-equivalencia') {
+    if (right !== null || !allNumeric(left)) invalid('la equivalencia necesita un plato completo y otro vacío');
+    validateChoiceAnswer(exercise, exercise.options.filter(option => totalOf(parseSum(option)) === totalOf(left)));
+    return canonicalSide(left)[0];
+  }
+  if (!['completar-balanza', 'resolver-igualdad'].includes(type) || !terms(right)
+      || [...left, ...right].filter(term => term === null).length !== 1) invalid('la igualdad requiere una sola casilla vacía');
+  const expected = left.includes(null) ? totalOf(right) - totalOf(left.filter(nonnegativeInteger))
+    : totalOf(left) - totalOf(right.filter(nonnegativeInteger));
+  validateNumericAnswer(exercise, expected);
+  return [canonicalSide(left), canonicalSide(right)].sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
+}
+
+function hiddenNumberEvidence(exercise, type) {
+  const { operands, operator, result, display } = exercise.visual;
+  if (!['completar-suma-con-caja', 'resolver-operacion-con-caja', 'resolver-problema-con-incognita'].includes(type)
+      || !['+', '-'].includes(operator) || (type === 'completar-suma-con-caja' && operator !== '+')
+      || display !== (type === 'resolver-problema-con-incognita' ? 'story' : 'box')
+      || !Array.isArray(operands) || operands.length !== 2
+      || ![...operands].every(value => value === null || nonnegativeInteger(value))
+      || operands.filter(value => value === null).length !== 1 || !nonnegativeInteger(result)) {
+    invalid('la operación requiere una sola incógnita y un resultado válido');
+  }
+  const [a, b] = operands;
+  const expected = operator === '+' ? result - (a ?? b) : a === null ? result + b : a - result;
+  validateNumericAnswer(exercise, expected);
+  return [operator, operands, result];
+}
+
+function applyRule(input, [operator, value]) {
+  if (operator === '+') return input + value;
+  if (operator === '-') return input - value;
+  return input * value;
+}
+
+function machineEvidence(exercise, type) {
+  const { examples, input, operations } = exercise.visual;
+  if (type === 'descubrir-regla-simple') {
+    if (operations !== undefined || input !== undefined || !Array.isArray(examples) || examples.length < 3
+        || ![...examples].every(pair => isRecord(pair) && nonnegativeInteger(pair.input) && nonnegativeInteger(pair.output))
+        || new Set(examples.map(pair => pair.input)).size !== examples.length) invalid('pares de entrada y salida inválidos');
+    validateChoiceAnswer(exercise, exercise.options.filter(option => {
+      const rule = signedRule(option);
+      if (!rule) invalid('opción de máquina inválida');
+      return examples.every(pair => applyRule(pair.input, rule) === pair.output);
+    }));
+    return examples.map(pair => [pair.input, pair.output]).sort(([a], [b]) => a - b);
+  }
+  const count = type === 'aplicar-regla-simple' ? 1 : type === 'aplicar-reglas-consecutivas' ? 2 : 0;
+  if (!count || examples !== undefined || !nonnegativeInteger(input) || !Array.isArray(operations) || operations.length !== count
+      || ![...operations].every(op => isRecord(op) && ['+', '-', '×'].includes(op.operator) && nonnegativeInteger(op.value) && op.value > 0)) {
+    invalid('entrada u operaciones inválidas');
+  }
+  const rules = operations.map(op => [op.operator, op.value]);
+  const output = rules.reduce((value, rule) => {
+    const next = applyRule(value, rule);
+    if (!nonnegativeInteger(next)) invalid('resultado intermedio fuera del rango');
+    return next;
+  }, input);
+  validateNumericAnswer(exercise, output);
+  return [input, rules];
+}
+
+function growthEvidence(exercise, type) {
+  const { stages, query_position: position, repeated_icon: repeated, fixed_icon: fixedIcon } = exercise.visual;
+  if (!validDraftIcon(repeated) || !validDraftIcon(fixedIcon) || !Array.isArray(stages) || stages.length < 3
+      || ![...stages].every(stage => isRecord(stage) && sizeIsSafe(stage.position) && allNumeric(stage.groups)
+        && stage.groups.length === stage.position && nonnegativeInteger(stage.fixed) && stage.fixed <= 32)
+      || stages.some((stage, index) => index > 0 && stage.position <= stages[index - 1].position)) {
+    invalid('etapas o cantidades del patrón inválidas');
+  }
+  const gain = stages[0].groups[0];
+  const fixed = stages[0].fixed;
+  if (!sizeIsSafe(gain) || stages.some(stage => stage.fixed !== fixed || stage.groups.some(group => group !== gain))) {
+    invalid('el tamaño de los grupos y la parte fija deben mantenerse');
+  }
+  if (type === 'deducir-regla-del-dibujo') {
+    if (position !== undefined) invalid('deducir una regla usa todas las etapas');
+    validateChoiceAnswer(exercise, exercise.options.filter(option => {
+      const match = typeof option === 'string' && option.match(/^([1-9]\d*) por paso y (\d+) ficha(?:s)? fija(?:s)?$/);
+      if (!match) invalid('opción de regla de crecimiento inválida');
+      return Number(match[1]) === gain && Number(match[2]) === fixed;
+    }));
+  } else {
+    const present = stages.some(stage => stage.position === position);
+    if (!['contar-piezas-de-un-paso', 'relacionar-paso-con-cantidad'].includes(type) || !sizeIsSafe(position)
+        || present !== (type === 'contar-piezas-de-un-paso')) invalid('paso consultado inválido');
+    validateNumericAnswer(exercise, position * gain + fixed);
+  }
+  return [gain, fixed, position ?? null];
+}
+
+const DRAFT_CONTAINERS = { fish_tank: 'Pecera', basket: 'Canasta', child: 'Participante', tray: 'Bandeja', box: 'Caja' };
+const DRAFT_ICONS = { coral: 'Coral', shell: 'Concha' };
+const validDraftIcon = item => typeof item === 'string' && (own(OBJECTS, item) || own(DRAFT_ICONS, item));
+const validContainer = item => typeof item === 'string' && own(DRAFT_CONTAINERS, item);
+
+function groupingEvidence(exercise, type) {
+  const { visual } = exercise;
+  const { group_count: count, items_per_group: size } = visual;
+  if (!sizeIsSafe(count) || !sizeIsSafe(size) || !validDraftIcon(visual.icon) || !validContainer(visual.container)) {
+    invalid('cantidad, icono o recipiente de grupos inválido');
+  }
+  if (type === 'contar-grupos') validateNumericAnswer(exercise, count);
+  else if (type === 'identificar-suma-repetida') {
+    validateChoiceAnswer(exercise, exercise.options.filter(option => {
+      const terms = parseSum(option);
+      return terms.length === count && terms.every(term => term === size);
+    }));
+  } else invalid('tipo de agrupación inválido');
+  return [count, size];
+}
+
+function arrayEvidence(exercise, type) {
+  const { visual } = exercise;
+  const { rows, columns } = visual;
+  validGrid(visual);
+  if (!validDraftIcon(visual.icon)) invalid('icono de arreglo inválido');
+  if (type === 'calcular-total-del-arreglo') validateNumericAnswer(exercise, rows * columns);
+  else if (type === 'representar-multiplicacion') {
+    validateChoiceAnswer(exercise, exercise.options.filter(option => {
+      const match = typeof option === 'string' && option.match(/^(\d+) × (\d+)$/);
+      if (!match) invalid('opción de multiplicación inválida');
+      return Number(match[1]) === rows && Number(match[2]) === columns;
+    }));
+  } else invalid('tipo de arreglo inválido');
+  return [rows, columns];
+}
+
+function sharingEvidence(exercise, type) {
+  const { visual } = exercise;
+  const { total, recipients, display } = visual;
+  if (!nonnegativeInteger(total) || !sizeIsSafe(recipients) || recipients < 2 || total < recipients
+      || !validDraftIcon(visual.icon) || !validContainer(visual.container)) invalid('datos de reparto inválidos');
+  if (type === 'elegir-reparto-exacto') {
+    if (display !== 'objects' || total > 100 || total % recipients !== 0) invalid('se requiere un reparto exacto dibujable');
+    validateChoiceAnswer(exercise, exercise.options.filter(option => {
+      if (typeof option !== 'string' || !/^\d+(?:, \d+)* y \d+$/.test(option)) invalid('opción de reparto inválida');
+      const amounts = option.match(/\d+/g).map(Number);
+      if (amounts.length !== recipients || !allNumeric(amounts)) invalid('faltan cantidades para los participantes');
+      return amounts.every(amount => amount === amounts[0]) && totalOf(amounts) === total;
+    }));
+  } else {
+    if (!['calcular-cuanto-recibe-cada-uno', 'identificar-sobrantes'].includes(type) || display !== 'summary') {
+      invalid('tipo o presentación de reparto inválidos');
+    }
+    if (type === 'calcular-cuanto-recibe-cada-uno' && total % recipients !== 0) invalid('la consigna requiere reparto exacto');
+    validateNumericAnswer(exercise, type === 'identificar-sobrantes' ? total % recipients : total / recipients);
+  }
+  return [total, recipients];
+}
+
+function visualFrame(description, body) {
+  return `<div class="w-full max-w-2xl rounded-card border-2 border-border-gray bg-white p-4 text-center font-fredoka text-lg" role="img" aria-label="${escapeHTML(description)}">${body}</div>`;
+}
+
+function gridSvg({ rows, columns }, cells, description, { edges = [], axis, markers = [] } = {}) {
+  const line = (x1, y1, x2, y2, color, width) =>
+    `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="${width}"/>`;
+  const base = [
+    ...Array.from({ length: rows + 1 }, (_, r) => line(0, r, columns, r, '#CBD5E1', '.025')),
+    ...Array.from({ length: columns + 1 }, (_, c) => line(c, 0, c, rows, '#CBD5E1', '.025')),
+  ].join('');
+  const tiles = cells.map(([r, c]) =>
+    `<rect x="${c - 1}" y="${r - 1}" width="1" height="1" fill="#DDD6FE" stroke="#7050A3" stroke-width=".05"/>`).join('');
+  const border = edges.map(([r1, c1, r2, c2]) => line(c1, r1, c2, r2, '#593284', '.12')).join('');
+  const mirror = !axis ? '' : axis.direction === 'vertical'
+    ? line(axis.after, 0, axis.after, rows, '#593284', '.12')
+    : line(0, axis.after, columns, axis.after, '#593284', '.12');
+  const marked = markers.map(({ label, cells: [[r, c]] }) =>
+    `<text x="${c - .5}" y="${r - .32}" text-anchor="middle" font-size=".52" fill="#37204F">${label}</text>`).join('');
+  return `<svg class="mx-auto w-full max-w-xs" viewBox="-.1 -.1 ${columns + .2} ${rows + .2}" role="img" aria-label="${escapeHTML(description)}">${base}${tiles}${border}${mirror}${marked}</svg>`;
+}
+
+const describeCells = cells => cells.map(([r, c]) => 'fila ' + r + ', columna ' + c).join('; ');
+
+function renderReflection(visual) {
+  const { axis, choices, filled_cells: filled, source_cells: source = [], placed_cells: placed = [] } = visual;
+  const description = 'Eje ' + axis.direction + ' después de la '
+    + (axis.direction === 'vertical' ? 'columna ' : 'fila ') + axis.after + '. ';
+  const main = gridSvg(visual, filled ?? [...source, ...placed], description + (filled
+    ? 'Fichas visibles. ' + describeCells(filled) + '. ' + choices.map(card => card.label + ', ' + describeCells(card.cells)).join('. ')
+    : 'Fichas de origen. ' + describeCells(source) + (placed.length ? '. Fichas colocadas. ' + describeCells(placed) : '')),
+  { axis, markers: filled ? choices : [] });
+  const cards = filled ? '' : `<div class="grid grid-cols-2 gap-3 sm:grid-cols-4">${choices.map(card =>
+    `<div><span aria-hidden="true">${card.label}</span>${gridSvg(visual, card.cells, 'Tarjeta ' + card.label + '. ' + describeCells(card.cells), { axis })}</div>`).join('')}</div>`;
+  return `<div class="mx-auto w-full max-w-2xl rounded-card border-2 border-border-gray bg-white p-4 text-center font-fredoka">${main}${cards}</div>`;
+}
+
+function renderMeasurement({ figures, mode, show_dimensions: show }) {
+  const cards = figures.map(figure => {
+    const edges = mode === 'perimeter' ? shapeEdges(figure.cells) : [];
+    const dimensions = show ? 'Ancho ' + figure.columns + ', alto ' + figure.rows + '. ' : '';
+    const description = mode === 'area' ? describeCells(figure.cells)
+      : edges.map(([r1, c1, r2, c2]) => `tramo de (${r1}, ${c1}) a (${r2}, ${c2})`).join('; ');
+    return `<div><p aria-hidden="true">${figure.label} ${dimensions}</p>${gridSvg(figure, mode === 'area' ? figure.cells : [],
+      'Figura ' + figure.label + '. ' + dimensions + description, { edges })}</div>`;
+  }).join('');
+  return `<div class="mx-auto grid w-full max-w-2xl gap-4 rounded-card border-2 border-border-gray bg-white p-4 text-center font-fredoka ${figures.length > 1 ? 'grid-cols-2' : ''}">${cards}</div>`;
+}
+
+function renderStaircase({ steps, query_position: position }) {
+  const visible = steps.map((step, index) => 'Escalón ' + (index + 1) + ': ' + (step ?? 'casilla vacía'));
+  if (position > steps.length) visible.push('Escalón ' + position + ': casilla vacía');
+  const cards = visible.map(step => `<span class="rounded-btn bg-soft-lavender px-3 py-2">${step.replace('casilla vacía', '□')}</span>`);
+  return visualFrame(visible.join('. '), `<div class="flex flex-wrap justify-center gap-2">${cards.join('')}</div>`);
+}
+
+function chips(item, count) {
+  const picture = own(OBJECTS, item)
+    ? icon(item, 'h-6 w-6')
+    : item === 'coral' ? '<span>✿</span>' : '<span>◈</span>';
+  return picture.repeat(count);
+}
+
+function renderBalance({ left, right, display }) {
+  const text = side => side === null ? 'plato vacío' : side.map(value => value ?? 'casilla vacía').join(' más ');
+  const plate = side => side === null ? '□' : side.map(value => value === null ? '□'
+    : display === 'symbols' ? value : `<span class="inline-flex flex-wrap rounded bg-soft-lavender">${value ? chips('ball', value) : 0}</span>`).join(' + ');
+  return visualFrame('Izquierda ' + text(left) + '. Derecha ' + text(right) + '.',
+    `<div class="flex flex-wrap items-center justify-center gap-4"><span class="rounded-btn border-b-4 border-numu-purple p-2">${plate(left)}</span><span>=</span><span class="rounded-btn border-b-4 border-numu-purple p-2">${plate(right)}</span></div>`);
+}
+
+function renderHiddenNumber({ operator, operands, result }) {
+  const word = operator === '+' ? ' más ' : ' menos ';
+  const description = operands.map(value => value ?? 'casilla vacía').join(word) + ' igual a ' + result;
+  const shown = operands.map(value => value ?? '□').join(operator === '+' ? ' + ' : ' − ');
+  return visualFrame(description, `<span class="text-2xl">${shown} = ${result}</span>`);
+}
+
+function renderMachine({ examples, operations, input }) {
+  if (examples) {
+    const description = examples.map(pair => 'Entra ' + pair.input + ', sale ' + pair.output).join('. ');
+    const rows = examples.map(pair => `<li>${pair.input} → ${pair.output}</li>`).join('');
+    return visualFrame(description, `<ul>${rows}</ul>`);
+  }
+  const names = { '+': 'Sumar ', '-': 'Restar ', '×': 'Multiplicar por ' };
+  const chain = operations.map(op => names[op.operator] + op.value);
+  const description = ['Entra ' + input, ...chain, 'salida vacía'].join('. ');
+  return visualFrame(description, [input, ...chain, '□'].join(' → '));
+}
+
+function draftIconName(item) {
+  return own(OBJECTS, item) ? OBJECTS[item][2] : DRAFT_ICONS[item];
+}
+
+function renderGrowth({ stages, repeated_icon: repeated, fixed_icon: fixed, query_position: position }) {
+  const descriptions = stages.map(stage => 'Paso ' + stage.position + '. '
+    + stage.groups.map(count => draftIconName(repeated) + ', grupo de ' + count).join('. ')
+    + '. Piezas fijas de ' + draftIconName(fixed) + ': ' + stage.fixed + '.');
+  const drawings = stages.map(stage => `<div class="rounded-btn bg-soft-lavender p-2">Paso ${stage.position}
+    <div class="flex flex-wrap justify-center gap-2">${stage.groups.map(count =>
+      `<span class="inline-flex flex-wrap rounded border border-numu-purple">${chips(repeated, count)}</span>`).join('')}
+      <span class="inline-flex flex-wrap">${chips(fixed, stage.fixed)}</span></div></div>`).join('');
+  const query = position ? ' Paso solicitado ' + position + '.' : '';
+  return visualFrame(descriptions.join(' ') + query, `<div class="grid gap-2">${drawings}${query}</div>`);
+}
+
+function renderGrouping({ group_count: count, items_per_group: size, icon: item, container }) {
+  const name = DRAFT_CONTAINERS[container];
+  const description = Array(count).fill(name + ' con ' + size + ' de ' + draftIconName(item)).join('. ');
+  const drawings = Array(count).fill(`<div class="flex flex-wrap justify-center rounded-btn border-2 border-numu-purple p-2">${chips(item, size)}</div>`).join('');
+  return visualFrame(description, `<div class="flex flex-wrap justify-center gap-3">${drawings}</div>`);
+}
+
+function renderArray({ rows, columns, icon: item }) {
+  const description = Array(rows).fill('Fila con ' + columns + ' de ' + draftIconName(item)).join('. ');
+  const drawings = Array(rows).fill(`<div class="flex justify-center">${chips(item, columns)}</div>`).join('');
+  return visualFrame(description, `<div class="grid gap-1">${drawings}</div>`);
+}
+
+function renderSharing({ total, recipients, display, icon: item, container }) {
+  const description = 'Cantidad para repartir ' + total + ' de ' + draftIconName(item) + '. ' + DRAFT_CONTAINERS[container] + ', cantidad ' + recipients + '.';
+  const drawings = display === 'objects'
+    ? `<div class="flex flex-wrap justify-center">${chips(item, total)}</div><div class="flex flex-wrap justify-center gap-2">${Array(recipients).fill('□').join(' ')}</div>`
+    : `<div>Para repartir ${total}</div><div>${DRAFT_CONTAINERS[container]} · ${recipients}</div>`;
+  return visualFrame(description, drawings);
+}
+
+const DRAFT_VISUALS = {
+  reflection_grid: { evidence: reflectionEvidence, render: renderReflection, module: 'geometria' },
+  measurement_grid: { evidence: measurementEvidence, render: renderMeasurement, module: 'geometria' },
+  number_staircase: { evidence: staircaseEvidence, render: renderStaircase, module: 'algebra' },
+  balance_model: { evidence: balanceEvidence, render: renderBalance, module: 'algebra' },
+  unknown_number: { evidence: hiddenNumberEvidence, render: renderHiddenNumber, module: 'algebra' },
+  rule_machine: { evidence: machineEvidence, render: renderMachine, module: 'algebra' },
+  growing_pattern: { evidence: growthEvidence, render: renderGrowth, module: 'algebra' },
+  equal_groups: { evidence: groupingEvidence, render: renderGrouping, module: 'aritmetica' },
+  rectangular_array: { evidence: arrayEvidence, render: renderArray, module: 'aritmetica' },
+  equal_sharing: { evidence: sharingEvidence, render: renderSharing, module: 'aritmetica' },
+};

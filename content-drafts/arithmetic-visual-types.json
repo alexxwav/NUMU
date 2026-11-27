@@ -1,0 +1,61 @@
+{
+  "scope": "Campos comprobados en los borradores Grupos iguales y Repartimos por igual. Solo se adaptan los ejercicios estáticos.",
+  "visuals": {
+    "equal_groups": {
+      "required": [
+        "type",
+        "icon",
+        "container",
+        "group_count",
+        "items_per_group"
+      ],
+      "tasks": {
+        "contar-grupos": "La respuesta numérica es group_count.",
+        "identificar-suma-repetida": "La respuesta es una suma de group_count términos, todos iguales a items_per_group."
+      },
+      "evidence": [
+        "group_count",
+        "items_per_group"
+      ]
+    },
+    "rectangular_array": {
+      "required": [
+        "type",
+        "icon",
+        "rows",
+        "columns"
+      ],
+      "tasks": {
+        "representar-multiplicacion": "La respuesta conserva el orden filas × columnas.",
+        "calcular-total-del-arreglo": "La respuesta numérica es filas por columnas."
+      },
+      "evidence": [
+        "rows",
+        "columns"
+      ]
+    },
+    "equal_sharing": {
+      "required": [
+        "type",
+        "icon",
+        "container",
+        "total",
+        "recipients",
+        "display"
+      ],
+      "displays": [
+        "objects",
+        "summary"
+      ],
+      "tasks": {
+        "elegir-reparto-exacto": "Una opción enlista cantidades iguales por recipiente cuyo total es exactamente total.",
+        "calcular-cuanto-recibe-cada-uno": "La respuesta es total dividido entre recipients en un reparto exacto.",
+        "identificar-sobrantes": "La respuesta es el residuo al dividir total entre recipients."
+      },
+      "evidence": [
+        "total",
+        "recipients"
+      ]
+    }
+  }
+}
