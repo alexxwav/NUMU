@@ -36,4 +36,8 @@ y se conserva al combinar con la cuenta. Limitación: no viaja entre dispositivo
 
 ## Pendiente
 
-- **Cobertura de Conteo N1–N2** (4 y 5 cantidades distintas): ver la corrección de contenidos.
+- **Conteo N1–N2** (4 y 5 cantidades distintas; la evidencia de contar es solo la cantidad): ya no
+  usa el flujo anterior con repeticiones al azar. `minimalRepeatRound` (modo `repeticion-minima`) pone
+  todas las cantidades distintas y repite solo lo inevitable (N1: 2, N2: 1), siempre con otro objeto y
+  nunca dos seguidas. No cambia rangos ni catálogo. Llegar a 6 distintas en N1 exigiría agregar la
+  cantidad 1 o la 6 (cambia la dificultad): decisión de Viviana.

@@ -101,7 +101,13 @@ test('siempre · las combinaciones sin cobertura de Conteo siguen documentadas, 
   const conteo = allLessons.find((e) => e.lesson.id === 'conteo-basico')?.lesson;
   for (const level of [1, 2]) {
     assert.equal(lessonCoverage({ lesson: conteo, level }).playable, false, `conteo N${level}`);
-    assert.equal(planLessonRound({ lesson: conteo, level }).mode, 'legacy', 'se juega con el flujo anterior, sin cambios');
+    // Se juega con repeticiones mínimas: todas las cantidades distintas, sin inventar bancos.
+    const plan = planLessonRound({ lesson: conteo, level });
+    const distinct = lessonCoverage({ lesson: conteo, level }).distinct;
+    assert.equal(plan.mode, 'repeticion-minima', `conteo N${level}`);
+    assert.equal(plan.questions.length, QUESTIONS_PER_ROUND);
+    assert.equal(new Set(plan.questions.map(questionSignature)).size, distinct, 'usa todas las cantidades distintas');
+    assert.ok(plan.questions.every((q) => q.level === level), 'sin cambiar el nivel');
   }
 });
 

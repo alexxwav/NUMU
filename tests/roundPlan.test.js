@@ -33,10 +33,16 @@ test('regresión: las 4 lecciones actuales se juegan en los niveles 1, 2 y 3 con
     for (const level of [1, 2, 3]) {
       for (let run = 0; run < 25; run++) {
         const plan = planLessonRound({ lesson: lessons[id], level });
-        // Sin repetir preguntas donde hay 6 distintas. Flujo legacy temporal (con repetidas) solo en
-        // Conteo N1–N2 (decisión pendiente sobre su evidencia). Figuras ya juega con su ampliación.
+        // Sin repetir preguntas donde hay 6 distintas. Conteo N1–N2 (4 y 5 cantidades distintas):
+        // repeticiones mínimas, siempre con otro objeto. Figuras ya juega con su ampliación.
         const legacyExpected = id === 'conteo-basico' && level < 3;
-        assert.equal(plan.mode, legacyExpected ? 'legacy' : 'selector', `${id} N${level}`);
+        assert.equal(plan.mode, legacyExpected ? 'repeticion-minima' : 'selector', `${id} N${level}`);
+        if (legacyExpected) {
+          const distinct = new Set(plan.questions.map(questionSignature)).size;
+          assert.equal(distinct, level === 1 ? 4 : 5, `conteo N${level}: todas las cantidades distintas`);
+          const pairs = plan.questions.map((q) => `${questionSignature(q)}|${q.prompt}`);
+          assert.equal(new Set(pairs).size, QUESTIONS_PER_ROUND, 'una cantidad repetida siempre con otro objeto');
+        }
         assert.equal(plan.questions.length, QUESTIONS_PER_ROUND, `${id} N${level}`);
         assert.ok(plan.questions.every((q) => q.level === level));
         // N2–N3: el mismo generador (R12–R14); Figuras, el banco editorial de su nivel (sin generador).

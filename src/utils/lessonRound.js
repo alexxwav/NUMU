@@ -418,6 +418,51 @@ export function selectLessonQuestions({ lesson, level, count = QUESTIONS_PER_ROU
   return result(chosen);
 }
 
+/**
+ * Ronda con repeticiones MÍNIMAS para una lección actual cuyo nivel no reúne 6 preguntas distintas
+ * (Conteo N1: 4 cantidades; N2: 5). Empieza con todas las distintas del selector y completa con el
+ * mismo generador del nivel, repitiendo primero la evidencia menos usada, siempre con OTRO enunciado
+ * (otro objeto) y nunca dos equivalentes seguidas. No cambia rangos, niveles ni la habilidad.
+ * @returns {Object[]|null} 6 preguntas, o null si no se puede completar así.
+ */
+export function minimalRepeatRound({ lesson, level, count = QUESTIONS_PER_ROUND, selection }) {
+  const spec = lessonLevelSpec(lesson, level);
+  if (!isKnownGenerator(spec.generatorKey) || !selection?.questions?.length) return null;
+  const chosen = [...selection.questions];
+  const uses = new Map(chosen.map((q) => [questionSignature(q), 1]));
+  const seenPrompts = new Set(chosen.map((q) => `${questionSignature(q)}|${q.prompt}`));
+  const pool = [];
+  for (let attempt = 0; attempt < count * GENERATOR_ATTEMPTS_PER_SLOT && pool.length < 60; attempt++) {
+    const [question] = generateQuestions(spec.generatorKey, spec.level, 1);
+    if (!question || representabilityProblem(question)) continue;
+    const item = { ...withKey(question, semanticKeyForGenerated(spec.generatorKey, question)), source: 'generador', level: spec.level };
+    if (uses.has(questionSignature(item))) pool.push(item);
+  }
+  while (chosen.length < count) {
+    const options = pool.filter((q) => !seenPrompts.has(`${questionSignature(q)}|${q.prompt}`));
+    if (options.length === 0) return null;
+    const least = Math.min(...options.map((q) => uses.get(questionSignature(q))));
+    const pick = options.find((q) => uses.get(questionSignature(q)) === least);
+    uses.set(questionSignature(pick), least + 1);
+    seenPrompts.add(`${questionSignature(pick)}|${pick.prompt}`);
+    chosen.push(pick);
+  }
+  // Nunca dos equivalentes seguidas: en cada paso, la evidencia con más pendientes distinta de la anterior.
+  const remaining = [...chosen];
+  const ordered = [];
+  while (remaining.length) {
+    const last = ordered.length ? questionSignature(ordered[ordered.length - 1]) : null;
+    const left = new Map();
+    for (const q of remaining) left.set(questionSignature(q), (left.get(questionSignature(q)) ?? 0) + 1);
+    const candidates = remaining.filter((q) => questionSignature(q) !== last);
+    const pool = candidates.length ? candidates : remaining;
+    const best = pool.reduce((a, b) => (left.get(questionSignature(b)) > left.get(questionSignature(a)) ? b : a));
+    ordered.push(best);
+    remaining.splice(remaining.indexOf(best), 1);
+  }
+  return ordered;
+}
+
 /** Máximo de preguntas de refuerzo (tipos fallados) por ronda: el resto sigue siendo variado. */
 export const MAX_REINFORCED = 2;
 
@@ -477,20 +522,26 @@ export function planLessonRound({ lesson, level, count = QUESTIONS_PER_ROUND, ra
   if (!isLessonPublished(lesson)) return { mode: 'unavailable', questions: [], reasons: ['La lección no está publicada.'] };
 
   const legacy = () => ({ mode: 'legacy', questions: buildLessonRound({ lesson, level, count, random }), reasons: [] });
+  // Lección actual sin 6 preguntas distintas en su nivel (Conteo N1–N2): todas las distintas y solo
+  // las repeticiones inevitables, con otro objeto; si ni así se completa, el flujo legacy de siempre.
+  const shortRound = (selection) => {
+    const minimal = minimalRepeatRound({ lesson, level, count, selection });
+    if (minimal) return { mode: 'repeticion-minima', questions: minimal, reasons: selection.reasons };
+    return { ...legacy(), reasons: selection.reasons };
+  };
   const hasLevels = Boolean(lesson.levels) && typeof lesson.levels === 'object' && Object.keys(lesson.levels).length > 0;
   if (hasLevels) {
     const selection = selectLessonQuestions({ lesson, level, count, random, ...adaptive });
     if (selection.playable) return { mode: 'selector', questions: selection.questions, reasons: selection.reasons };
-    if (hasLegacyRound(lesson)) return { ...legacy(), reasons: selection.reasons };
+    if (hasLegacyRound(lesson)) return shortRound(selection);
     return { mode: 'unavailable', questions: [], reasons: selection.reasons };
   }
   if (hasLegacyRound(lesson)) {
     // Mismas fuentes que buildLessonRound (catálogo en N1 y el mismo generador con R12–R14), pero
-    // sin repetir preguntas (contrato v1.1 §4). Si no llega a 6 distintas (Figuras, hasta integrar
-    // la ampliación de Viviana), se conserva temporalmente el flujo legacy.
+    // sin repetir preguntas (contrato v1.1 §4). Si no llega a 6 distintas, repeticiones mínimas.
     const selection = selectLessonQuestions({ lesson, level, count, random, ...adaptive });
     if (selection.playable) return { mode: 'selector', questions: selection.questions, reasons: [] };
-    return { ...legacy(), reasons: selection.reasons };
+    return shortRound(selection);
   }
   return { mode: 'unavailable', questions: [], reasons: ['La lección no tiene ejercicios por nivel ni un generador registrado.'] };
 }
