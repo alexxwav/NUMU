@@ -19,19 +19,27 @@ guardando lecciones (RPC de 2 parámetros) y perfil; ninguna migración cambia d
 
 ## 2. Secuencia de despliegue (corta)
 
-1. **Confirmar esquema:** ejecutar `supabase/diagnostico_numu.sql` (solo lectura). Seguir solo si no hay
-   ninguna fila `FALTA`; si `user_module_progress` falta, aplicar antes `supabase_progreso_modulos.sql`.
-   Guardar la fila `totales · perfil_usuario` (perfiles, suma de gemas y XP).
-2. **Respaldar:** ejecutar `supabase/respaldo_previo.sql` (copia las 6 tablas al esquema
-   `respaldo_numu`, no expuesto por la API; al final, originales = respaldadas). Opcional: CSV.
-3. **Aplicar** (cada archivo completo, en este orden): `propuesta_xp_monotona.sql` →
-   `propuesta_ultima_ronda_transaccional.sql` → `propuesta_gemas_transaccional.sql`.
-4. **Verificar:** repetir `diagnostico_numu.sql`: las 3 migraciones `APLICADA`, mismos totales, RPC de
-   gemas ejecutables por `authenticated` y no por `anon`.
-5. **Cuenta ficticia:** sección 4 con la app publicada (`.env.local` con URL y clave pública de numu).
-6. **Persistencia:** después de cada paso, `supabase/verificar_cuenta_ficticia.sql` (solo lectura).
-7. **Recuperar si falla:** `supabase/reversion_propuestas.sql` (no borra datos); si hiciera falta,
-   restaurar los CSV del paso 2.
+Diagnóstico real de numu (27-nov-2026): **COMPATIBLE**. 8 tablas, `user_module_progress`, 4 únicas,
+trigger de registro y RLS correctos; 3 migraciones pendientes. Las 6 columnas `character varying` y
+`puntuacion numeric` no afectan a ninguna migración (ensayo con esos tipos: 53/53). 4 perfiles con 0 XP y
+0 gemas: el libro de gemas empezará con 4 saldos iniciales de 0.
+
+Cada archivo se pega COMPLETO en el SQL Editor y se ejecuta una vez:
+
+| Paso | Archivo | Escribe | Esperado |
+|---|---|---|---|
+| 1 | `respaldo_previo.sql` | sí (solo crea `respaldo_numu`) | 6 filas «datos» OK (filas y md5) + 8 tipos «esquema» OK |
+| 2 | `verificacion_post_migracion.sql` | no | «todas» OK · 1, 2, 3 PENDIENTE |
+| 3 | `propuesta_xp_monotona.sql` | sí | — |
+| 4 | `verificacion_post_migracion.sql` | no | «todas» OK · 1 OK · 2, 3 PENDIENTE |
+| 5 | `propuesta_ultima_ronda_transaccional.sql` | sí | — |
+| 6 | `verificacion_post_migracion.sql` | no | «todas» OK · 1, 2 OK · 3 PENDIENTE |
+| 7 | `propuesta_gemas_transaccional.sql` | sí | — |
+| 8 | `verificacion_post_migracion.sql` | no | todo OK |
+| 9 | `diagnostico_numu.sql` | no | 3 migraciones APLICADA, mismos totales |
+
+Si cualquier verificación muestra **ERROR**: no seguir y ejecutar `reversion_propuestas.sql` (no borra
+datos). Si aun así hiciera falta, restaurar desde `respaldo_numu` (instrucciones al final de `respaldo_previo.sql`).
 
 ## 3. Qué falta para conectar Supabase real
 
@@ -41,18 +49,23 @@ guardando lecciones (RPC de 2 parámetros) y perfil; ninguna migración cambia d
 - Autorizar el respaldo y las tres migraciones (pasos 3–5), por quien administra el proyecto.
 - Crear la cuenta ficticia (correo de prueba del equipo) y ejecutar la sección 4.
 
-## 4. Prueba con una cuenta ficticia (después de migrar)
+## 4. Prueba con una cuenta ficticia (después del paso 9)
 
-| Paso | Acción | Esperado |
+Preparación: correo de prueba del equipo con buzón accesible (el proyecto exige confirmar el correo).
+App: rama `pruebas/integracion-numu-15` con `.env.local` de numu (`npm run dev`). Después de cada paso,
+`verificar_cuenta_ficticia.sql` (solo lectura) con ese correo en la primera línea.
+
+| # | Acción en la app | Esperado en `verificar_cuenta_ficticia.sql` |
 |---|---|---|
-| 1 | Registrarse con la cuenta ficticia y completar el cuestionario | fila en `usuarios` y `perfil_usuario` con 0 gemas y saldo inicial en `movimiento_gemas` |
-| 2 | Jugar Sumas con 3★ | `progreso_leccion` con `nivel = 2`, `ultimas_estrellas = 3`; +15 gemas por `registrar_gemas_ronda` |
-| 3 | Repetir con 1★ | mejor estrella sigue en 3; `ultimas_estrellas = 1` |
-| 4 | Jugar una parada del mapa | fila en `user_module_progress`; XP +50 por estrella mejorada |
-| 5 | Comprar un marco con doble clic | se cobra una vez; fila en `compra_tienda` |
-| 6 | Cerrar sesión, iniciar y recargar | mismas gemas, XP, marcos y progreso |
-| 7 | Iniciar sesión en otro navegador y comprar otro marco | ambos dispositivos muestran el mismo saldo |
-| 8 | Abrir `/lecciones/la-balanza-de-numu/jugar` | redirige a la teoría; sin gemas ni guardados |
+| 1 | Crear cuenta y confirmar el correo | (aún sin filas de perfil) |
+| 2 | Iniciar sesión y completar el cuestionario | `perfil`: gemas 0 · xp 0; `diagnostico`; `gemas saldo_inicial` 0 |
+| 3 | Abrir la teoría de Sumas básicas | sin cambios (abrir teoría no guarda ni premia) |
+| 4 | Jugar Sumas con 0–1 errores (3★) | `leccion sumas-basicas`: mejor 3 · última 3 · nivel 2; `gemas recompensa` 15; `mapa aritmetica`; perfil: xp > 0 |
+| 5 | Recargar la página | la app muestra las mismas gemas, XP, estrellas y nivel |
+| 6 | Cerrar sesión e iniciar otra vez | igual que el paso 5 |
+| 7 | Iniciar sesión en otro navegador | igual que el paso 5 |
+| 8 | Comprar «Marco Coral» (30) si alcanza, con doble clic | `gemas compra` −30 una sola vez; al recargar e iniciar sesión las gemas no vuelven |
+| 9 | Abrir `/lecciones/la-balanza-de-numu/jugar` | redirige a la teoría; sin filas nuevas |
 
 ## 5. Riesgos conocidos
 

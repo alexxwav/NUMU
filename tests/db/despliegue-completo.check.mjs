@@ -33,14 +33,15 @@ await db.exec(`
   create function auth.uid() returns uuid language sql stable as
     $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
   grant usage on schema auth to anon, authenticated;
-  -- Tablas del equipo (antes de propuesta_numu_auth.sql).
+  -- Tablas del equipo (antes de propuesta_numu_auth.sql), con los TIPOS REALES del diagnóstico de numu
+  -- (27-nov-2026): seis columnas character varying en lugar de text y puntuacion numeric.
   create table public.usuarios (id serial primary key, correo text, contrasena text not null, fecha_registro date);
   create table public.perfil_usuario (id serial primary key, usuario_id integer references public.usuarios (id),
-    nombre text, apodo text, edad integer, pais text, grado_escolar text, avatar integer default 0,
+    nombre varchar(100), apodo varchar(50), edad integer, pais varchar(60), grado_escolar varchar(40), avatar integer default 0,
     gemas integer not null default 0, xp integer not null default 0);
   create table public.resultados_examen_diagnostico (id serial primary key, usuario_id integer references public.usuarios (id),
-    num_aciertos integer, puntuacion integer, autoevaluacion text, respuestas json);
-  create table public.cursos (id serial primary key, nombre_curso text, slug text unique);
+    num_aciertos integer, puntuacion numeric, autoevaluacion varchar(30), respuestas json);
+  create table public.cursos (id serial primary key, nombre_curso text, slug varchar(60) unique);
   create table public.lecciones (id serial primary key, curso_id integer references public.cursos (id), titulo_leccion text, nivel integer, preguntas json);
   create table public.progreso (id serial primary key, usuario_id integer references public.usuarios (id), curso_id integer references public.cursos (id),
     nivel_actual integer default 1, num_estrellas integer default 0, num_intentos integer default 0, racha_dias integer default 1, leccion_completada boolean default false);
@@ -126,22 +127,43 @@ ok('la app publicada guarda perfil, progreso, lecciones y mapa', antes.perfil.ge
 console.log('Respaldo');
 await as(null);
 const respaldo = await db.exec(file('supabase', 'respaldo_previo.sql'));
-const conteos = respaldo.at(-1).rows;
-ok('respaldo_previo.sql copia las 6 tablas con datos de alumnos', conteos.length === 6 && conteos.every((r) => Number(r.originales) === Number(r.respaldadas)),
-  JSON.stringify(conteos));
-ok('el respaldo está en un esquema aparte', (await q(`select count(*)::int n from pg_tables where schemaname = 'respaldo_numu'`))[0].n === 6);
+const informe = respaldo.at(-1).rows;
+const datosResp = informe.filter((r) => r.parte === 'datos');
+ok('respaldo_previo.sql: 6 tablas con mismas filas y misma huella md5', datosResp.length === 6 && datosResp.every((r) => r.estado === 'OK'), JSON.stringify(datosResp));
+const tiposEsquema = informe.filter((r) => r.parte === 'esquema' && r.estado === 'OK').map((r) => r.elemento).sort();
+ok('respaldo del esquema: funciones, triggers, políticas, restricciones, columnas, RLS y permisos',
+  JSON.stringify(tiposEsquema) === JSON.stringify(['columna', 'funcion', 'permiso_funcion', 'permiso_tabla', 'politica', 'restriccion', 'rls', 'trigger']), tiposEsquema.join(', '));
+const defRpc = (await q(`select definicion from respaldo_numu.esquema_20261127 where tipo = 'funcion' and nombre like 'registrar_resultado_leccion(%'`))[0]?.definicion ?? '';
+ok('guarda la definición completa del RPC actual (para restaurarlo)', /CREATE OR REPLACE FUNCTION public\.registrar_resultado_leccion\(p_leccion_id text, p_estrellas integer\)/.test(defRpc));
+ok('guarda el trigger de registro y las políticas', (await q(`select count(*)::int n from respaldo_numu.esquema_20261127 where (tipo = 'trigger' and nombre like 'auth.users%al_crear_cuenta_numu') or (tipo = 'politica' and nombre like 'perfil_usuario%')`))[0].n === 4);
+ok('el respaldo está en un esquema aparte', (await q(`select count(*)::int n from pg_tables where schemaname = 'respaldo_numu'`))[0].n === 8);
 await db.exec(file('supabase', 'respaldo_previo.sql'));
-ok('volver a ejecutarlo no duplica ni sobrescribe', (await q(`select count(*)::int n from respaldo_numu.perfil_usuario_20261127`))[0].n === Number(conteos[1].originales));
+ok('volver a ejecutarlo no duplica ni sobrescribe', (await q(`select count(*)::int n from respaldo_numu.perfil_usuario_20261127`))[0].n === Number(datosResp.find((r) => r.elemento === 'perfil_usuario').original.split(' ')[0]));
 await as(ana);
 ok('los alumnos (authenticated) no pueden leer el respaldo', await fails(() => q(`select * from respaldo_numu.perfil_usuario_20261127`)));
 await as(null);
 const datosAntes = await snapshot();
 
 // --- 3. Las tres propuestas, en orden ----------------------------------------------------------------
-console.log('Aplicación en orden');
-for (const m of MIGRACIONES) {
+console.log('Aplicación en orden, con verificacion_post_migracion.sql después de cada una');
+const verificar = async () => {
+  await as(null);
+  await db.exec('begin transaction read only');
+  try { return (await db.query(file('supabase', 'verificacion_post_migracion.sql'))).rows; } finally { await db.exec('commit'); }
+};
+const estadoPor = (rows, prefijo) => [...new Set(rows.filter((r) => r.migracion.startsWith(prefijo)).map((r) => r.estado))];
+let ver = await verificar();
+ok('antes: datos OK y las 3 migraciones PENDIENTE (solo lectura)', estadoPor(ver, 'todas').join() === 'OK'
+  && ['1', '2', '3'].every((p) => estadoPor(ver, p).join() === 'PENDIENTE'), JSON.stringify(ver.filter((r) => r.estado === 'ERROR')));
+for (const [i, m] of MIGRACIONES.entries()) {
   try { await as(null); await db.exec(file('supabase', m)); ok(`${m} se aplica`, true); }
   catch (e) { ok(`${m} se aplica`, false, e.message); process.exit(1); }
+  ver = await verificar();
+  const aplicadas = ['1', '2', '3'].slice(0, i + 1);
+  const pendientes = ['1', '2', '3'].slice(i + 1);
+  ok(`después de ${m}: datos intactos, ${aplicadas.join('+')} OK${pendientes.length ? `, ${pendientes.join('+')} PENDIENTE` : ''}, ningún ERROR`,
+    estadoPor(ver, 'todas').join() === 'OK' && aplicadas.every((p) => estadoPor(ver, p).join() === 'OK')
+    && pendientes.every((p) => estadoPor(ver, p).join() === 'PENDIENTE'), JSON.stringify(ver.filter((r) => r.estado !== 'OK' && r.estado !== 'PENDIENTE')));
 }
 
 // --- 4. Verificación posterior ------------------------------------------------------------------------
@@ -188,6 +210,9 @@ await as(ana);
 const compra = (await q(`select * from public.comprar_articulo('frame-gold', 'compra-ana-00000001')`))[0];
 ok('Ana compra el Marco Dorado: 100 → 40', compra.comprado === true && compra.gemas === 40);
 ok('Ana no ve datos de Ceci', (await q(`select * from public.movimiento_gemas`)).every((m) => m.usuario_id === anaId));
+const trasUso = await verificar();
+ok('la verificación detecta cambios de datos (tras compras y rondas ya no coincide con el respaldo)',
+  trasUso.some((r) => r.migracion === 'todas' && r.estado === 'ERROR') && ['1', '2'].every((p) => estadoPor(trasUso, p).join() === 'OK'));
 
 console.log('Reaplicar (idempotencia)');
 const antesReaplicar = await snapshot();
