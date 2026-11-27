@@ -1,0 +1,487 @@
+{
+  "id": "repartimos-por-igual",
+  "course_id": "aritmetica",
+  "title": "Repartimos por igual",
+  "position": 5,
+  "base_level": 1,
+  "published": false,
+  "objective": "Repartir objetos en grupos de la misma cantidad, descubrir cuánto recibe cada participante e identificar lo que sobra.",
+  "explanation": "Repartir por igual significa que cada persona o recipiente recibe lo mismo. Da un objeto a cada uno por turno. Cuando todos tengan uno más, completaste una vuelta. Da otra vuelta si te alcanza para todos. Si quedan objetos pero ya no alcanzan para otra vuelta completa, esos objetos sobran. Si se usan todos, el reparto es exacto.",
+  "guided_example": {
+    "mode": "interactive",
+    "explanation": "Hay trece conchas y tres canastas. Reparte una concha por canasta en cada vuelta. Averigua cuántas conchas recibe cada canasta y cuántas sobran.",
+    "visual": {
+      "type": "equal_sharing",
+      "icon": "shell",
+      "container": "basket",
+      "total": 13,
+      "recipients": 3,
+      "display": "interactive"
+    },
+    "interaction": {
+      "type": "share_objects",
+      "instructions": [
+        "Toca una concha y elige la canasta que la recibe.",
+        "Antes de volver a una canasta, dale una concha a cada una de las demás.",
+        "Cuando ya no alcance para una vuelta completa, cuenta las conchas de una canasta y las que quedaron fuera."
+      ],
+      "feedback_on_complete": "¡Cada canasta recibe 4 conchas y sobra 1! Cuatro vueltas completas usaron doce conchas. La última concha no alcanza para otra vuelta.",
+      "restart_label": "Volver a empezar"
+    }
+  },
+  "levels": {
+    "1": {
+      "exercise_types": [
+        "elegir-reparto-exacto"
+      ],
+      "exercises": [
+        {
+          "id": "repartimos-por-igual-n1-01",
+          "type": "elegir-reparto-exacto",
+          "prompt": "Hay 6 conchas y 2 canastas. ¿Qué reparto usa todas las conchas y deja la misma cantidad en cada canasta?",
+          "visual": {
+            "type": "equal_sharing",
+            "icon": "shell",
+            "container": "basket",
+            "total": 6,
+            "recipients": 2,
+            "display": "objects"
+          },
+          "options": [
+            "4 y 2",
+            "2 y 2",
+            "3 y 3",
+            "4 y 4"
+          ],
+          "correct_answer": "3 y 3",
+          "answer_index": 2,
+          "hint": "Pon una concha en cada canasta por turno. Rellena las dos antes de dar otra vuelta.",
+          "feedback_correct": "¡Es 3 y 3! Las dos canastas quedan iguales y usaste las seis conchas.",
+          "feedback_incorrect": "Revisa dos cosas: que ambas canastas tengan lo mismo y que uses todas las conchas."
+        },
+        {
+          "id": "repartimos-por-igual-n1-02",
+          "type": "elegir-reparto-exacto",
+          "prompt": "Hay 6 peces para 3 peceras. ¿Cómo repartes todos los peces para que cada pecera tenga lo mismo?",
+          "visual": {
+            "type": "equal_sharing",
+            "icon": "fish",
+            "container": "fish_tank",
+            "total": 6,
+            "recipients": 3,
+            "display": "objects"
+          },
+          "options": [
+            "2, 2 y 2",
+            "1, 2 y 3",
+            "1, 1 y 1",
+            "3, 3 y 3"
+          ],
+          "correct_answer": "2, 2 y 2",
+          "answer_index": 0,
+          "hint": "Imagina que das un pez a cada pecera antes de volver a la primera.",
+          "feedback_correct": "¡Es 2, 2 y 2! Las tres peceras reciben lo mismo y hay lugar para los seis peces.",
+          "feedback_incorrect": "Si una pecera terminó con más peces que otra, prueba poniendo un pez por turno en cada una."
+        },
+        {
+          "id": "repartimos-por-igual-n1-03",
+          "type": "elegir-reparto-exacto",
+          "prompt": "Hay 8 pelotas para 2 cajas. ¿Qué opción llena las cajas por igual usando todas las pelotas?",
+          "visual": {
+            "type": "equal_sharing",
+            "icon": "ball",
+            "container": "box",
+            "total": 8,
+            "recipients": 2,
+            "display": "objects"
+          },
+          "options": [
+            "5 y 3",
+            "4 y 4",
+            "3 y 3",
+            "5 y 5"
+          ],
+          "correct_answer": "4 y 4",
+          "answer_index": 1,
+          "hint": "Prueba alternar entre las cajas mientras repartes las pelotas.",
+          "feedback_correct": "¡Es 4 y 4! Cada caja tiene cuatro pelotas y entre ambas reúnen las ocho.",
+          "feedback_incorrect": "Suma las pelotas de ambas cajas y después compara lo que tiene cada una."
+        },
+        {
+          "id": "repartimos-por-igual-n1-04",
+          "type": "elegir-reparto-exacto",
+          "prompt": "Hay 9 estrellas para 3 bandejas. ¿Qué reparto deja las bandejas iguales y usa todas las estrellas?",
+          "visual": {
+            "type": "equal_sharing",
+            "icon": "star",
+            "container": "tray",
+            "total": 9,
+            "recipients": 3,
+            "display": "objects"
+          },
+          "options": [
+            "2, 3 y 4",
+            "4, 4 y 4",
+            "2, 2 y 2",
+            "3, 3 y 3"
+          ],
+          "correct_answer": "3, 3 y 3",
+          "answer_index": 3,
+          "hint": "Haz una vuelta poniendo una estrella en cada bandeja. Repite hasta usar el grupo entero.",
+          "feedback_correct": "¡Es 3, 3 y 3! Todas las bandejas quedan iguales y no queda ninguna estrella fuera.",
+          "feedback_incorrect": "Si quedan estrellas fuera, prueba otra vuelta. Cada bandeja debe recibir una en esa vuelta."
+        },
+        {
+          "id": "repartimos-por-igual-n1-05",
+          "type": "elegir-reparto-exacto",
+          "prompt": "Hay 8 tarjetas de corazón para 4 cajas. ¿Cómo repartes todas las tarjetas dejando lo mismo en cada caja?",
+          "visual": {
+            "type": "equal_sharing",
+            "icon": "heart",
+            "container": "box",
+            "total": 8,
+            "recipients": 4,
+            "display": "objects"
+          },
+          "options": [
+            "1, 2, 2 y 3",
+            "2, 2, 2 y 2",
+            "1, 1, 1 y 1",
+            "3, 3, 3 y 3"
+          ],
+          "correct_answer": "2, 2, 2 y 2",
+          "answer_index": 1,
+          "hint": "En cada vuelta pon una tarjeta en cada caja. Mira si puedes completar otra vuelta.",
+          "feedback_correct": "¡Es 2, 2, 2 y 2! Dos vueltas completas usan las ocho tarjetas.",
+          "feedback_incorrect": "Cuenta cuántas cajas hay y asegúrate de que ninguna se salte en una vuelta."
+        },
+        {
+          "id": "repartimos-por-igual-n1-06",
+          "type": "elegir-reparto-exacto",
+          "prompt": "Tienes 12 conchas para 4 canastas. ¿Qué reparto usa todas y deja la misma cantidad en cada canasta?",
+          "visual": {
+            "type": "equal_sharing",
+            "icon": "shell",
+            "container": "basket",
+            "total": 12,
+            "recipients": 4,
+            "display": "objects"
+          },
+          "options": [
+            "4, 4, 4 y 4",
+            "2, 2, 2 y 2",
+            "3, 3, 3 y 3",
+            "2, 3, 3 y 4"
+          ],
+          "correct_answer": "3, 3, 3 y 3",
+          "answer_index": 2,
+          "hint": "Reparte una concha por canasta, vuelve a la primera y repite hasta terminar.",
+          "feedback_correct": "¡Es 3, 3, 3 y 3! Cuatro canastas con tres conchas cada una reúnen las doce.",
+          "feedback_incorrect": "Comprueba que la suma dé doce y que todas las canastas tengan el mismo número."
+        }
+      ]
+    },
+    "2": {
+      "exercise_types": [
+        "calcular-cuanto-recibe-cada-uno"
+      ],
+      "exercises": [
+        {
+          "id": "repartimos-por-igual-n2-01",
+          "type": "calcular-cuanto-recibe-cada-uno",
+          "prompt": "NUMU tiene 10 conchas para 2 niñas. Si las reparte todas por igual, ¿cuántas conchas recibe cada niña?",
+          "visual": {
+            "type": "equal_sharing",
+            "icon": "shell",
+            "container": "child",
+            "total": 10,
+            "recipients": 2,
+            "display": "summary"
+          },
+          "options": [
+            4,
+            10,
+            5,
+            2
+          ],
+          "correct_answer": 5,
+          "answer_index": 2,
+          "hint": "Haz un grupo por niña y pon una concha en cada grupo por turno.",
+          "feedback_correct": "¡Cada niña recibe 5! Cinco conchas en cada grupo suman diez.",
+          "feedback_incorrect": "Comprueba si tu número funciona para cada niña. Al juntar los dos grupos debe haber diez conchas."
+        },
+        {
+          "id": "repartimos-por-igual-n2-02",
+          "type": "calcular-cuanto-recibe-cada-uno",
+          "prompt": "Hay 12 estrellas para 3 bandejas. Si repartes todas por igual, ¿cuántas estrellas van en cada bandeja?",
+          "visual": {
+            "type": "equal_sharing",
+            "icon": "star",
+            "container": "tray",
+            "total": 12,
+            "recipients": 3,
+            "display": "summary"
+          },
+          "options": [
+            4,
+            3,
+            6,
+            12
+          ],
+          "correct_answer": 4,
+          "answer_index": 0,
+          "hint": "Piensa cuántas vueltas completas puedes dar colocando una estrella por bandeja.",
+          "feedback_correct": "¡Van 4 en cada bandeja! Cuatro más cuatro más cuatro son doce.",
+          "feedback_incorrect": "Si elegiste cuántas bandejas hay, todavía falta saber cuántas estrellas recibe cada una."
+        },
+        {
+          "id": "repartimos-por-igual-n2-03",
+          "type": "calcular-cuanto-recibe-cada-uno",
+          "prompt": "Hay 24 pelotas para 4 cajas. Si pones la misma cantidad en cada caja y usas todas, ¿cuántas pelotas van en una caja?",
+          "visual": {
+            "type": "equal_sharing",
+            "icon": "ball",
+            "container": "box",
+            "total": 24,
+            "recipients": 4,
+            "display": "summary"
+          },
+          "options": [
+            4,
+            5,
+            8,
+            6
+          ],
+          "correct_answer": 6,
+          "answer_index": 3,
+          "hint": "Empieza con grupos iguales. Añade una pelota a cada grupo en cada vuelta hasta completar el total.",
+          "feedback_correct": "¡Van 6 pelotas en cada caja! Cuatro grupos de seis reúnen las veinticuatro.",
+          "feedback_incorrect": "Prueba tu número en las cuatro cajas. Si juntas los grupos, deben aparecer exactamente veinticuatro pelotas."
+        },
+        {
+          "id": "repartimos-por-igual-n2-04",
+          "type": "calcular-cuanto-recibe-cada-uno",
+          "prompt": "Hay 15 tarjetas de corazón para 5 niños. Si repartes todas por igual, ¿cuántas tarjetas recibe cada niño?",
+          "visual": {
+            "type": "equal_sharing",
+            "icon": "heart",
+            "container": "child",
+            "total": 15,
+            "recipients": 5,
+            "display": "summary"
+          },
+          "options": [
+            5,
+            3,
+            2,
+            15
+          ],
+          "correct_answer": 3,
+          "answer_index": 1,
+          "hint": "Dale una tarjeta a cada niño y repite las vueltas mientras queden tarjetas.",
+          "feedback_correct": "¡Cada niño recibe 3 tarjetas! Cinco grupos de tres usan las quince.",
+          "feedback_incorrect": "Cuenta cuántas vueltas completas haces. En cada vuelta, cada niño gana una tarjeta."
+        },
+        {
+          "id": "repartimos-por-igual-n2-05",
+          "type": "calcular-cuanto-recibe-cada-uno",
+          "prompt": "Hay 18 peces para 3 peceras. Si quedan igual de llenas y repartes todos los peces, ¿cuántos peces van en cada pecera?",
+          "visual": {
+            "type": "equal_sharing",
+            "icon": "fish",
+            "container": "fish_tank",
+            "total": 18,
+            "recipients": 3,
+            "display": "summary"
+          },
+          "options": [
+            3,
+            9,
+            12,
+            6
+          ],
+          "correct_answer": 6,
+          "answer_index": 3,
+          "hint": "Busca una cantidad que se pueda repetir una vez por pecera hasta completar el total.",
+          "feedback_correct": "¡Van 6 peces en cada pecera! Seis más seis más seis son dieciocho.",
+          "feedback_incorrect": "Dibuja una pecera por grupo y añade la misma cantidad a las tres. Comprueba el total."
+        },
+        {
+          "id": "repartimos-por-igual-n2-06",
+          "type": "calcular-cuanto-recibe-cada-uno",
+          "prompt": "Quieres guardar 14 conchas en 2 canastas. Si usas todas y repartes por igual, ¿cuántas quedan en cada canasta?",
+          "visual": {
+            "type": "equal_sharing",
+            "icon": "shell",
+            "container": "basket",
+            "total": 14,
+            "recipients": 2,
+            "display": "summary"
+          },
+          "options": [
+            2,
+            7,
+            6,
+            14
+          ],
+          "correct_answer": 7,
+          "answer_index": 1,
+          "hint": "Puedes buscar dos montones iguales. Reúne uno para cada canasta.",
+          "feedback_correct": "¡Quedan 7 conchas en cada canasta! Siete y siete suman catorce.",
+          "feedback_incorrect": "Si un montón es más grande que el otro, mueve conchas de uno al otro hasta que tengan lo mismo."
+        }
+      ]
+    },
+    "3": {
+      "exercise_types": [
+        "identificar-sobrantes"
+      ],
+      "exercises": [
+        {
+          "id": "repartimos-por-igual-n3-01",
+          "type": "identificar-sobrantes",
+          "prompt": "Hay 10 conchas para 3 canastas. Pon una concha en cada canasta por vuelta. Cuando ya no alcance para otra vuelta, ¿cuántas conchas sobran?",
+          "visual": {
+            "type": "equal_sharing",
+            "icon": "shell",
+            "container": "basket",
+            "total": 10,
+            "recipients": 3,
+            "display": "summary"
+          },
+          "options": [
+            0,
+            3,
+            1,
+            4
+          ],
+          "correct_answer": 1,
+          "answer_index": 2,
+          "hint": "Antes de empezar otra vuelta, mira si te alcanza para darle una concha a cada canasta.",
+          "feedback_correct": "¡Sobra 1 concha! Tres vueltas usan nueve. La concha que queda no alcanza para dar otra vuelta igual.",
+          "feedback_incorrect": "Reparte por vueltas completas y cuenta solo las conchas que quedan fuera."
+        },
+        {
+          "id": "repartimos-por-igual-n3-02",
+          "type": "identificar-sobrantes",
+          "prompt": "Hay 14 pelotas y 4 cajas. Das una pelota por caja en cada vuelta. Cuando ya no puedas completar otra vuelta, ¿cuántas pelotas sobran?",
+          "visual": {
+            "type": "equal_sharing",
+            "icon": "ball",
+            "container": "box",
+            "total": 14,
+            "recipients": 4,
+            "display": "summary"
+          },
+          "options": [
+            3,
+            2,
+            4,
+            0
+          ],
+          "correct_answer": 2,
+          "answer_index": 1,
+          "hint": "En cada vuelta, aparta una pelota por caja. Lo que quede al final es lo que sobra.",
+          "feedback_correct": "¡Sobran 2 pelotas! Cuatro cajas reciben tres pelotas cada una, así que se usan doce.",
+          "feedback_incorrect": "Si contaste las que recibe cada caja, ahora mira las pelotas que quedaron fuera de todas las cajas."
+        },
+        {
+          "id": "repartimos-por-igual-n3-03",
+          "type": "identificar-sobrantes",
+          "prompt": "Hay 17 estrellas para 6 bandejas. Reparte una estrella por bandeja en cada vuelta. Cuando no alcance para otra vuelta completa, ¿cuántas estrellas sobran?",
+          "visual": {
+            "type": "equal_sharing",
+            "icon": "star",
+            "container": "tray",
+            "total": 17,
+            "recipients": 6,
+            "display": "summary"
+          },
+          "options": [
+            6,
+            0,
+            2,
+            5
+          ],
+          "correct_answer": 5,
+          "answer_index": 3,
+          "hint": "Compara las estrellas que te quedan con las necesarias para llenar una vuelta de todas las bandejas.",
+          "feedback_correct": "¡Sobran 5 estrellas! Dos vueltas usan doce y las cinco que quedan no alcanzan para otra vuelta.",
+          "feedback_incorrect": "Si repartiste las estrellas que quedaban en algunas bandejas, retira esa última parte para que todas queden iguales."
+        },
+        {
+          "id": "repartimos-por-igual-n3-04",
+          "type": "identificar-sobrantes",
+          "prompt": "Hay 11 tarjetas para 4 niños. Da una tarjeta a cada niño por vuelta. Cuando ya no puedas dar una a todos, ¿cuántas tarjetas sobran?",
+          "visual": {
+            "type": "equal_sharing",
+            "icon": "heart",
+            "container": "child",
+            "total": 11,
+            "recipients": 4,
+            "display": "summary"
+          },
+          "options": [
+            3,
+            4,
+            0,
+            2
+          ],
+          "correct_answer": 3,
+          "answer_index": 0,
+          "hint": "Separa una tarjeta por niño en cada vuelta. Antes de repetir, mira si puedes darle una a todos.",
+          "feedback_correct": "¡Sobran 3 tarjetas! Después de dos vueltas se usaron ocho y quedaron tres.",
+          "feedback_incorrect": "Cuenta las tarjetas sin entregar, después de la última vuelta en la que todos recibieron una."
+        },
+        {
+          "id": "repartimos-por-igual-n3-05",
+          "type": "identificar-sobrantes",
+          "prompt": "Hay 19 conchas para 5 canastas. Pon una por canasta en cada vuelta. Cuando ya no alcance para otra vuelta, ¿cuántas conchas sobran?",
+          "visual": {
+            "type": "equal_sharing",
+            "icon": "shell",
+            "container": "basket",
+            "total": 19,
+            "recipients": 5,
+            "display": "summary"
+          },
+          "options": [
+            5,
+            3,
+            4,
+            1
+          ],
+          "correct_answer": 4,
+          "answer_index": 2,
+          "hint": "Cada vuelta necesita una concha para cada canasta. Comprueba si las que quedan alcanzan para todas.",
+          "feedback_correct": "¡Sobran 4 conchas! Tres vueltas usan quince y quedan cuatro fuera.",
+          "feedback_incorrect": "Si contaste cuántas tiene cada canasta, busca ahora las conchas que todavía están sin repartir."
+        },
+        {
+          "id": "repartimos-por-igual-n3-06",
+          "type": "identificar-sobrantes",
+          "prompt": "Hay 21 peces para 3 peceras. Das un pez a cada pecera en cada vuelta. Al hacer todas las vueltas completas posibles, ¿cuántos peces sobran?",
+          "visual": {
+            "type": "equal_sharing",
+            "icon": "fish",
+            "container": "fish_tank",
+            "total": 21,
+            "recipients": 3,
+            "display": "summary"
+          },
+          "options": [
+            1,
+            7,
+            3,
+            0
+          ],
+          "correct_answer": 0,
+          "answer_index": 3,
+          "hint": "Revisa si al terminar la última vuelta queda algún pez fuera de las peceras.",
+          "feedback_correct": "¡Sobran 0 peces! Siete vueltas completas repartieron los veintiún peces.",
+          "feedback_incorrect": "Algunas veces el reparto es exacto. Cuenta si queda algún pez fuera antes de elegir."
+        }
+      ]
+    }
+  }
+}
