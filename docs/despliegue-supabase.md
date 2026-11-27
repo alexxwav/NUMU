@@ -76,3 +76,17 @@ guardando lecciones (RPC de 2 parámetros) y perfil; ninguna migración cambia d
 - **XP:** la app puede escribir una XP mayor que la real (el trigger solo impide que baje).
 - **App vieja en caché** tras la migración de gemas: no sube recompensas hasta recargar la versión nueva.
 - Tras una reversión, cambios de gemas hechos por la app vieja no quedan en `movimiento_gemas`.
+
+## 6. Verificación de esta sesión (27-nov-2026)
+
+| Comprobación | Resultado | Cómo |
+|---|---|---|
+| Configuración local | `.env.local` (solo en el worktree principal, ignorado por git) tiene `VITE_SUPABASE_URL` con formato válido y una clave `sb_publishable_…`; sin claves secretas | lectura sin mostrar valores |
+| Proyecto `numu` accesible para consultas de solo lectura | **NO**: el conector de Supabase de esta sesión solo ve un proyecto ajeno (CRM), que no se consultó. La URL de la app no es ese proyecto | `list_projects` |
+| Supabase Auth en la app | `signUp`, `signInWithPassword`, `signOut`, `getSession`, `onAuthStateChange`; solo clave pública en `src/` | `tests/cuentasAisladas.test.js` |
+| Aislamiento de cuentas en el dispositivo | una cuenta nueva no hereda XP, gemas, compras, progreso ni perfil | `tests/cuentasAisladas.test.js` (5) |
+| Registro, sesión, progreso, niveles, XP, gemas, compras, recompensas, RLS | correctos en la base aislada con las 3 migraciones | `tests/db/despliegue-completo.check.mjs` (40) |
+
+**Bloqueo:** la verificación previa (sección 2, paso 2) y la prueba con cuenta ficticia (sección 4) deben
+ejecutarse en el proyecto `numu` por quien tenga acceso (SQL Editor o conector con ese proyecto).
+Nada de lo anterior demuestra que Supabase real funcione: solo la base simulada.
